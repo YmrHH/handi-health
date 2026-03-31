@@ -5,9 +5,7 @@
         <div class="header-sub">{{ subTitle }}</div>
         <div class="header-main">
           <h1>{{ title }}</h1>
-          <span class="header-pill">{{ orgText }}</span>
           <span class="header-pill">{{ timeText }}</span>
-          <span class="header-pill">数据更新：{{ updatedText }}</span>
         </div>
       </div>
       <div class="header-right">
@@ -19,13 +17,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 
-const props = defineProps<{
+defineProps<{
   title: string
   subTitle: string
-  orgName?: string
-  updatedAt?: string
 }>()
 
 const timeText = ref('')
@@ -38,9 +34,6 @@ function updateNow() {
     d.getMinutes()
   )}:${pad(d.getSeconds())}`
 }
-
-const orgText = computed(() => props.orgName || '机构：默认组织')
-const updatedText = computed(() => props.updatedAt || '—')
 
 onMounted(() => {
   updateNow()

@@ -4,10 +4,7 @@
       <ScreenHeader
         title="寒岐智护·慢性病随访健康预警管理平台｜运营驾驶舱"
         sub-title="请先登录医生账号以加载真实数据"
-        :org-name="orgName"
-        :updated-at="updatedAt"
       >
-        <span class="header-pill">登录后仅作只读展示</span>
       </ScreenHeader>
       <div class="content">
         <LoginScreen @logged-in="handleLoggedIn" />
@@ -17,11 +14,8 @@
       <ScreenHeader
         title="寒岐智护·慢性病随访健康预警管理平台｜运营驾驶舱"
         sub-title="医疗运营监控数据大屏"
-        :org-name="orgName"
-        :updated-at="updatedAt"
       >
         <ScreenTabs v-model="active" :tabs="tabs" />
-        <span class="header-pill">只读展示</span>
       </ScreenHeader>
 
       <div class="content">
@@ -53,9 +47,6 @@ const tabs = [
 ]
 
 const active = ref('command')
-const orgName = ref('机构：默认组织')
-const updatedAt = ref('—')
-
 const isAuthed = ref(typeof sessionStorage !== 'undefined' && !!sessionStorage.getItem('token'))
 
 const compMap = {

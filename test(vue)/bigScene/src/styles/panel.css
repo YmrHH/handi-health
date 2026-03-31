@@ -62,6 +62,10 @@
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 1px;
+  color: rgba(33, 75, 103, 0.96);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .panel-subtitle {
