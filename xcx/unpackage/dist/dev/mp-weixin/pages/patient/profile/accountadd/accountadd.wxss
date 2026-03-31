@@ -1,0 +1,58 @@
+
+.account-disabled-page {
+  min-height: 100vh;
+  padding: 32rpx;
+  background: #f6f8fc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.account-disabled-card {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 28rpx;
+  padding: 40rpx 32rpx;
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.06);
+}
+.account-disabled-icon {
+  font-size: 64rpx;
+  line-height: 1;
+  text-align: center;
+}
+.account-disabled-title {
+  display: block;
+  margin-top: 20rpx;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #1f2937;
+}
+.account-disabled-desc {
+  display: block;
+  margin-top: 24rpx;
+  font-size: 28rpx;
+  line-height: 1.8;
+  color: #475467;
+}
+.account-disabled-tips {
+  margin-top: 28rpx;
+  padding: 24rpx;
+  background: #f8fafc;
+  border-radius: 20rpx;
+}
+.account-disabled-tip {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.8;
+  color: #344054;
+}
+.account-disabled-btn {
+  margin-top: 36rpx;
+  background: #5b6cff;
+  color: #ffffff;
+  border-radius: 999rpx;
+  font-size: 30rpx;
+  line-height: 88rpx;
+  height: 88rpx;
+}

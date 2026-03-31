@@ -1,0 +1,40 @@
+开始转换……
+小程序路径:  E:\miniprogram-2
+搜索到108个文件(含目录)，耗时：27ms
+
+开始分析文件
+分析文件信息完成，共25组数据
+开始转换文件组为vue文件
+开始二次遍历及生成vue文件
+write pages.json success!
+write manifest.json success!
+write main.js success!
+write package.json success!
+
+
+统计信息：
+
+Component数量: 0
+Page数量: 20
+支付api数量: 0
+登录api数量: 0
+chooseMedia数量: 0
+getLocation数量: 0
+getRelationNodes数量: 0
+<ad/>数量: 0
+<map/>数量: 0
+<video/>数量: 0
+Vant组件: ， 数量：0
+
+项目转换完成！
+用时: 13.228s
+工具版本：v2.2.6
+在该小程序项目的同级目录可以看到_uni结尾的项目，即是转换好的uniapp项目，相关日志在该目录里。
+
+使用说明：
+    1.因各种原因，本工具并非100%完美转换！部分语法仍需人工处理！
+    2.工具转换原理及说明文档参考：https://l4rz4zwpx7.k.topthink.com/@kmrvzg72lx/
+    3.如遇运行报错，请添加QQ群(五群：536178289)带图反馈或https://github.com/zhangdaren/miniprogram-to-uniapp提交Issue！
+    4.转换后请查阅_uni目录或_uni-cli目录里的 README.md 和 transform.log
+
+

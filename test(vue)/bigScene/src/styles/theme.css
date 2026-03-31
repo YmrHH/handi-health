@@ -1,0 +1,67 @@
+:root {
+  /* Base */
+  --bg-0: #eef7fb;
+  --bg-1: #e2f0f7;
+  --bg-2: #d3e8f2;
+
+  /* Glass */
+  --glass: rgba(255, 255, 255, 0.62);
+  --glass-2: rgba(247, 252, 255, 0.84);
+
+  /* Text */
+  --t-0: rgba(20, 52, 79, 0.96);
+  --t-1: rgba(39, 85, 113, 0.92);
+  --t-2: rgba(92, 130, 156, 0.88);
+  --t-3: rgba(92, 130, 156, 0.76);
+
+  /* Accent */
+  --c-cyan: #5fc7d8;
+  --c-cyan-2: #7fd6e3;
+  --c-blue: #8cbce3;
+  --c-violet: #9ea9e6;
+  --c-gold: #e6bc79;
+
+  /* Status */
+  --c-danger: #ee8d99;
+  --c-warning: #efc56f;
+  --c-success: #78c4a0;
+
+  /* Borders / glow */
+  --bd: rgba(114, 180, 205, 0.34);
+  --bd-2: rgba(140, 188, 227, 0.32);
+  --glow: 0 0 18px rgba(95, 199, 216, 0.16);
+  --glow-strong: 0 0 28px rgba(95, 199, 216, 0.22);
+  --shadow: 0 18px 42px rgba(116, 153, 182, 0.18);
+
+  /* Radius */
+  --r-lg: 16px;
+  --r-md: 12px;
+  --r-sm: 10px;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--t-0);
+  /* 浅冰蓝 + 雾白底 + 很轻微网格纹理 */
+  background:
+    radial-gradient(1000px 700px at 50% -10%, rgba(95, 199, 216, 0.22), transparent 55%),
+    radial-gradient(900px 600px at 15% 30%, rgba(158, 169, 230, 0.16), transparent 60%),
+    radial-gradient(900px 700px at 90% 55%, rgba(140, 188, 227, 0.16), transparent 60%),
+    linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 55%, var(--bg-2) 100%),
+    repeating-linear-gradient(90deg, rgba(95, 199, 216, 0.06) 0px, rgba(95, 199, 216, 0.06) 1px, transparent 1px, transparent 48px),
+    repeating-linear-gradient(0deg, rgba(95, 199, 216, 0.05) 0px, rgba(95, 199, 216, 0.05) 1px, transparent 1px, transparent 48px);
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+

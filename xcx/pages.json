@@ -1,0 +1,263 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "角色选择",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/home/home",
+      "style": {
+        "navigationBarTitleText": "患者首页",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/dashboard/dashboard",
+      "style": {
+        "usingComponents": {},
+        "navigationBarTitleText": "随访关联"
+      }
+    },
+    {
+      "path": "pages/patient/chat/chat",
+      "style": {
+        "navigationBarTitleText": "在线咨询",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/profile/profile",
+      "style": {
+        "navigationBarTitleText": "我的",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/alerts/alerts",
+      "style": {
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/monitor/monitor",
+      "style": {
+        "navigationBarTitleText": "体征记录",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/rehab/rehab",
+      "style": {
+        "navigationBarTitleText": "康养任务",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/home/home",
+      "style": {
+        "navigationBarTitleText": "医护工作台",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/tasks/tasks",
+      "style": {
+        "navigationBarTitleText": "医护任务",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/patients/patients",
+      "style": {
+        "navigationBarTitleText": "患者列表",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/alarm/alarm",
+      "style": {
+        "navigationBarTitleText": "异常告警中心",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/profile/profile",
+      "style": {
+        "navigationBarTitleText": "我的信息管理",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/followup/followup",
+      "style": {
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/survey/survey",
+      "style": {
+        "navigationBarTitleText": "今日康养指标",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/tongue/tongue",
+      "style": {
+        "navigationBarTitleText": "舌象采集",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/profile/profileedit/profileedit",
+      "style": {
+        "navigationBarTitleText": "编辑个人资料"
+      }
+    },
+    {
+      "path": "pages/patient/profile/accountadd/accountadd",
+      "style": {
+        "navigationBarTitleText": "添加新账号"
+      }
+    },
+    {
+      "path": "pages/patient/healthFile/healthFile",
+      "style": {
+        "navigationBarTitleText": "健康档案"
+      }
+    },
+    {
+      "path": "pages/patient/devices/devices",
+      "style": {
+        "navigationBarTitleText": "设备管理"
+      }
+    },
+    {
+      "path": "pages/patient/family/family",
+      "style": {
+        "navigationBarTitleText": "家属管理"
+      }
+    },
+    {
+      "path": "pages/patient/followup/followup",
+      "style": {
+        "navigationBarTitleText": "随访记录"
+      }
+    },
+    {
+      "path": "pages/patient/followupDetail/followupDetail",
+      "style": {
+        "navigationBarTitleText": "随访详情",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/patient/message/message",
+      "style": {
+        "navigationBarTitleText": "消息中心"
+      }
+    },
+    {
+      "path": "pages/patient/privacy/privacy",
+      "style": {
+        "navigationBarTitleText": "隐私与安全"
+      }
+    },
+    {
+      "path": "pages/patient/feedback/feedback",
+      "style": {
+        "navigationBarTitleText": "意见反馈"
+      }
+    },
+    {
+      "path": "pages/patient/help/help",
+      "style": {
+        "navigationBarTitleText": "帮助与客服"
+      }
+    },
+    {
+      "path": "pages/patient/bp/bp",
+      "style": {
+        "navigationBarTitleText": "血压/血糖"
+      }
+    },
+    {
+      "path": "pages/patient/hr/hr",
+      "style": {
+        "navigationBarTitleText": "心率检测"
+      }
+    },
+    {
+      "path": "pages/patient/spo2/spo2",
+      "style": {
+        "navigationBarTitleText": "血氧检测"
+      }
+    },
+    {
+      "path": "pages/patient/weight/weight",
+      "style": {
+        "navigationBarTitleText": "体温管理"
+      }
+    },
+    {
+      "path": "pages/patient/trends/trends",
+      "style": {
+        "navigationBarTitleText": "趋势与建议",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/patientData/patientData",
+      "style": {
+        "navigationBarTitleText": "患者数据",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/patientChat/patientChat",
+      "style": {
+        "navigationBarTitleText": "患者消息",
+        "usingComponents": {}
+      }
+    },
+    {
+      "path": "pages/staff/managedPatients/managedPatients",
+      "style": {
+        "navigationBarTitleText": "在管患者",
+        "usingComponents": {}
+      }
+    }
+  ],
+  "tabBar": {
+    "color": "#8A93A6",
+    "selectedColor": "#5B6CFF",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/patient/home/home",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/patient/chat/chat",
+        "text": "咨询"
+      },
+      {
+        "pagePath": "pages/patient/profile/profile",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "globalStyle": {
+    "navigationBarTitleText": "寒地慢性病随访小程序",
+    "navigationBarBackgroundColor": "#EDEEFF",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#F2F3FF",
+    "backgroundTextStyle": "light"
+  },
+  "subPackages": []
+}

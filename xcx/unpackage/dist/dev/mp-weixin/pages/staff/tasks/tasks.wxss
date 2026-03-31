@@ -1,0 +1,149 @@
+/* pages/staff/tasks/tasks.css
+   统一随访端视觉风格：与全局紫蓝玻璃卡一致
+*/
+page{
+  background: linear-gradient(180deg, #EDEEFF 0%, #F6F7FF 40%, #FFFFFF 100%);
+}
+.staff-page{
+  padding-bottom: 140rpx; /* 给底部导航栏留空间 */
+}
+.staff-card{
+  margin-top: 18rpx;
+}
+.staff-card:first-child{
+  margin-top: 0;
+}
+.staff-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.staff-title{
+  font-size: 34rpx;
+  font-weight: 900;
+  color: var(--c-text);
+}
+.staff-sub{
+  margin-top: 10rpx;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: rgba(31,42,55,0.58);
+  font-weight: 600;
+}
+
+/* 筛选 Tabs */
+.filter-tabs{
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 18rpx;
+}
+.filter-tab{
+  font-size: 24rpx;
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255,255,255,0.78);
+  border: 1rpx solid rgba(91,108,255,0.14);
+  color: rgba(31,42,55,0.70);
+  margin-right: 14rpx;
+  margin-bottom: 12rpx;
+  font-weight: 700;
+}
+.filter-tab.active{
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-2) 100%);
+  color: #ffffff;
+  border-color: rgba(255,255,255,0.0);
+}
+
+/* 任务卡片（基于 app-card） */
+.task-card{
+  margin-top: 18rpx;
+}
+.task-top{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.task-patient{
+  font-size: 30rpx;
+  font-weight: 900;
+  color: var(--c-text);
+}
+.task-age{
+  font-size: 24rpx;
+  color: rgba(31,42,55,0.55);
+  font-weight: 700;
+}
+.task-type{
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  color: rgba(31,42,55,0.66);
+  font-weight: 600;
+}
+.task-risk{
+  padding: 8rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 800;
+  border: 1rpx solid rgba(91,108,255,0.14);
+  background: rgba(91,108,255,0.08);
+  color: rgba(91,108,255,0.92);
+}
+.task-risk.high{ background: rgba(255,99,132,0.14); color: #B42318; border-color: rgba(255,99,132,0.18);
+}
+.task-risk.mid{ background: rgba(245,158,11,0.14); color: #92400E; border-color: rgba(245,158,11,0.18);
+}
+.task-risk.low{ background: rgba(16,185,129,0.14); color: #065F46; border-color: rgba(16,185,129,0.18);
+}
+.task-middle{ margin-top: 12rpx;
+}
+.task-time{
+  font-size: 24rpx;
+  color: rgba(31,42,55,0.66);
+  font-weight: 650;
+}
+.task-ai{
+  margin-top: 6rpx;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: rgba(31,42,55,0.58);
+  font-weight: 600;
+}
+.task-bottom{
+  margin-top: 14rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.task-tags{ display: flex; flex-direction: row; flex-wrap: wrap;
+}
+.tag{
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  margin-right: 10rpx;
+  font-size: 22rpx;
+  font-weight: 750;
+  border: 1rpx solid rgba(91,108,255,0.14);
+  background: rgba(255,255,255,0.70);
+  color: rgba(31,42,55,0.70);
+}
+.tag-alert{
+  background: rgba(91,108,255,0.12);
+  color: rgba(91,108,255,0.92);
+}
+.tag-overdue{
+  background: rgba(255,99,132,0.14);
+  color: #B42318;
+  border-color: rgba(255,99,132,0.18);
+}
+.task-status-text{
+  font-size: 24rpx;
+  color: rgba(31,42,55,0.55);
+  font-weight: 700;
+}
+.empty-tip{
+  margin-top: 24rpx;
+  font-size: 24rpx;
+  text-align: center;
+  color: rgba(31,42,55,0.55);
+  font-weight: 650;
+}

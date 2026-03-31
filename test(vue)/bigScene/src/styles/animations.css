@@ -1,0 +1,29 @@
+.fade-in {
+  animation: fadeIn 420ms ease both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.glow-breath {
+  animation: glowBreath 3.2s ease-in-out infinite;
+}
+
+@keyframes glowBreath {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 10px rgba(95, 199, 216, 0.12));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgba(95, 199, 216, 0.20));
+  }
+}
+

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64" fill="none">
+  <polyline points="32,10 46,14 46,28 42,40 32,50 22,40 18,28 18,14 32,10" fill="none" stroke="#E8EEF9" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="29" r="7" fill="none" stroke="#E8EEF9" stroke-width="2.8"/>
+  <path d="M41 29H45" fill="none" stroke="#E8EEF9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38.364 35.364L41.192 38.192" fill="none" stroke="#E8EEF9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 38V42" fill="none" stroke="#E8EEF9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25.636 35.364L22.808 38.192" fill="none" stroke="#E8EEF9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M23 29H19" fill="none" stroke="#E8EEF9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M25.636 22.636L22.808 19.808" fill="none" stroke="#E8EEF9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M32 20V16" fill="none" stroke="#E8EEF9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M38.364 22.636L41.192 19.808" fill="none" stroke="#E8EEF9" stroke-width="2.0" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="32" cy="29" r="2" fill="#E8EEF9"/>
+</svg>

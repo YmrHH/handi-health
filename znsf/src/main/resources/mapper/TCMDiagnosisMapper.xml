@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.zhinengsuifang.mapper.TCMDiagnosisMapper">
+    <insert id="insert" parameterType="com.example.zhinengsuifang.entity.TCMDiagnosis" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tcm_diagnosis (
+            patient_id,
+            doctor_id,
+            doctor_name,
+            diagnosis_date,
+            main_complaint,
+            tongue_description,
+            tongue_image_url,
+            pulse_description,
+            tcm_summary,
+            physical_exam,
+            lifestyle,
+            status,
+            created_at,
+            updated_at
+        ) VALUES (
+            #{patientId},
+            #{doctorId},
+            #{doctorName},
+            #{diagnosisDate},
+            #{mainComplaint},
+            #{tongueDescription},
+            #{tongueImageUrl},
+            #{pulseDescription},
+            #{tcmSummary},
+            #{physicalExam},
+            #{lifestyle},
+            #{status},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.zhinengsuifang.entity.TCMDiagnosis">
+        UPDATE tcm_diagnosis SET
+            doctor_id = #{doctorId},
+            doctor_name = #{doctorName},
+            diagnosis_date = #{diagnosisDate},
+            main_complaint = #{mainComplaint},
+            tongue_description = #{tongueDescription},
+            tongue_image_url = #{tongueImageUrl},
+            pulse_description = #{pulseDescription},
+            tcm_summary = #{tcmSummary},
+            physical_exam = #{physicalExam},
+            lifestyle = #{lifestyle},
+            status = #{status},
+            updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" parameterType="java.lang.Long" resultType="com.example.zhinengsuifang.entity.TCMDiagnosis">
+        SELECT * FROM tcm_diagnosis WHERE id = #{id}
+    </select>
+
+    <select id="selectByPatientId" parameterType="java.util.Map" resultType="com.example.zhinengsuifang.entity.TCMDiagnosis">
+        SELECT * FROM tcm_diagnosis WHERE patient_id = #{patientId} ORDER BY diagnosis_date DESC LIMIT #{limit}
+    </select>
+
+    <select id="selectLatestByPatientId" parameterType="java.lang.Long" resultType="com.example.zhinengsuifang.entity.TCMDiagnosis">
+        SELECT * FROM tcm_diagnosis WHERE patient_id = #{patientId} ORDER BY diagnosis_date DESC LIMIT 1
+    </select>
+
+    <delete id="deleteById" parameterType="java.lang.Long">
+        DELETE FROM tcm_diagnosis WHERE id = #{id}
+    </delete>
+</mapper>

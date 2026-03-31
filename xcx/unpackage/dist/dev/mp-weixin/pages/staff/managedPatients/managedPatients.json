@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "在管患者",
+  "usingComponents": {
+    "staff-tabbar": "../../../components/staff-tabbar/staff-tabbar"
+  }
+}

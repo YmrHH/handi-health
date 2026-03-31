@@ -1,0 +1,178 @@
+/* pages/index/index.wxss */
+page {
+    background-color: #f3f6fb;
+}
+.login-page {
+    padding: 40rpx 24rpx 32rpx;
+}
+
+/* 顶部“角色选择”小标题 */
+.page-title {
+    font-size: 28rpx;
+    color: #6b7280;
+    margin-bottom: 16rpx;
+}
+
+/* 顶部蓝色渐变卡片 */
+.hero-card {
+    background: linear-gradient(135deg, #2972f6, #1d4ed8);
+    border-radius: 24rpx;
+    padding: 24rpx 24rpx 28rpx;
+    box-shadow: 0 12rpx 32rpx rgba(37, 99, 235, 0.55);
+    color: #ffffff;
+    margin-bottom: 24rpx;
+}
+.hero-title-main {
+    font-size: 32rpx;
+    font-weight: 700;
+}
+.hero-sub {
+    margin-top: 8rpx;
+    font-size: 24rpx;
+    opacity: 0.92;
+}
+.hero-tip {
+    margin-top: 20rpx;
+    font-size: 24rpx;
+    opacity: 0.96;
+}
+
+/* 通用卡片 */
+.card {
+    background-color: #ffffff;
+    border-radius: 18rpx;
+    padding: 22rpx 20rpx;
+    box-shadow: 0 8rpx 26rpx rgba(15, 23, 42, 0.08);
+    box-sizing: border-box;
+}
+
+/* 端口选择卡片 */
+.role-card {
+    margin-bottom: 18rpx;
+}
+.role-row {
+    margin-top: 8rpx;
+    display: flex;
+    justify-content: space-between;
+}
+.role-item {
+    width: 48%;
+    border-radius: 16rpx;
+    padding: 16rpx 14rpx;
+    background-color: #eff1f5;
+    box-shadow: 0 4rpx 14rpx rgba(15, 23, 42, 0.06);
+}
+.role-item.active {
+    background: linear-gradient(135deg, #2972f6, #1d4ed8);
+    box-shadow: 0 8rpx 22rpx rgba(37, 99, 235, 0.5);
+}
+.role-name {
+    font-size: 28rpx;
+    font-weight: 600;
+    color: #111827;
+}
+.role-item.active .role-name {
+    color: #ffffff;
+}
+.role-desc {
+    margin-top: 6rpx;
+    font-size: 24rpx;
+    color: #6b7280;
+}
+.role-item.active .role-desc {
+    color: #e5edff;
+}
+.role-tip {
+    margin-top: 14rpx;
+    font-size: 24rpx;
+    color: #9ca3af;
+}
+.role-selected {
+    color: #1d4ed8;
+}
+
+/* 登录表单卡片 */
+.form-card {
+    margin-bottom: 18rpx;
+}
+
+/* 未选择角色时的占位态 */
+.form-placeholder {
+    padding: 48rpx 0 52rpx;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.form-placeholder-icon {
+    width: 96rpx;
+    height: 96rpx;
+    border-radius: 50%;
+    background-color: #f0f4ff;
+    margin-bottom: 20rpx;
+}
+.form-placeholder-title {
+    font-size: 26rpx;
+    color: #9ca3af;
+}
+.form-placeholder-sub {
+    margin-top: 8rpx;
+    font-size: 24rpx;
+    color: #c0c7d5;
+}
+
+/* 已选择角色时的表单标题 */
+.form-title {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 10rpx;
+}
+
+/* 表单字段 */
+.field {
+    margin-top: 14rpx;
+}
+.field-label {
+    font-size: 26rpx;
+    color: #374151;
+    margin-bottom: 6rpx;
+}
+.field-input {
+    border-radius: 14rpx;
+    border: 2rpx solid #e5e7eb;
+    background-color: #ffffff;
+    padding: 14rpx 16rpx;
+}
+.field-input input {
+    font-size: 28rpx;
+}
+.input-placeholder {
+    color: #9ca3af;
+}
+
+/* 登录按钮 */
+.btn-primary {
+    width: 100%;
+    background-color: #2972f6;
+    color: #ffffff;
+    border-radius: 999rpx;
+    padding: 24rpx 0;
+    font-size: 32rpx;
+    text-align: center;
+    margin-top: 24rpx;
+}
+
+/* 底部说明 */
+.tip-blue {
+    background-color: #e8f1ff;
+    border-radius: 14rpx;
+    padding: 16rpx 18rpx;
+    font-size: 24rpx;
+    color: #1d4ed8;
+    line-height: 1.6;
+    box-shadow: 0 4rpx 16rpx rgba(37, 99, 235, 0.24);
+}
+.bottom-tip {
+    margin-top: 18rpx;
+}
