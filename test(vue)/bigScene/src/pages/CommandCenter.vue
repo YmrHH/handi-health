@@ -4,34 +4,34 @@
     <section class="overview-row">
       <article class="overview-card">
         <div class="overview-icon bg-cyan">患</div>
-        <div class="overview-label">总患者数</div>
+        <div class="overview-label">患者总数</div>
         <div class="overview-value">{{ totalPatients }}</div>
-        <div class="overview-meta">在管慢病人群全量</div>
+        <div class="overview-meta">高危 {{ riskHigh }} · 中危 {{ riskMid }}</div>
+      </article>
+      <article class="overview-card">
+        <div class="overview-icon bg-violet">医</div>
+        <div class="overview-label">活跃医生数</div>
+        <div class="overview-value">{{ activeDoctorCount }}</div>
+        <div class="overview-meta">责任医生活跃负载</div>
+      </article>
+      <article class="overview-card">
+        <div class="overview-icon bg-warn">警</div>
+        <div class="overview-label">实时事件数</div>
+        <div class="overview-value">{{ totalAlerts30d }}</div>
+        <div class="overview-meta">近30天健康+设备事件</div>
       </article>
       <article class="overview-card risk">
-        <div class="overview-icon bg-danger">险</div>
-        <div class="overview-label">高危患者数</div>
-        <div class="overview-value">{{ riskHigh }}</div>
-        <div class="overview-meta">中危 {{ riskMid }} · 低危 {{ riskLow }}</div>
-      </article>
-      <article class="overview-card warn">
-        <div class="overview-icon bg-warn">警</div>
-        <div class="overview-label">未处理告警</div>
+        <div class="overview-icon bg-danger">危</div>
+        <div class="overview-label">高危告警数</div>
         <div class="overview-value">{{ unhandledAlerts }}</div>
-        <div class="overview-meta">近30天总告警 {{ totalAlerts30d }}</div>
-      </article>
-      <article class="overview-card done">
-        <div class="overview-icon bg-success">访</div>
-        <div class="overview-label">本周完成随访</div>
-        <div class="overview-value">{{ weekFollowDone }}</div>
-        <div class="overview-meta">任务完成率 {{ weekFollowRateText }}</div>
+        <div class="overview-meta">已关闭 {{ closedAlerts }} · 处置率 {{ closeRate }}%</div>
       </article>
     </section>
 
     <!-- 第二行：左窄 中宽 右窄 -->
     <section class="middle-grid">
       <div class="middle-col left">
-        <ScreenPanel title="Disease Ranking Top 5" subtitle="慢病病种分布">
+        <ScreenPanel title="病种排名 TOP5" subtitle="慢病病种分布">
           <ul class="rank-list">
             <li v-for="(it, idx) in diseaseTop5" :key="it.name" class="rank-item">
               <div class="rank-head">
@@ -46,7 +46,7 @@
           </ul>
         </ScreenPanel>
 
-        <ScreenPanel title="Doctor Load Top 5" subtitle="责任医生负载">
+        <ScreenPanel title="医生负载 TOP5" subtitle="责任医生负载">
           <ul class="doctor-list">
             <li v-for="it in doctorTop5" :key="it.name" class="doctor-item">
               <span class="doctor-dot"></span>
@@ -58,7 +58,7 @@
       </div>
 
       <div class="middle-col center">
-        <ScreenPanel title="康养闭环中枢图" subtitle="Platform Command Hub">
+        <ScreenPanel title="康养闭环中枢图" subtitle="平台指挥中枢">
           <div class="hub-stage">
             <div class="hub-pulse"></div>
             <div class="hub-rotate-ring"></div>
@@ -78,16 +78,16 @@
                 </div>
               </div>
             </div>
-            <div class="hub-node n1">Patients</div>
-            <div class="hub-node n2">Networks</div>
-            <div class="hub-node n3">AI Core</div>
-            <div class="hub-node n4">Doctors</div>
+            <div class="hub-node n1">患者</div>
+            <div class="hub-node n2">协同网络</div>
+            <div class="hub-node n3">AI中枢</div>
+            <div class="hub-node n4">医生</div>
           </div>
         </ScreenPanel>
       </div>
 
       <div class="middle-col right">
-        <ScreenPanel title="Disposal Efficiency" subtitle="告警处置效率">
+        <ScreenPanel title="处置效率" subtitle="告警处置效率">
           <div class="single-ring-wrap">
             <div ref="disposalGaugeRef" class="single-ring"></div>
             <div class="legend-row">
@@ -103,7 +103,7 @@
           </div>
         </ScreenPanel>
 
-        <ScreenPanel title="Completion Matrix" subtitle="随访与干预完成度">
+        <ScreenPanel title="完成率矩阵" subtitle="随访与干预完成度">
           <div class="matrix-grid">
             <div class="matrix-item">
               <div ref="followGaugeRef" class="matrix-ring"></div>
@@ -121,9 +121,9 @@
 
     <!-- 第三行：整行主趋势 -->
     <section class="trend-row">
-      <ScreenPanel title="Comprehensive Trend Master" subtitle="风险 / 告警 / 随访（近 6~12 月）">
+      <ScreenPanel title="综合趋势总览" subtitle="风险 / 告警 / 随访（近 6~12 月）">
         <div class="trend-toolbar">
-          <div class="trend-note">Holistic health metrics aggregated over recent months</div>
+          <div class="trend-note">近期健康指标综合趋势对比</div>
           <div class="trend-switch">
             <button
               v-for="item in trendTabs"
@@ -157,9 +157,9 @@
         </div>
       </div>
       <div class="footer-links">
-        <span>Real-time Metrics</span>
-        <span>Event Ticker</span>
-        <span>Support</span>
+        <span>实时指标</span>
+        <span>事件流</span>
+        <span>支持中心</span>
       </div>
     </section>
   </div>
@@ -186,6 +186,7 @@ const unhandledAlerts = ref(0)
 const closedAlerts = ref(0)
 const weekFollowDone = ref(0)
 const weekFollowRatePct = ref(0)
+const activeDoctorCount = ref(0)
 
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
 const diseaseTop5 = ref<RankItem[]>([])
@@ -199,9 +200,9 @@ const closeRate = computed(() => {
 
 const weekFollowRateText = computed(() => `${Number(weekFollowRatePct.value || 0).toFixed(1)}%`)
 const trendTabs = [
-  { key: 'daily', label: 'Daily' },
-  { key: 'weekly', label: 'Weekly' },
-  { key: 'monthly', label: 'Monthly' }
+  { key: 'daily', label: '日' },
+  { key: 'weekly', label: '周' },
+  { key: 'monthly', label: '月' }
 ] as const
 const trendGranularity = ref<'daily' | 'weekly' | 'monthly'>('weekly')
 const marqueeItems = computed(() => {
@@ -412,7 +413,7 @@ async function loadCore() {
   const start = Math.max(0, monthsAll.length - take)
 
   buildTrend(monthsAll.slice(start), alertsAll.slice(start), highAll.slice(start), followAll.slice(start))
-  followGaugeChart = buildGauge(followGaugeRef.value, followGaugeChart, weekFollowRatePct.value, '随访')
+  followGaugeChart = buildGauge(followGaugeRef.value, followGaugeChart, weekFollowRatePct.value, '随访完成率')
 }
 
 async function loadSecondary() {
@@ -430,6 +431,13 @@ async function loadSecondary() {
 
   buildDiseaseTop(pList)
   buildDoctorTop(pList)
+  activeDoctorCount.value = Array.from(
+    new Set(
+      pList
+        .map((r: any) => (r.responsibleDoctor || r.doctor || '').toString().trim())
+        .filter((x: string) => !!x)
+    )
+  ).length
 
   const [alertRes, hardwareRes] = await Promise.all([fetchAlerts(30).catch(() => ({} as any)), fetchHardwareAlerts(30).catch(() => ({} as any))])
   if (!activeAlive) return
@@ -458,9 +466,9 @@ async function loadSecondary() {
   events.value = ev.slice(0, 8)
 
   buildHubRing()
-  disposalGaugeChart = buildGauge(disposalGaugeRef.value, disposalGaugeChart, closeRate.value, '处置')
+  disposalGaugeChart = buildGauge(disposalGaugeRef.value, disposalGaugeChart, closeRate.value, '处置效率')
   // 干预计划完成率：当前后端无聚合接口，先展示统一样式占位值（后续可替换真实接口）
-  interventionGaugeChart = buildGauge(interventionGaugeRef.value, interventionGaugeChart, 62, '干预')
+  interventionGaugeChart = buildGauge(interventionGaugeRef.value, interventionGaugeChart, 62, '干预完成率')
 }
 
 async function startLoad() {
@@ -573,6 +581,7 @@ onUnmounted(() => {
   color: rgba(29, 78, 114, 0.92);
 }
 .overview-icon.bg-cyan { background: rgba(95, 199, 216, 0.16); }
+.overview-icon.bg-violet { background: rgba(158, 169, 230, 0.16); }
 .overview-icon.bg-danger { background: rgba(238, 141, 153, 0.14); }
 .overview-icon.bg-warn { background: rgba(239, 197, 111, 0.14); }
 .overview-icon.bg-success { background: rgba(120, 196, 160, 0.14); }
