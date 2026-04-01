@@ -61,7 +61,9 @@
         <ScreenPanel title="康养闭环中枢图" subtitle="平台指挥中枢">
           <div class="hub-stage">
             <div class="hub-pulse"></div>
+            <div class="hub-halo"></div>
             <div class="hub-rotate-ring"></div>
+            <div class="hub-orbit"></div>
             <div ref="hubRingRef" class="hub-ring"></div>
             <div class="hub-core glow-breath">
               <div class="hub-core-label">受管患者</div>
@@ -331,16 +333,32 @@ function buildTrend(months: string[], alerts: number[], high: number[], follow: 
   })
 }
 
-function buildGauge(el: HTMLElement | null, chart: ECharts | null, value: number, title: string) {
+function buildGauge(
+  el: HTMLElement | null,
+  chart: ECharts | null,
+  value: number,
+  title: string,
+  opts?: {
+    placeholderText?: string
+  }
+) {
   if (!el) return chart
   const c = chart || init(el)
+  const isPlaceholder = !!opts?.placeholderText
+  const safeVal = Math.max(0, Math.min(100, Number(value || 0)))
   c.setOption({
     series: [
       {
         type: 'gauge',
         startAngle: 210,
         endAngle: -30,
-        progress: { show: true, width: 10 },
+        progress: {
+          show: true,
+          width: 10,
+          itemStyle: {
+            color: isPlaceholder ? 'rgba(114,180,205,0.18)' : 'rgba(95,199,216,0.86)'
+          }
+        },
         axisLine: { lineStyle: { width: 10, color: [[1, 'rgba(114,180,205,0.30)']] } },
         splitLine: { show: false },
         axisTick: { show: false },
@@ -348,13 +366,13 @@ function buildGauge(el: HTMLElement | null, chart: ECharts | null, value: number
         pointer: { show: false },
         detail: {
           valueAnimation: true,
-          formatter: '{value}%',
-          color: 'rgba(20,52,79,0.96)',
-          fontSize: 20,
-          fontWeight: 900
+          formatter: isPlaceholder ? opts?.placeholderText : '{value}%',
+          color: isPlaceholder ? 'rgba(39,85,113,0.86)' : 'rgba(20,52,79,0.96)',
+          fontSize: isPlaceholder ? 16 : 20,
+          fontWeight: isPlaceholder ? 800 : 900
         },
         title: { color: 'rgba(39,85,113,0.92)', fontSize: 12, offsetCenter: [0, '58%'] },
-        data: [{ value: Math.max(0, Math.min(100, value)), name: title }]
+        data: [{ value: isPlaceholder ? 0 : safeVal, name: title }]
       }
     ]
   })
@@ -475,8 +493,10 @@ async function loadSecondary() {
 
   buildHubRing()
   disposalGaugeChart = buildGauge(disposalGaugeRef.value, disposalGaugeChart, closeRate.value, '处置效率')
-  // 干预计划完成率：当前后端无聚合接口，先展示统一样式占位值（后续可替换真实接口）
-  interventionGaugeChart = buildGauge(interventionGaugeRef.value, interventionGaugeChart, 62, '干预完成率')
+  // 干预计划完成率：当前后端无聚合接口，保持结构完整，使用中文占位
+  interventionGaugeChart = buildGauge(interventionGaugeRef.value, interventionGaugeChart, 0, '干预完成率', {
+    placeholderText: '待接入'
+  })
 }
 
 async function startLoad() {
@@ -719,12 +739,43 @@ onUnmounted(() => {
   animation: hubPulse 3.8s ease-in-out infinite;
 }
 
+.hub-halo {
+  position: absolute;
+  width: 92%;
+  height: 92%;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 54%, rgba(127,214,227,0.10) 70%, rgba(127,214,227,0.00) 86%),
+    radial-gradient(circle at 50% 50%, rgba(140,188,227,0.16) 0%, rgba(140,188,227,0.00) 64%);
+  filter: blur(0.2px);
+  opacity: 0.95;
+  pointer-events: none;
+}
+
 .hub-rotate-ring {
   position: absolute;
   inset: 10px;
   border-radius: 999px;
   border: 2px dashed rgba(95, 199, 216, 0.30);
   animation: hubRotate 60s linear infinite;
+}
+
+.hub-orbit {
+  position: absolute;
+  inset: 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(114, 180, 205, 0.20);
+  background:
+    repeating-conic-gradient(
+      from 0deg,
+      rgba(114,180,205,0.00) 0deg,
+      rgba(114,180,205,0.00) 10deg,
+      rgba(114,180,205,0.16) 10deg,
+      rgba(114,180,205,0.16) 11deg
+    );
+  mask: radial-gradient(circle, transparent 0%, transparent 63%, #000 64%, #000 100%);
+  opacity: 0.55;
+  pointer-events: none;
 }
 
 .hub-ring {
@@ -863,6 +914,20 @@ onUnmounted(() => {
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.58);
   padding: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.matrix-item::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(95,199,216,0.55), rgba(158,169,230,0.55));
+  opacity: 0.55;
 }
 
 .matrix-ring {
