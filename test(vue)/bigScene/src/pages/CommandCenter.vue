@@ -1,63 +1,167 @@
 <template>
-  <div class="layout">
-    <div class="col left">
-      <ScreenPanel title="平台总量卡组" subtitle="患者 / 告警 / 随访 / 干预">
-        <div class="stat-grid">
-          <StatCard label="总患者数" :value="totalPatients" tone="gold" />
-          <StatCard label="高危患者数" :value="riskHigh" tone="danger" />
-          <StatCard label="未处理告警" :value="unhandledAlerts" tone="warning" />
-          <StatCard label="本周完成随访" :value="weekFollowDone" tone="cyan" hint="来自 /api/home/stats" />
-        </div>
-      </ScreenPanel>
+  <div class="command-page">
+    <!-- 顶部总量四卡 -->
+    <section class="overview-row">
+      <article class="overview-card">
+        <div class="overview-icon bg-cyan">患</div>
+        <div class="overview-label">总患者数</div>
+        <div class="overview-value">{{ totalPatients }}</div>
+        <div class="overview-meta">在管慢病人群全量</div>
+      </article>
+      <article class="overview-card risk">
+        <div class="overview-icon bg-danger">险</div>
+        <div class="overview-label">高危患者数</div>
+        <div class="overview-value">{{ riskHigh }}</div>
+        <div class="overview-meta">中危 {{ riskMid }} · 低危 {{ riskLow }}</div>
+      </article>
+      <article class="overview-card warn">
+        <div class="overview-icon bg-warn">警</div>
+        <div class="overview-label">未处理告警</div>
+        <div class="overview-value">{{ unhandledAlerts }}</div>
+        <div class="overview-meta">近30天总告警 {{ totalAlerts30d }}</div>
+      </article>
+      <article class="overview-card done">
+        <div class="overview-icon bg-success">访</div>
+        <div class="overview-label">本周完成随访</div>
+        <div class="overview-value">{{ weekFollowDone }}</div>
+        <div class="overview-meta">任务完成率 {{ weekFollowRateText }}</div>
+      </article>
+    </section>
 
-      <ScreenPanel title="病种 Top5 排行条" subtitle="按患者数聚合">
-        <div ref="diseaseRankRef" class="chart chart-rank"></div>
-      </ScreenPanel>
+    <!-- 第二行：左窄 中宽 右窄 -->
+    <section class="middle-grid">
+      <div class="middle-col left">
+        <ScreenPanel title="Disease Ranking Top 5" subtitle="慢病病种分布">
+          <ul class="rank-list">
+            <li v-for="(it, idx) in diseaseTop5" :key="it.name" class="rank-item">
+              <div class="rank-head">
+                <span class="rank-no">{{ idx + 1 }}</span>
+                <span class="rank-name" :title="it.name">{{ it.name }}</span>
+                <span class="rank-val">{{ it.value }}</span>
+              </div>
+              <div class="rank-bar">
+                <span class="rank-fill" :style="{ width: `${it.percent}%` }"></span>
+              </div>
+            </li>
+          </ul>
+        </ScreenPanel>
 
-      <ScreenPanel title="责任医生负载 Top5" subtitle="按随访任务聚合">
-        <div ref="doctorRankRef" class="chart chart-rank"></div>
-      </ScreenPanel>
-    </div>
+        <ScreenPanel title="Doctor Load Top 5" subtitle="责任医生负载">
+          <ul class="doctor-list">
+            <li v-for="it in doctorTop5" :key="it.name" class="doctor-item">
+              <span class="doctor-dot"></span>
+              <span class="doctor-name">{{ it.name }}</span>
+              <span class="doctor-rate">{{ it.percent }}%</span>
+            </li>
+          </ul>
+        </ScreenPanel>
+      </div>
 
-    <div class="col center">
-      <ScreenPanel title="康养闭环中枢图" subtitle="平台核心态势主视觉" >
-        <div class="center-stage">
-          <div class="hub glow-breath">
-            <div class="hub-title">受管患者</div>
-            <div class="hub-value">{{ totalPatients }}</div>
-            <div class="hub-sub">风险分层与告警分布</div>
+      <div class="middle-col center">
+        <ScreenPanel title="康养闭环中枢图" subtitle="Platform Command Hub">
+          <div class="hub-stage">
+            <div class="hub-pulse"></div>
+            <div class="hub-rotate-ring"></div>
+            <div ref="hubRingRef" class="hub-ring"></div>
+            <div class="hub-core glow-breath">
+              <div class="hub-core-label">受管患者</div>
+              <div class="hub-core-value">{{ totalPatients }}</div>
+              <div class="hub-core-sub">风险分层 · 告警联动 · 随访闭环</div>
+              <div class="hub-micro-grid">
+                <div class="hub-micro-item">
+                  <span class="k">高危</span>
+                  <span class="v">{{ riskHigh }}</span>
+                </div>
+                <div class="hub-micro-item">
+                  <span class="k">告警</span>
+                  <span class="v">{{ totalAlerts30d }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="hub-node n1">Patients</div>
+            <div class="hub-node n2">Networks</div>
+            <div class="hub-node n3">AI Core</div>
+            <div class="hub-node n4">Doctors</div>
           </div>
-          <div ref="hubRingRef" class="hub-ring"></div>
+        </ScreenPanel>
+      </div>
+
+      <div class="middle-col right">
+        <ScreenPanel title="Disposal Efficiency" subtitle="告警处置效率">
+          <div class="single-ring-wrap">
+            <div ref="disposalGaugeRef" class="single-ring"></div>
+            <div class="legend-row">
+              <span class="legend-item">
+                <i class="dot success"></i>
+                已关闭 {{ closedAlerts }}
+              </span>
+              <span class="legend-item">
+                <i class="dot danger"></i>
+                未处理 {{ unhandledAlerts }}
+              </span>
+            </div>
+          </div>
+        </ScreenPanel>
+
+        <ScreenPanel title="Completion Matrix" subtitle="随访与干预完成度">
+          <div class="matrix-grid">
+            <div class="matrix-item">
+              <div ref="followGaugeRef" class="matrix-ring"></div>
+              <div class="matrix-title">随访完成率</div>
+            </div>
+            <div class="matrix-item">
+              <div ref="interventionGaugeRef" class="matrix-ring"></div>
+              <div class="matrix-title">干预计划完成率</div>
+              <div class="matrix-tip">待接入聚合接口</div>
+            </div>
+          </div>
+        </ScreenPanel>
+      </div>
+    </section>
+
+    <!-- 第三行：整行主趋势 -->
+    <section class="trend-row">
+      <ScreenPanel title="Comprehensive Trend Master" subtitle="风险 / 告警 / 随访（近 6~12 月）">
+        <div class="trend-toolbar">
+          <div class="trend-note">Holistic health metrics aggregated over recent months</div>
+          <div class="trend-switch">
+            <button
+              v-for="item in trendTabs"
+              :key="item.key"
+              type="button"
+              class="switch-btn"
+              :class="{ active: trendGranularity === item.key }"
+              @click="trendGranularity = item.key"
+            >
+              {{ item.label }}
+            </button>
+          </div>
         </div>
+        <div ref="trendRef" class="trend-chart"></div>
       </ScreenPanel>
+    </section>
 
-      <ScreenPanel title="综合趋势主图" subtitle="风险 / 告警 / 随访（近 6~12 月）">
-        <div ref="trendRef" class="chart chart-tall chart-trend"></div>
-      </ScreenPanel>
-    </div>
-
-    <div class="col right">
-      <ScreenPanel title="告警处置效率卡" subtitle="未处理 / 已关闭">
-        <div class="stat-grid">
-          <StatCard label="未处理" :value="unhandledAlerts" tone="danger" />
-          <StatCard label="已关闭" :value="closedAlerts" tone="success" />
-          <StatCard label="近30天告警" :value="totalAlerts30d" tone="cyan" />
-          <StatCard label="关闭率" :value="closeRateText" tone="gold" />
+    <!-- 最底部：状态 + 事件流 -->
+    <section class="footer-row">
+      <div class="system-status">
+        <span class="status-tag ok">系统运行正常</span>
+        <span class="status-tag">API 连接稳定</span>
+        <span class="status-tag">数据更新中</span>
+      </div>
+      <div class="ticker-wrap marquee-shell">
+        <div class="marquee-track" :style="{ animationDuration: `${Math.max(22, marqueeDurationSec)}s` }">
+          <span v-for="it in marqueeItems" :key="it.key" class="marquee-item">
+            <strong>{{ it.time }}</strong>
+            {{ it.title }}
+          </span>
         </div>
-      </ScreenPanel>
-
-      <ScreenPanel title="随访完成率" subtitle="任务推进">
-        <div ref="followGaugeRef" class="chart"></div>
-      </ScreenPanel>
-
-      <ScreenPanel title="干预计划完成率" subtitle="占位（后续接入）">
-        <div class="placeholder">待接入 VisitPlan / HomeService / Recommend 的聚合指标</div>
-      </ScreenPanel>
-
-      <ScreenPanel title="滚动事件流" subtitle="最近告警 / 随访 / 服务">
-        <EventTicker :items="events" />
-      </ScreenPanel>
-    </div>
+      </div>
+      <div class="footer-links">
+        <span>Real-time Metrics</span>
+        <span>Event Ticker</span>
+        <span>Support</span>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -65,11 +169,12 @@
 import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { graphic, init, type ECharts } from '../utils/echarts'
 import ScreenPanel from '../components/ScreenPanel.vue'
-import StatCard from '../components/StatCard.vue'
-import EventTicker from '../components/EventTicker.vue'
-import { baseGrid, axisStyle, colorPalette, legendStyle, tooltipStyle } from '../utils/chartTheme'
+import { baseGrid, axisStyle, legendStyle, tooltipStyle } from '../utils/chartTheme'
 import { fetchAlerts, fetchHardwareAlerts, fetchHomeStats, fetchMonthSummary, fetchPatientSummary } from '../api'
 import { rafThrottle, scheduleIdle } from '../utils/perf'
+
+type RankItem = { name: string; value: number; percent: number }
+type DoctorItem = { name: string; value: number; percent: number }
 
 const totalPatients = ref(0)
 const riskHigh = ref(0)
@@ -83,128 +188,92 @@ const weekFollowDone = ref(0)
 const weekFollowRatePct = ref(0)
 
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
+const diseaseTop5 = ref<RankItem[]>([])
+const doctorTop5 = ref<DoctorItem[]>([])
 
-const closeRateText = computed(() => {
+const closeRate = computed(() => {
   const total = unhandledAlerts.value + closedAlerts.value
-  if (!total) return '—'
-  return `${((closedAlerts.value / total) * 100).toFixed(1)}%`
+  if (!total) return 0
+  return Number(((closedAlerts.value / total) * 100).toFixed(1))
 })
 
-const diseaseRankRef = ref<HTMLElement | null>(null)
-const doctorRankRef = ref<HTMLElement | null>(null)
+const weekFollowRateText = computed(() => `${Number(weekFollowRatePct.value || 0).toFixed(1)}%`)
+const trendTabs = [
+  { key: 'daily', label: 'Daily' },
+  { key: 'weekly', label: 'Weekly' },
+  { key: 'monthly', label: 'Monthly' }
+] as const
+const trendGranularity = ref<'daily' | 'weekly' | 'monthly'>('weekly')
+const marqueeItems = computed(() => {
+  const arr = events.value.length
+    ? events.value
+    : [{ id: 'fallback', title: '暂无实时事件', time: '--:--' }]
+  // 双份拼接，形成无缝滚动
+  return [...arr, ...arr].map((it, idx) => ({ key: `${it.id}-${idx}`, title: it.title, time: it.time }))
+})
+const marqueeDurationSec = computed(() => {
+  const base = events.value.length || 6
+  return base * 5
+})
+
 const hubRingRef = ref<HTMLElement | null>(null)
 const trendRef = ref<HTMLElement | null>(null)
+const disposalGaugeRef = ref<HTMLElement | null>(null)
 const followGaugeRef = ref<HTMLElement | null>(null)
+const interventionGaugeRef = ref<HTMLElement | null>(null)
 
-let diseaseRankChart: ECharts | null = null
-let doctorRankChart: ECharts | null = null
 let hubRingChart: ECharts | null = null
 let trendChart: ECharts | null = null
+let disposalGaugeChart: ECharts | null = null
 let followGaugeChart: ECharts | null = null
+let interventionGaugeChart: ECharts | null = null
 
 let activeAlive = false
 let cancelIdle: null | (() => void) = null
 
-function buildDiseaseRank(list: any[]) {
-  if (!diseaseRankRef.value) return
-  if (!diseaseRankChart) diseaseRankChart = init(diseaseRankRef.value)
+function buildDiseaseTop(list: any[]) {
   const by: Record<string, number> = {}
-  list.forEach((r) => {
-    const d = (r.disease || '未填写').toString()
+  list.forEach((r: any) => {
+    const d = (r.disease || '未填写').toString().trim() || '未填写'
     by[d] = (by[d] || 0) + 1
   })
   const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const names = pairs.map((p) => p[0])
-  const vals = pairs.map((p) => p[1])
-  const axis = axisStyle()
-  diseaseRankChart.setOption({
-    color: colorPalette(),
-    tooltip: tooltipStyle(),
-    // bottom 留足空间，避免 xAxis 数字被裁切
-    grid: { left: 90, right: 18, top: 18, bottom: 26 },
-    xAxis: { type: 'value', ...axis, axisLabel: { ...(axis as any).axisLabel, margin: 12 } },
-    yAxis: { type: 'category', data: names, axisLabel: { color: 'rgba(39,85,113,0.92)' }, axisLine: axis.axisLine },
-    series: [
-      {
-        type: 'bar',
-        name: '患者数',
-        data: vals,
-        barWidth: 14,
-        itemStyle: {
-          borderRadius: [0, 8, 8, 0],
-          color: new graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#5fc7d8' },
-            { offset: 1, color: '#9ea9e6' }
-          ])
-        }
-      }
-    ]
-  })
+  const max = pairs[0]?.[1] || 1
+  diseaseTop5.value = pairs.map(([name, value]) => ({
+    name,
+    value,
+    percent: Math.max(8, Math.round((value / max) * 100))
+  }))
 }
 
-function buildDoctorRank(pList: any[]) {
-  if (!doctorRankRef.value) return
-  if (!doctorRankChart) doctorRankChart = init(doctorRankRef.value)
+function buildDoctorTop(list: any[]) {
   const by: Record<string, number> = {}
-  pList.forEach((r: any) => {
+  list.forEach((r: any) => {
     const d = (r.responsibleDoctor || r.doctor || '未分配').toString().trim() || '未分配'
     by[d] = (by[d] || 0) + 1
   })
   const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const names = pairs.map((p) => p[0])
-  const vals = pairs.map((p) => p[1])
-  const axis = axisStyle()
-  doctorRankChart.setOption({
-    tooltip: tooltipStyle(),
-    // bottom 留足空间，避免 xAxis 数字被裁切
-    grid: { left: 90, right: 18, top: 18, bottom: 26 },
-    xAxis: { type: 'value', ...axis, axisLabel: { ...(axis as any).axisLabel, margin: 12 } },
-    yAxis: { type: 'category', data: names, axisLabel: { color: 'rgba(39,85,113,0.92)' }, axisLine: axis.axisLine },
-    series: [
-      {
-        type: 'bar',
-        name: '任务数',
-        data: vals,
-        barWidth: 14,
-        itemStyle: {
-          borderRadius: [0, 8, 8, 0],
-          color: new graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: '#78c4a0' },
-            { offset: 1, color: '#9ea9e6' }
-          ])
-        }
-      }
-    ]
-  })
+  const max = pairs[0]?.[1] || 1
+  doctorTop5.value = pairs.map(([name, value]) => ({
+    name,
+    value,
+    percent: Math.max(10, Math.round((value / max) * 100))
+  }))
 }
 
 function buildHubRing() {
   if (!hubRingRef.value) return
   if (!hubRingChart) hubRingChart = init(hubRingRef.value)
   hubRingChart.setOption({
-    color: ['#ee8d99', '#e6bc79', '#78c4a0', '#7fd6e3', '#9ea9e6'],
+    color: ['#ee8d99', '#e6bc79', '#78c4a0', '#7fd6e3'],
     tooltip: { trigger: 'item' },
     series: [
       {
         type: 'pie',
-        radius: ['62%', '86%'],
+        radius: ['62%', '88%'],
         center: ['50%', '50%'],
-        label: {
-          show: true,
-          position: 'outside',
-          formatter: (p: any) => `${p.name}  ${p.value}`,
-          color: (p: any) => p.color,
-          fontSize: 12,
-          padding: [2, 2, 2, 2],
-          fontWeight: 800
-        },
-        labelLine: {
-          show: true,
-          length: 18,
-          length2: 14,
-          smooth: false,
-          lineStyle: { color: 'rgba(39,85,113,0.32)', width: 1 }
-        },
+        label: { show: false },
+        labelLine: { show: false },
         itemStyle: { borderColor: 'rgba(114,180,205,0.24)', borderWidth: 2 },
         data: [
           { name: '高危', value: riskHigh.value },
@@ -217,26 +286,25 @@ function buildHubRing() {
   })
 }
 
-function buildTrend(months: string[], alerts: number[], high: number[]) {
+function buildTrend(months: string[], alerts: number[], high: number[], follow: number[]) {
   if (!trendRef.value) return
   if (!trendChart) trendChart = init(trendRef.value)
   const axis = axisStyle()
   trendChart.setOption({
     tooltip: tooltipStyle(),
-    legend: { ...legendStyle(), data: ['告警', '高危'] },
-    // 增大底部留白，避免 xAxis 标签贴边
-    grid: { ...baseGrid(), bottom: 54 },
-    xAxis: { type: 'category', data: months, ...axis, axisLabel: { ...(axis as any).axisLabel, margin: 14 } },
+    legend: { ...legendStyle(), data: ['告警', '高危', '随访'] },
+    grid: { ...baseGrid(), bottom: 48 },
+    xAxis: { type: 'category', data: months, ...axis, axisLabel: { ...(axis as any).axisLabel, margin: 12 } },
     yAxis: { type: 'value', ...axis },
     series: [
       {
         name: '告警',
         type: 'bar',
         data: alerts,
-        barWidth: 14,
+        barWidth: 12,
         itemStyle: {
           color: new graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#5fc7d8' },
+            { offset: 0, color: '#7fd6e3' },
             { offset: 1, color: '#9ea9e6' }
           ])
         }
@@ -245,26 +313,35 @@ function buildTrend(months: string[], alerts: number[], high: number[]) {
         name: '高危',
         type: 'line',
         smooth: true,
-        symbolSize: 6,
+        symbolSize: 5,
         data: high,
         itemStyle: { color: '#ee8d99' },
+        lineStyle: { width: 2 }
+      },
+      {
+        name: '随访',
+        type: 'line',
+        smooth: true,
+        symbolSize: 5,
+        data: follow,
+        itemStyle: { color: '#5fc7d8' },
         lineStyle: { width: 2 }
       }
     ]
   })
 }
 
-function buildFollowGauge() {
-  if (!followGaugeRef.value) return
-  if (!followGaugeChart) followGaugeChart = init(followGaugeRef.value)
-  followGaugeChart.setOption({
+function buildGauge(el: HTMLElement | null, chart: ECharts | null, value: number, title: string) {
+  if (!el) return chart
+  const c = chart || init(el)
+  c.setOption({
     series: [
       {
         type: 'gauge',
         startAngle: 210,
         endAngle: -30,
         progress: { show: true, width: 10 },
-        axisLine: { lineStyle: { width: 10, color: [[1, 'rgba(114,180,205,0.32)']] } },
+        axisLine: { lineStyle: { width: 10, color: [[1, 'rgba(114,180,205,0.30)']] } },
         splitLine: { show: false },
         axisTick: { show: false },
         axisLabel: { show: false },
@@ -273,38 +350,39 @@ function buildFollowGauge() {
           valueAnimation: true,
           formatter: '{value}%',
           color: 'rgba(20,52,79,0.96)',
-          fontSize: 24,
+          fontSize: 20,
           fontWeight: 900
         },
         title: { color: 'rgba(39,85,113,0.92)', fontSize: 12, offsetCenter: [0, '58%'] },
-        data: [{ value: weekFollowRatePct.value, name: '完成率' }]
+        data: [{ value: Math.max(0, Math.min(100, value)), name: title }]
       }
     ]
   })
+  return c
 }
 
 function resizeAll() {
   if (!activeAlive) return
-  diseaseRankChart?.resize()
-  doctorRankChart?.resize()
   hubRingChart?.resize()
   trendChart?.resize()
+  disposalGaugeChart?.resize()
   followGaugeChart?.resize()
+  interventionGaugeChart?.resize()
 }
 
 const onResize = rafThrottle(() => resizeAll())
 
 function disposeAll() {
-  diseaseRankChart?.dispose()
-  doctorRankChart?.dispose()
   hubRingChart?.dispose()
   trendChart?.dispose()
+  disposalGaugeChart?.dispose()
   followGaugeChart?.dispose()
-  diseaseRankChart = null
-  doctorRankChart = null
+  interventionGaugeChart?.dispose()
   hubRingChart = null
   trendChart = null
+  disposalGaugeChart = null
   followGaugeChart = null
+  interventionGaugeChart = null
 }
 
 async function loadCore() {
@@ -312,7 +390,6 @@ async function loadCore() {
     fetchHomeStats().catch(() => ({} as any)),
     fetchMonthSummary().catch(() => [] as any)
   ])
-
   if (!activeAlive) return
 
   totalPatients.value = Number(homeStats?.totalPatients || 0)
@@ -320,7 +397,6 @@ async function loadCore() {
   weekFollowRatePct.value =
     homeStats?.weekFollowRate != null ? Math.max(0, Math.min(100, Number(homeStats.weekFollowRate) * 100)) : 0
 
-  // 风险分层：优先用后端 stats 口径（不再额外请求 risk-list）
   if (homeStats && (homeStats.highRiskCount != null || homeStats.midRiskCount != null || homeStats.lowRiskCount != null)) {
     riskHigh.value = Number(homeStats.highRiskCount) || 0
     riskMid.value = Number(homeStats.midRiskCount) || 0
@@ -331,31 +407,29 @@ async function loadCore() {
   const monthsAll = mArr.map((it: any) => it.month || (it.months && it.months[0]) || '')
   const alertsAll = mArr.map((it: any) => it.alerts || it.alert_count || 0)
   const highAll = mArr.map((it: any) => it.highRisk || it.high_risk || 0)
+  const followAll = mArr.map((it: any) => it.followups || it.follow_count || 0)
   const take = monthsAll.length > 12 ? 12 : monthsAll.length
   const start = Math.max(0, monthsAll.length - take)
 
-  // 核心图：趋势 + 仪表盘先出
-  buildTrend(monthsAll.slice(start), alertsAll.slice(start), highAll.slice(start))
-  buildFollowGauge()
+  buildTrend(monthsAll.slice(start), alertsAll.slice(start), highAll.slice(start), followAll.slice(start))
+  followGaugeChart = buildGauge(followGaugeRef.value, followGaugeChart, weekFollowRatePct.value, '随访')
 }
 
 async function loadSecondary() {
-  // 次级：排名与事件流延后加载，减轻首屏压测
   const patientRes = await fetchPatientSummary(300).catch(() => ({ rows: [], total: 0 } as any))
   if (!activeAlive) return
+
   const pList = (patientRes?.rows || []) as any[]
   if (!totalPatients.value) totalPatients.value = Number(patientRes?.total || pList.length || 0)
 
-  // 如果 stats 没给风险分层，才用列表兜底计算
   if (!riskHigh.value && !riskMid.value && !riskLow.value && pList.length) {
     riskHigh.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('HIGH')).length
     riskMid.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('MID')).length
     riskLow.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('LOW')).length
   }
 
-  buildDiseaseRank(pList)
-  buildDoctorRank(pList)
-  buildHubRing()
+  buildDiseaseTop(pList)
+  buildDoctorTop(pList)
 
   const [alertRes, hardwareRes] = await Promise.all([fetchAlerts(30).catch(() => ({} as any)), fetchHardwareAlerts(30).catch(() => ({} as any))])
   if (!activeAlive) return
@@ -368,23 +442,35 @@ async function loadSecondary() {
 
   const ev: Array<{ id: string; title: string; time: string }> = []
   aRows.slice(0, 4).forEach((r: any, idx: number) => {
-    ev.push({ id: `a-${r.id || idx}`, title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`, time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ') })
+    ev.push({
+      id: `a-${r.id || idx}`,
+      title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`,
+      time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ')
+    })
   })
   hRows.slice(0, 4).forEach((r: any, idx: number) => {
-    ev.push({ id: `h-${r.id || idx}`, title: `设备 · ${r.patientName || '患者'} · ${r.alertType || r.summary || ''}`, time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ') })
+    ev.push({
+      id: `h-${r.id || idx}`,
+      title: `设备 · ${r.patientName || '患者'} · ${r.alertType || r.summary || ''}`,
+      time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ')
+    })
   })
   events.value = ev.slice(0, 8)
+
+  buildHubRing()
+  disposalGaugeChart = buildGauge(disposalGaugeRef.value, disposalGaugeChart, closeRate.value, '处置')
+  // 干预计划完成率：当前后端无聚合接口，先展示统一样式占位值（后续可替换真实接口）
+  interventionGaugeChart = buildGauge(interventionGaugeRef.value, interventionGaugeChart, 62, '干预')
 }
 
 async function startLoad() {
   await loadCore()
   if (!activeAlive) return
-  // 等首屏核心渲染后再拉次级模块（空白更少，首屏更快）
   await nextTick()
   cancelIdle?.()
   cancelIdle = scheduleIdle(() => {
     void loadSecondary()
-  }, 900)
+  }, 800)
 }
 
 onMounted(() => {
@@ -396,7 +482,6 @@ onMounted(() => {
 onActivated(() => {
   activeAlive = true
   window.addEventListener('resize', onResize)
-  // 恢复后只做一次轻量 resize（避免隐藏期间的无意义计算）
   onResize()
 })
 
@@ -417,48 +502,225 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.layout {
+.command-page {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto;
+  gap: 12px;
+  padding-top: 2px;
+}
+
+.overview-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
-.col {
+.overview-card {
+  position: relative;
+  border: 1px solid rgba(114, 180, 205, 0.34);
+  border-radius: 16px;
+  padding: 14px 16px 12px 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(245, 251, 255, 0.68));
+  box-shadow: var(--shadow), var(--glow);
+  overflow: hidden;
+}
+
+.overview-card.risk {
+  border-color: rgba(238, 141, 153, 0.34);
+}
+.overview-card.warn {
+  border-color: rgba(239, 197, 111, 0.34);
+}
+.overview-card.done {
+  border-color: rgba(120, 196, 160, 0.34);
+}
+
+.overview-label {
+  font-size: 12px;
+  color: var(--t-2);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+}
+
+.overview-value {
+  margin-top: 6px;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 900;
+  color: var(--t-0);
+  white-space: nowrap;
+}
+
+.overview-meta {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--t-3);
+  white-space: nowrap;
+}
+
+.overview-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  border: 1px solid rgba(114, 180, 205, 0.28);
+  color: rgba(29, 78, 114, 0.92);
+}
+.overview-icon.bg-cyan { background: rgba(95, 199, 216, 0.16); }
+.overview-icon.bg-danger { background: rgba(238, 141, 153, 0.14); }
+.overview-icon.bg-warn { background: rgba(239, 197, 111, 0.14); }
+.overview-icon.bg-success { background: rgba(120, 196, 160, 0.14); }
+
+.middle-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: 12px;
+}
+
+.middle-col {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  min-height: 0;
 }
 
-.chart {
-  height: 180px;
+.rank-list,
+.doctor-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
-.chart-rank {
-  height: 250px;
+.rank-item + .rank-item {
+  margin-top: 12px;
 }
 
-.chart-tall {
-  height: 320px;
+.rank-head {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 10px;
 }
 
-.chart-trend {
-  height: 380px;
+.rank-no {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(29, 78, 114, 0.95);
+  background: rgba(127, 214, 227, 0.35);
 }
 
-.center-stage {
+.rank-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rank-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--t-0);
+}
+
+.rank-bar {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(140, 188, 227, 0.22);
+  overflow: hidden;
+}
+
+.rank-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5fc7d8, #9ea9e6);
+}
+
+.doctor-item {
+  display: grid;
+  grid-template-columns: 8px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px dashed rgba(114, 180, 205, 0.22);
+}
+
+.doctor-item:last-child {
+  border-bottom: none;
+}
+
+.doctor-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #5fc7d8;
+  box-shadow: 0 0 8px rgba(95, 199, 216, 0.3);
+}
+
+.doctor-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--t-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doctor-rate {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--t-0);
+}
+
+.hub-stage {
   position: relative;
-  height: 260px;
+  height: 360px;
   display: grid;
   place-items: center;
 }
 
-.hub {
+.hub-pulse {
   position: absolute;
-  width: 240px;
-  height: 240px;
+  width: 78%;
+  height: 78%;
   border-radius: 999px;
-  background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.76) 58%, rgba(140, 188, 227, 0.25));
+  background: radial-gradient(circle, rgba(95, 199, 216, 0.16) 0%, rgba(95, 199, 216, 0.03) 60%, transparent 72%);
+  animation: hubPulse 3.8s ease-in-out infinite;
+}
+
+.hub-rotate-ring {
+  position: absolute;
+  inset: 10px;
+  border-radius: 999px;
+  border: 2px dashed rgba(95, 199, 216, 0.30);
+  animation: hubRotate 60s linear infinite;
+}
+
+.hub-ring {
+  position: absolute;
+  inset: 8px;
+}
+
+.hub-core {
+  position: absolute;
+  width: 232px;
+  height: 232px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.78) 58%, rgba(140, 188, 227, 0.25));
   border: 1px solid rgba(114, 180, 205, 0.34);
   box-shadow: var(--glow-strong);
   display: flex;
@@ -468,35 +730,286 @@ onUnmounted(() => {
   text-align: center;
 }
 
-.hub-title {
+.hub-core-label {
   font-size: 12px;
-  letter-spacing: 2px;
   color: var(--t-2);
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 
-.hub-value {
+.hub-core-value {
   margin-top: 8px;
-  font-size: 42px;
+  font-size: 44px;
   font-weight: 900;
   color: var(--c-gold);
-  text-shadow: 0 0 18px rgba(230, 188, 121, 0.22);
+  line-height: 1;
+  white-space: nowrap;
 }
 
-.hub-sub {
+.hub-core-sub {
   margin-top: 10px;
   font-size: 12px;
   color: var(--t-3);
+  white-space: normal;
+  max-width: 180px;
 }
 
-.hub-ring {
-  position: absolute;
-  inset: 0;
+.hub-micro-grid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  width: 86%;
 }
 
-.placeholder {
-  padding: 10px 8px;
-  color: var(--t-3);
+.hub-micro-item {
+  border-radius: 10px;
+  border: 1px solid rgba(114, 180, 205, 0.22);
+  background: rgba(255, 255, 255, 0.56);
+  padding: 5px 6px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.hub-micro-item .k {
+  font-size: 11px;
+  color: var(--t-2);
+}
+
+.hub-micro-item .v {
   font-size: 12px;
+  font-weight: 800;
+  color: var(--t-0);
+}
+
+.hub-node {
+  position: absolute;
+  min-width: 74px;
+  text-align: center;
+  padding: 5px 10px 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--t-1);
+  border: 1px solid rgba(114, 180, 205, 0.34);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.66);
+  box-shadow: 0 4px 16px rgba(95, 199, 216, 0.12);
+}
+
+.hub-node.n1 { top: 30px; left: 50%; transform: translateX(-50%); }
+.hub-node.n2 { top: 50%; right: 18px; transform: translateY(-50%); }
+.hub-node.n3 { bottom: 32px; left: 50%; transform: translateX(-50%); }
+.hub-node.n4 { top: 50%; left: 18px; transform: translateY(-50%); }
+
+.single-ring-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.single-ring {
+  height: 168px;
+}
+
+.legend-row {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.legend-item {
+  font-size: 12px;
+  color: var(--t-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+.dot.success { background: #78c4a0; }
+.dot.danger { background: #ee8d99; }
+
+.matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.matrix-item {
+  border: 1px solid rgba(114, 180, 205, 0.24);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.58);
+  padding: 8px;
+}
+
+.matrix-ring {
+  height: 122px;
+}
+
+.matrix-title {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t-1);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.matrix-tip {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--t-3);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.trend-row :deep(.panel-body) {
+  padding-top: 8px;
+}
+
+.trend-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.trend-note {
+  font-size: 12px;
+  color: var(--t-3);
+  white-space: nowrap;
+}
+
+.trend-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(114, 180, 205, 0.26);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.56);
+  padding: 4px;
+}
+
+.switch-btn {
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--t-2);
+  cursor: pointer;
+}
+
+.switch-btn.active {
+  background: linear-gradient(135deg, rgba(95, 199, 216, 0.18), rgba(158, 169, 230, 0.18));
+  color: var(--t-0);
+}
+
+.trend-chart {
+  height: 300px;
+}
+
+.footer-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: stretch;
+}
+
+.system-status {
+  border: 1px solid rgba(114, 180, 205, 0.30);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.62);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+
+.status-tag {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--t-2);
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(114, 180, 205, 0.24);
+  background: rgba(255, 255, 255, 0.72);
+  white-space: nowrap;
+}
+
+.status-tag.ok {
+  color: rgba(31, 119, 86, 0.92);
+  border-color: rgba(120, 196, 160, 0.34);
+  background: rgba(120, 196, 160, 0.14);
+}
+
+.ticker-wrap {
+  border: 1px solid rgba(114, 180, 205, 0.30);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.62);
+  padding: 8px 10px;
+}
+
+.marquee-shell {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  min-width: max-content;
+  animation: marquee linear infinite;
+}
+
+.marquee-item {
+  font-size: 12px;
+  color: var(--t-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.marquee-item strong {
+  color: var(--t-0);
+  font-weight: 800;
+}
+
+.footer-links {
+  border: 1px solid rgba(114, 180, 205, 0.30);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.62);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: var(--t-2);
+  white-space: nowrap;
+}
+
+@keyframes hubRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes hubPulse {
+  0%, 100% { transform: scale(1); opacity: 0.75; }
+  50% { transform: scale(1.04); opacity: 1; }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 </style>
 

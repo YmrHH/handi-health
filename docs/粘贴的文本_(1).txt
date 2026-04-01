@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>寒岐智护·慢性病随访健康预警管理平台</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-background": "#283031",
+              "surface-bright": "#eff8f8",
+              "surface-container": "#dfeaeb",
+              "on-secondary-fixed": "#004650",
+              "on-primary-fixed": "#00443f",
+              "surface-container-high": "#d9e5e5",
+              "on-primary-container": "#005852",
+              "surface-container-low": "#e8f3f3",
+              "primary-fixed": "#73f1e4",
+              "primary-fixed-dim": "#63e2d6",
+              "inverse-surface": "#071010",
+              "secondary-fixed": "#b0ecfa",
+              "primary-container": "#73f1e4",
+              "inverse-on-surface": "#969f9f",
+              "secondary-dim": "#135763",
+              "tertiary-container": "#93f0e8",
+              "outline-variant": "#a6afaf",
+              "surface": "#eff8f8",
+              "on-primary-fixed-variant": "#00635c",
+              "on-secondary-fixed-variant": "#24646f",
+              "secondary-container": "#b0ecfa",
+              "on-surface": "#283031",
+              "surface-tint": "#006760",
+              "on-tertiary-fixed-variant": "#006560",
+              "on-tertiary": "#bdfff9",
+              "outline": "#6f7879",
+              "error-dim": "#9f0519",
+              "surface-dim": "#c9d7d8",
+              "tertiary": "#006762",
+              "on-secondary": "#daf8ff",
+              "surface-variant": "#d2dfe0",
+              "on-tertiary-container": "#005a56",
+              "error-container": "#fb5151",
+              "surface-container-highest": "#d2dfe0",
+              "on-surface-variant": "#545d5d",
+              "tertiary-fixed-dim": "#85e1da",
+              "background": "#eff8f8",
+              "surface-container-lowest": "#ffffff",
+              "tertiary-dim": "#005a55",
+              "on-error": "#ffefee",
+              "on-error-container": "#570008",
+              "inverse-primary": "#7cfaed",
+              "secondary": "#24646f",
+              "primary-dim": "#005a54",
+              "secondary-fixed-dim": "#a2deeb",
+              "tertiary-fixed": "#93f0e8",
+              "on-primary": "#bffff6",
+              "on-tertiary-fixed": "#004642",
+              "on-secondary-container": "#165a65",
+              "primary": "#006760",
+              "error": "#b31b25"
+            },
+            fontFamily: {
+              "headline": ["Space Grotesk"],
+              "body": ["Manrope"],
+              "label": ["Manrope"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background: radial-gradient(circle at 50% 50%, #eff8f8 0%, #d9e5e5 100%);
+            background-attachment: fixed;
+            font-family: 'Manrope', sans-serif;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .tech-grid {
+            background-image: 
+                linear-gradient(rgba(0, 103, 96, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 103, 96, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hub-rotation {
+            animation: rotate-hub 60s linear infinite;
+        }
+        @keyframes rotate-hub {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-on-surface min-h-screen tech-grid pb-20 overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-[100] bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl flex justify-between items-center px-8 h-16 shadow-xl shadow-cyan-900/5 border-b border-white/20">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-bold text-cyan-800 dark:text-cyan-200 font-headline tracking-tight">Command Center</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-cyan-600 dark:text-cyan-300 border-b-2 border-cyan-500 pb-1 font-headline font-bold tracking-tight" href="#">Global Command</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-cyan-600 transition-colors font-headline tracking-tight" href="#">Risk Profile</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-cyan-600 transition-colors font-headline tracking-tight" href="#">Alarm Linkage</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-cyan-600 transition-colors font-headline tracking-tight" href="#">Intervention Service</a>
+<a class="text-slate-500 dark:text-slate-400 font-medium hover:text-cyan-600 transition-colors font-headline tracking-tight" href="#">AI Insight</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-white/20 transition-all duration-300">
+<span class="material-symbols-outlined text-cyan-700 dark:text-cyan-400" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-white/20 transition-all duration-300">
+<span class="material-symbols-outlined text-cyan-700 dark:text-cyan-400" data-icon="account_circle">account_circle</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-8 max-w-[1920px] mx-auto grid grid-cols-12 gap-8 relative">
+<!-- Top Row: Platform Total Volume Card Set -->
+<div class="col-span-12 flex justify-between gap-6 mb-4">
+<div class="glass-panel flex-1 p-6 rounded-xl shadow-sm flex items-center gap-4">
+<div class="bg-primary/10 p-3 rounded-full text-primary">
+<span class="material-symbols-outlined text-3xl" data-icon="group">group</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-wider">Total Patients</p>
+<p class="text-3xl font-headline font-bold text-on-surface">1,284,502</p>
+</div>
+</div>
+<div class="glass-panel flex-1 p-6 rounded-xl shadow-sm flex items-center gap-4">
+<div class="bg-secondary/10 p-3 rounded-full text-secondary">
+<span class="material-symbols-outlined text-3xl" data-icon="medical_services">medical_services</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-wider">Active Doctors</p>
+<p class="text-3xl font-headline font-bold text-on-surface">12,490</p>
+</div>
+</div>
+<div class="glass-panel flex-1 p-6 rounded-xl shadow-sm flex items-center gap-4">
+<div class="bg-tertiary/10 p-3 rounded-full text-tertiary">
+<span class="material-symbols-outlined text-3xl" data-icon="monitoring">monitoring</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-wider">Real-time Events</p>
+<p class="text-3xl font-headline font-bold text-on-surface">34,102</p>
+</div>
+</div>
+<div class="glass-panel flex-1 p-6 rounded-xl shadow-sm flex items-center gap-4">
+<div class="bg-error/10 p-3 rounded-full text-error">
+<span class="material-symbols-outlined text-3xl" data-icon="warning">warning</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label text-sm uppercase tracking-wider">Critical Alarms</p>
+<p class="text-3xl font-headline font-bold text-on-surface">128</p>
+</div>
+</div>
+</div>
+<!-- Left Wing -->
+<section class="col-span-3 space-y-8">
+<!-- Disease Top5 Ranking -->
+<div class="glass-panel p-6 rounded-xl">
+<h3 class="text-lg font-headline font-bold text-secondary mb-6 border-l-4 border-primary pl-3">Disease Ranking Top 5</h3>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm font-medium">Hypertension</span>
+<span class="text-sm text-on-surface-variant">42%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary-dim to-primary rounded-full" style="width: 42%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm font-medium">Diabetes (Type II)</span>
+<span class="text-sm text-on-surface-variant">28%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary-dim to-primary rounded-full" style="width: 28%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm font-medium">COPD</span>
+<span class="text-sm text-on-surface-variant">15%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary-dim to-primary rounded-full" style="width: 15%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm font-medium">Heart Failure</span>
+<span class="text-sm text-on-surface-variant">9%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary-dim to-primary rounded-full" style="width: 9%"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-sm font-medium">Chronic Renal</span>
+<span class="text-sm text-on-surface-variant">6%</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-gradient-to-r from-primary-dim to-primary rounded-full" style="width: 6%"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Responsible Doctor Load -->
+<div class="glass-panel p-6 rounded-xl">
+<h3 class="text-lg font-headline font-bold text-secondary mb-6 border-l-4 border-primary pl-3">Doctor Load Top 5</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">李</div>
+<span class="text-sm font-bold">Dr. Li Wei</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-error font-bold">98% Load</span>
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">张</div>
+<span class="text-sm font-bold">Dr. Zhang Yan</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-primary font-bold">85% Load</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">陈</div>
+<span class="text-sm font-bold">Dr. Chen Hua</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-xs text-primary font-bold">82% Load</span>
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Central Hub: Convalescence Closed-loop Central Hub -->
+<section class="col-span-6 flex items-center justify-center relative min-h-[600px]">
+<div class="relative w-full aspect-square max-w-[560px]">
+<!-- Background Pulse -->
+<div class="absolute inset-0 bg-primary/5 rounded-full scale-110 animate-pulse"></div>
+<!-- Rotating Ring -->
+<div class="absolute inset-0 border-[2px] border-dashed border-primary/30 rounded-full hub-rotation"></div>
+<!-- Main Illustration Placeholder -->
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-[85%] h-[85%] rounded-full bg-white/20 backdrop-blur-xl border border-white/40 shadow-2xl overflow-hidden flex flex-col items-center justify-center text-center p-12">
+<img alt="3D flow chart" class="absolute inset-0 w-full h-full object-cover opacity-80" data-alt="A sophisticated high-precision 3D circular flow diagram showing holographic data circulation between patients, medical doctors, and AI nodes in a medical lab environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzp9_VXsWnfDW_h628QCvXsExk9X01z-Jagjr92t3CSCQ98__D2ltGf2kpdtC_XV_C6dYuqnonKrhXg5ptBGaaROB_fiQZ_W5vfz6e0uTcaug6Xhba5keeSgDzu2aJCKTk7WCQMQAVpOBrhVKoN_Or1-Qlxv5289Gc0jc9s0njZeb4QJV-kawGWZGVYn-Emru7FzMITqHFdVyjzrBFnDy7DesdouN4grVdBPioeGmX6IDVJMJhpBMjvob8-OYpUtM4Gs4ga3bwPw"/>
+<div class="relative z-10">
+<h2 class="text-4xl font-headline font-extrabold text-primary-dim tracking-tighter mb-2">寒岐智护</h2>
+<p class="text-secondary font-headline font-bold text-lg uppercase tracking-widest">Convalescence Hub</p>
+<div class="mt-8 grid grid-cols-2 gap-4">
+<div class="glass-panel p-4 rounded-xl border-primary/20">
+<p class="text-2xl font-bold text-primary">94.8%</p>
+<p class="text-xs opacity-60">AI Accuracy</p>
+</div>
+<div class="glass-panel p-4 rounded-xl border-primary/20">
+<p class="text-2xl font-bold text-primary">1.2s</p>
+<p class="text-xs opacity-60">Latency</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Floating Data Nodes -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+<div class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" data-icon="patient_list">patient_list</span>
+</div>
+<span class="text-xs font-bold mt-2 bg-white/80 px-2 py-0.5 rounded shadow-sm">Patients</span>
+</div>
+<div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 flex flex-col items-center">
+<div class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="psychiatry">psychiatry</span>
+</div>
+<span class="text-xs font-bold mt-2 bg-white/80 px-2 py-0.5 rounded shadow-sm">AI Core</span>
+</div>
+<div class="absolute left-0 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+<div class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="emergency">emergency</span>
+</div>
+<span class="text-xs font-bold mt-2 bg-white/80 px-2 py-0.5 rounded shadow-sm">Doctors</span>
+</div>
+<div class="absolute right-0 top-1/2 translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+<div class="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-error">
+<span class="material-symbols-outlined" data-icon="hub">hub</span>
+</div>
+<span class="text-xs font-bold mt-2 bg-white/80 px-2 py-0.5 rounded shadow-sm">Networks</span>
+</div>
+</div>
+</section>
+<!-- Right Wing -->
+<section class="col-span-3 space-y-8">
+<!-- Alarm Disposal Efficiency -->
+<div class="glass-panel p-6 rounded-xl">
+<h3 class="text-lg font-headline font-bold text-secondary mb-6 border-l-4 border-primary pl-3">Disposal Efficiency</h3>
+<div class="flex items-center justify-center py-4">
+<div class="relative w-40 h-40">
+<svg class="w-full h-full -rotate-90" viewbox="0 0 100 100">
+<circle class="text-surface-container" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-width="8"></circle>
+<circle class="text-primary-dim" cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-dasharray="251.2" stroke-dashoffset="30" stroke-linecap="round" stroke-width="8"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-3xl font-headline font-bold">88%</span>
+<span class="text-[10px] uppercase font-bold tracking-widest opacity-60">Handled</span>
+</div>
+</div>
+</div>
+<div class="flex justify-between text-xs font-bold mt-4">
+<div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span> Handled (1,240)</div>
+<div class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-surface-container"></span> Pending (162)</div>
+</div>
+</div>
+<!-- Completion Rates -->
+<div class="glass-panel p-6 rounded-xl">
+<h3 class="text-lg font-headline font-bold text-secondary mb-6 border-l-4 border-primary pl-3">Completion Matrix</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="text-center">
+<div class="w-full aspect-square flex items-center justify-center relative">
+<svg class="w-full h-full" viewbox="0 0 36 36">
+<path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#dfeaeb" stroke-dasharray="100, 100" stroke-width="3"></path>
+<path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#006760" stroke-dasharray="72, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<span class="absolute text-sm font-bold">72%</span>
+</div>
+<p class="text-[10px] mt-2 font-bold opacity-70">Follow-up</p>
+</div>
+<div class="text-center">
+<div class="w-full aspect-square flex items-center justify-center relative">
+<svg class="w-full h-full" viewbox="0 0 36 36">
+<path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#dfeaeb" stroke-dasharray="100, 100" stroke-width="3"></path>
+<path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#135763" stroke-dasharray="94, 100" stroke-linecap="round" stroke-width="3"></path>
+</svg>
+<span class="absolute text-sm font-bold">94%</span>
+</div>
+<p class="text-[10px] mt-2 font-bold opacity-70">Intervention</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Section -->
+<section class="col-span-12">
+<div class="glass-panel p-8 rounded-2xl relative overflow-hidden">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h3 class="text-xl font-headline font-bold text-secondary border-l-4 border-primary pl-3">Comprehensive Trend Master</h3>
+<p class="text-sm text-on-surface-variant mt-1">Holistic health metrics aggregated over 24 months</p>
+</div>
+<div class="flex gap-4">
+<button class="bg-surface-container px-4 py-2 rounded-lg text-xs font-bold hover:bg-surface-variant transition-colors">Daily</button>
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-xs font-bold">Weekly</button>
+<button class="bg-surface-container px-4 py-2 rounded-lg text-xs font-bold hover:bg-surface-variant transition-colors">Monthly</button>
+</div>
+</div>
+<!-- Chart Area -->
+<div class="w-full h-64 flex items-end justify-between gap-2 relative">
+<div class="absolute inset-0 flex flex-col justify-between py-2 pointer-events-none">
+<div class="w-full border-t border-surface-container/50"></div>
+<div class="w-full border-t border-surface-container/50"></div>
+<div class="w-full border-t border-surface-container/50"></div>
+<div class="w-full border-t border-surface-container/50"></div>
+</div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 60%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 75%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 65%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 85%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 70%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 90%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 80%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 95%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 85%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 75%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 80%"></div>
+<div class="flex-1 bg-gradient-to-t from-primary/30 to-primary/0 rounded-t-lg transition-all hover:scale-105 cursor-pointer" style="height: 100%"></div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer with Ticker -->
+<footer class="fixed bottom-0 w-full flex justify-between items-center px-8 py-3 z-[150] border-t border-white/10 bg-[#eff8f8]/60 backdrop-blur-md">
+<div class="flex items-center gap-12 w-full">
+<div class="flex items-center gap-2 text-cyan-600 dark:text-cyan-400 font-manrope text-xs tracking-wide uppercase shrink-0">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                System Operational
+            </div>
+<!-- Scrolling Event Stream -->
+<div class="flex-1 overflow-hidden whitespace-nowrap border-x border-primary/10 px-6">
+<div class="inline-block animate-[marquee_30s_linear_infinite] hover:[animation-play-state:paused] flex gap-16">
+<span class="text-xs text-on-surface-variant flex items-center gap-2">
+<strong class="text-primary font-bold">[14:28]</strong> Patient ID: H-2949 Risk Level: Elevated - Notified Dr. Li
+                    </span>
+<span class="text-xs text-on-surface-variant flex items-center gap-2">
+<strong class="text-secondary font-bold">[14:25]</strong> AI Intervention triggered for Patient: M-1092 - Glucose Anomaly
+                    </span>
+<span class="text-xs text-on-surface-variant flex items-center gap-2">
+<strong class="text-tertiary font-bold">[14:22]</strong> System Integrity Check: Complete - All Nodes Responding
+                    </span>
+<span class="text-xs text-on-surface-variant flex items-center gap-2">
+<strong class="text-primary font-bold">[14:18]</strong> Follow-up batch processing completed for Distict 04
+                    </span>
+</div>
+</div>
+<div class="flex gap-6 shrink-0">
+<a class="text-slate-500 hover:text-cyan-500 transition-all font-manrope text-xs tracking-wide uppercase" href="#">Real-time Metrics</a>
+<a class="text-slate-500 hover:text-cyan-500 transition-all font-manrope text-xs tracking-wide uppercase" href="#">Event Ticker</a>
+<a class="text-slate-500 hover:text-cyan-500 transition-all font-manrope text-xs tracking-wide uppercase" href="#">Privacy</a>
+<a class="text-slate-500 hover:text-cyan-500 transition-all font-manrope text-xs tracking-wide uppercase" href="#">Support</a>
+</div>
+</div>
+</footer>
+<style>
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            animation: marquee 30s linear infinite;
+        }
+    </style>
+</body></html>
