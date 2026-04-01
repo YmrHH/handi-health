@@ -272,11 +272,63 @@ const trendModes = [
 function getArray(input: any): any[] {
   if (Array.isArray(input)) return input
   if (Array.isArray(input?.records)) return input.records
+  if (Array.isArray(input?.result)) return input.result
+  if (Array.isArray(input?.pageData)) return input.pageData
+  if (Array.isArray(input?.datas)) return input.datas
+  if (Array.isArray(input?.recordsList)) return input.recordsList
+  if (Array.isArray(input?.dataList)) return input.dataList
   if (Array.isArray(input?.list)) return input.list
   if (Array.isArray(input?.items)) return input.items
   if (Array.isArray(input?.rows)) return input.rows
   if (Array.isArray(input?.content)) return input.content
   if (Array.isArray(input?.data)) return input.data
+  if (Array.isArray(input?.data?.records)) return input.data.records
+  if (Array.isArray(input?.data?.result)) return input.data.result
+  if (Array.isArray(input?.data?.pageData)) return input.data.pageData
+  if (Array.isArray(input?.data?.datas)) return input.data.datas
+  if (Array.isArray(input?.data?.recordsList)) return input.data.recordsList
+  if (Array.isArray(input?.data?.dataList)) return input.data.dataList
+  if (Array.isArray(input?.result?.records)) return input.result.records
+  if (Array.isArray(input?.result?.rows)) return input.result.rows
+  if (Array.isArray(input?.result?.list)) return input.result.list
+  if (Array.isArray(input?.page?.records)) return input.page.records
+  if (Array.isArray(input?.page?.rows)) return input.page.rows
+  if (Array.isArray(input?.payload?.list)) return input.payload.list
+  if (Array.isArray(input?.payload?.rows)) return input.payload.rows
+  if (Array.isArray(input?.payload?.result)) return input.payload.result
+
+  const deep = deepFindArray(input, 0, 5)
+  if (deep.length) return deep
+  return []
+}
+
+function deepFindArray(node: any, depth = 0, maxDepth = 4): any[] {
+  if (depth > maxDepth || node == null) return []
+  if (Array.isArray(node)) return node
+  if (typeof node !== 'object') return []
+
+  const priorityKeys = [
+    'rows',
+    'records',
+    'list',
+    'items',
+    'content',
+    'data',
+    'result',
+    'pageData',
+    'datas',
+    'recordsList',
+    'dataList'
+  ]
+  for (const k of priorityKeys) {
+    const v = (node as any)[k]
+    if (Array.isArray(v)) return v
+  }
+
+  for (const v of Object.values(node)) {
+    const arr = deepFindArray(v, depth + 1, maxDepth)
+    if (arr.length) return arr
+  }
   return []
 }
 
@@ -295,6 +347,13 @@ function pickText(source: any, keys: string[], fallback = ''): string {
     if (typeof value === 'string' && value.trim()) return value.trim()
   }
   return fallback
+}
+
+function pickFirstText(values: any[]): string {
+  for (const v of values) {
+    if (typeof v === 'string' && v.trim()) return v.trim()
+  }
+  return ''
 }
 
 function formatNumber(value: number | string | undefined | null) {
@@ -355,11 +414,83 @@ const serviceRateLabel = computed(() => '服务执行率')
 const serviceRateDisplay = computed(() => `${serviceRate.value}%`)
 
 function diseaseName(item: SummaryItem) {
-  return pickText(item, ['diseaseName', 'chronicName', 'diseaseType', 'categoryName', 'disease']) || '未标注病种'
+  const direct = pickText(item, [
+    'diseaseName',
+    'chronicName',
+    'diseaseType',
+    'categoryName',
+    'disease',
+    'diagnosisName',
+    'diagnosis',
+    'diseaseLabel',
+    'illnessName',
+    'chronicDisease',
+    'chronicDiseaseName',
+    'majorDisease',
+    'patientDisease',
+    'conditionName',
+    'tagName',
+    'typeName'
+  ])
+  if (direct) return direct
+
+  const nested = pickFirstText([
+    item?.disease?.name,
+    item?.disease?.label,
+    item?.diagnosis?.name,
+    item?.diagnosis?.label,
+    item?.category?.name,
+    item?.chronicDisease?.name,
+    item?.chronicDiseaseInfo?.name,
+    item?.majorDiseaseInfo?.name,
+    item?.condition?.name
+  ])
+  if (nested) return nested
+
+  const fromArrays = [
+    ...(Array.isArray(item?.diseaseNames) ? item.diseaseNames : []),
+    ...(Array.isArray(item?.diagnosisList) ? item.diagnosisList : []),
+    ...(Array.isArray(item?.tags) ? item.tags : [])
+  ]
+  const arrName = pickFirstText(
+    fromArrays.map((x: any) => (typeof x === 'string' ? x : x?.name || x?.label || x?.title || ''))
+  )
+  return arrName || '未标注病种'
 }
 
 function doctorName(item: SummaryItem) {
-  return pickText(item, ['doctorName', 'responsibleDoctorName', 'followDoctorName', 'staffName']) || '未分配医生'
+  const direct = pickText(item, [
+    'doctorName',
+    'responsibleDoctorName',
+    'followDoctorName',
+    'staffName',
+    'ownerName',
+    'managerName',
+    'physicianName',
+    'attendingDoctorName',
+    'familyDoctorName',
+    'doctor',
+    'doctorNickName',
+    'nickname',
+    'realName',
+    'userName',
+    'staffRealName',
+    'followUserName',
+    'createByName'
+  ])
+  if (direct) return direct
+
+  const nested = pickFirstText([
+    item?.doctor?.name,
+    item?.doctor?.realName,
+    item?.doctor?.nickname,
+    item?.staff?.name,
+    item?.staff?.realName,
+    item?.owner?.name,
+    item?.manager?.name,
+    item?.user?.name
+  ])
+  return nested || '未分配医生'
 }
 
 function cnRiskLevel(item: any) {
@@ -382,12 +513,27 @@ function cnAlertStatus(item: any) {
 
 const diseaseRanks = computed<RankItem[]>(() => {
   const map = new Map<string, number>()
-  patientSummary.value.forEach((item) => {
+  const sources: SummaryItem[] = [...patientSummary.value, ...riskList.value]
+  sources.forEach((item) => {
     const key = diseaseName(item)
-    map.set(key, (map.get(key) || 0) + 1)
+    if (key && key !== '未标注病种') {
+      map.set(key, (map.get(key) || 0) + 1)
+    }
   })
-  const total = Array.from(map.values()).reduce((sum, cur) => sum + cur, 0)
-  return Array.from(map.entries())
+
+  if (!map.size) {
+    const homeRows = getArray(homeStats.value)
+    homeRows.forEach((item: any) => {
+      const key = diseaseName(item)
+      if (key && key !== '未标注病种') {
+        map.set(key, (map.get(key) || 0) + 1)
+      }
+    })
+  }
+
+  const entries = Array.from(map.entries())
+  const total = entries.reduce((sum, [, cur]) => sum + cur, 0)
+  return entries
     .map(([name, count]) => ({ name, count, percent: percent(count, total) }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 5)
@@ -395,11 +541,27 @@ const diseaseRanks = computed<RankItem[]>(() => {
 
 const doctorLoads = computed<DoctorLoad[]>(() => {
   const map = new Map<string, number>()
-  patientSummary.value.forEach((item) => {
+  const sources: SummaryItem[] = [...patientSummary.value, ...riskList.value]
+  sources.forEach((item) => {
     const key = doctorName(item)
-    map.set(key, (map.get(key) || 0) + 1)
+    if (key && key !== '未分配医生') {
+      map.set(key, (map.get(key) || 0) + 1)
+    }
   })
-  const rows = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
+  if (!map.size) {
+    const homeRows = getArray(homeStats.value)
+    homeRows.forEach((item: any) => {
+      const key = doctorName(item)
+      if (key && key !== '未分配医生') {
+        map.set(key, (map.get(key) || 0) + 1)
+      }
+    })
+  }
+
+  const rows = Array.from(map.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
   const max = rows[0]?.[1] || 1
   return rows.map(([name, count]) => ({
     name,
@@ -629,7 +791,7 @@ async function loadCore() {
 
 async function loadSecondary() {
   const [summary, alertList, hardwareList, risks] = await Promise.all([
-    fetchPatientSummary(300),
+    fetchPatientSummary(500),
     fetchAlerts(30),
     fetchHardwareAlerts(30),
     fetchPatientRiskList(200)
@@ -638,6 +800,11 @@ async function loadSecondary() {
   alerts.value = getArray(alertList)
   hardwareAlerts.value = getArray(hardwareList)
   riskList.value = getArray(risks)
+
+  // 二次兜底：若摘要列表仍为空，尝试从其他首页返回中提取记录数组
+  if (!patientSummary.value.length) {
+    patientSummary.value = getArray(summary?.data) || getArray(summary?.result) || getArray(summary?.page) || []
+  }
 }
 
 async function loadPage() {
