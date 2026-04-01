@@ -3,28 +3,36 @@
     <!-- 顶部总量四卡 -->
     <section class="overview-row">
       <article class="overview-card">
-        <div class="overview-icon bg-cyan">患</div>
-        <div class="overview-label">患者总数</div>
-        <div class="overview-value">{{ totalPatients }}</div>
-        <div class="overview-meta">高危 {{ riskHigh }} · 中危 {{ riskMid }}</div>
+        <div class="overview-icon bg-cyan" aria-hidden="true">患</div>
+        <div class="overview-body">
+          <div class="overview-label">患者总数</div>
+          <div class="overview-value">{{ totalPatients }}</div>
+          <div class="overview-meta">高危 {{ riskHigh }} · 中危 {{ riskMid }}</div>
+        </div>
       </article>
       <article class="overview-card">
-        <div class="overview-icon bg-violet">医</div>
-        <div class="overview-label">活跃医生数</div>
-        <div class="overview-value">{{ activeDoctorCount }}</div>
-        <div class="overview-meta">责任医生活跃负载</div>
+        <div class="overview-icon bg-violet" aria-hidden="true">医</div>
+        <div class="overview-body">
+          <div class="overview-label">活跃医生数</div>
+          <div class="overview-value">{{ activeDoctorCount }}</div>
+          <div class="overview-meta">责任医生活跃负载</div>
+        </div>
       </article>
       <article class="overview-card">
-        <div class="overview-icon bg-warn">警</div>
-        <div class="overview-label">实时事件数</div>
-        <div class="overview-value">{{ totalAlerts30d }}</div>
-        <div class="overview-meta">近30天健康+设备事件</div>
+        <div class="overview-icon bg-warn" aria-hidden="true">警</div>
+        <div class="overview-body">
+          <div class="overview-label">实时事件数</div>
+          <div class="overview-value">{{ totalAlerts30d }}</div>
+          <div class="overview-meta">近30天健康+设备事件</div>
+        </div>
       </article>
       <article class="overview-card risk">
-        <div class="overview-icon bg-danger">危</div>
-        <div class="overview-label">高危告警数</div>
-        <div class="overview-value">{{ unhandledAlerts }}</div>
-        <div class="overview-meta">已关闭 {{ closedAlerts }} · 处置率 {{ closeRate }}%</div>
+        <div class="overview-icon bg-danger" aria-hidden="true">危</div>
+        <div class="overview-body">
+          <div class="overview-label">高危告警数</div>
+          <div class="overview-value">{{ unhandledAlerts }}</div>
+          <div class="overview-meta">已关闭 {{ closedAlerts }} · 处置率 {{ closeRate }}%</div>
+        </div>
       </article>
     </section>
 
@@ -157,11 +165,6 @@
             {{ it.title }}
           </span>
         </div>
-      </div>
-      <div class="footer-links">
-        <span>实时指标</span>
-        <span>事件流</span>
-        <span>支持中心</span>
       </div>
     </section>
   </div>
@@ -573,6 +576,10 @@ onUnmounted(() => {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(245, 251, 255, 0.68));
   box-shadow: var(--shadow), var(--glow);
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 92px;
 }
 
 .overview-card.risk {
@@ -588,8 +595,7 @@ onUnmounted(() => {
 .overview-label {
   font-size: 12px;
   color: var(--t-2);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.6px;
   white-space: nowrap;
 }
 
@@ -610,18 +616,23 @@ onUnmounted(() => {
 }
 
 .overview-icon {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 900;
-  margin-bottom: 8px;
   border: 1px solid rgba(114, 180, 205, 0.28);
   color: rgba(29, 78, 114, 0.92);
+  flex: 0 0 auto;
 }
+.overview-body{
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .overview-icon.bg-cyan { background: rgba(95, 199, 216, 0.16); }
 .overview-icon.bg-violet { background: rgba(158, 169, 230, 0.16); }
 .overview-icon.bg-danger { background: rgba(238, 141, 153, 0.14); }
@@ -1015,7 +1026,7 @@ onUnmounted(() => {
 
 .footer-row {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto 1fr;
   gap: 12px;
   align-items: stretch;
 }
@@ -1080,18 +1091,6 @@ onUnmounted(() => {
   font-weight: 800;
 }
 
-.footer-links {
-  border: 1px solid rgba(114, 180, 205, 0.30);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.62);
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  font-size: 11px;
-  color: var(--t-2);
-  white-space: nowrap;
-}
 
 @keyframes hubRotate {
   from { transform: rotate(0deg); }
