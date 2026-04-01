@@ -80,7 +80,7 @@
             </div>
             <div class="hub-node n1">患者</div>
             <div class="hub-node n2">协同网络</div>
-            <div class="hub-node n3">AI中枢</div>
+            <div class="hub-node n3">智能中枢</div>
             <div class="hub-node n4">医生</div>
           </div>
         </ScreenPanel>
@@ -145,7 +145,7 @@
     <section class="footer-row">
       <div class="system-status">
         <span class="status-tag ok">系统运行正常</span>
-        <span class="status-tag">API 连接稳定</span>
+        <span class="status-tag">接口连接稳定</span>
         <span class="status-tag">数据更新中</span>
       </div>
       <div class="ticker-wrap marquee-shell">
@@ -198,7 +198,6 @@ const closeRate = computed(() => {
   return Number(((closedAlerts.value / total) * 100).toFixed(1))
 })
 
-const weekFollowRateText = computed(() => `${Number(weekFollowRatePct.value || 0).toFixed(1)}%`)
 const trendTabs = [
   { key: 'daily', label: '日' },
   { key: 'weekly', label: '周' },
@@ -424,9 +423,14 @@ async function loadSecondary() {
   if (!totalPatients.value) totalPatients.value = Number(patientRes?.total || pList.length || 0)
 
   if (!riskHigh.value && !riskMid.value && !riskLow.value && pList.length) {
-    riskHigh.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('HIGH')).length
-    riskMid.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('MID')).length
-    riskLow.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('LOW')).length
+    const norm = (x: any) => String(x ?? '').trim().toUpperCase()
+    const isHigh = (s: string) => s.includes('HIGH') || s === 'H' || s === '高' || s.includes('高危')
+    const isMid = (s: string) => s.includes('MID') || s.includes('MED') || s === 'M' || s === '中' || s.includes('中危')
+    const isLow = (s: string) => s.includes('LOW') || s === 'L' || s === '低' || s.includes('低危')
+
+    riskHigh.value = pList.filter((r: any) => isHigh(norm(r.riskLevel))).length
+    riskMid.value = pList.filter((r: any) => isMid(norm(r.riskLevel))).length
+    riskLow.value = pList.filter((r: any) => isLow(norm(r.riskLevel))).length
   }
 
   buildDiseaseTop(pList)
@@ -450,17 +454,21 @@ async function loadSecondary() {
 
   const ev: Array<{ id: string; title: string; time: string }> = []
   aRows.slice(0, 4).forEach((r: any, idx: number) => {
+    const time = String(r.alertTime || r.firstTime || r.createdAt || '').replace('T', ' ')
+    const hhmm = time.length >= 16 ? time.slice(11, 16) : '--:--'
     ev.push({
       id: `a-${r.id || idx}`,
       title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`,
-      time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ')
+      time: hhmm
     })
   })
   hRows.slice(0, 4).forEach((r: any, idx: number) => {
+    const time = String(r.alertTime || r.firstTime || r.createdAt || '').replace('T', ' ')
+    const hhmm = time.length >= 16 ? time.slice(11, 16) : '--:--'
     ev.push({
       id: `h-${r.id || idx}`,
       title: `设备 · ${r.patientName || '患者'} · ${r.alertType || r.summary || ''}`,
-      time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ')
+      time: hhmm
     })
   })
   events.value = ev.slice(0, 8)
