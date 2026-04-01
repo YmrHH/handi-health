@@ -460,15 +460,25 @@ async function loadSecondary() {
         .filter((x: string) => !!x)
     )
   ).length
+}
 
-  const [alertRes, hardwareRes] = await Promise.all([fetchAlerts(30).catch(() => ({} as any)), fetchHardwareAlerts(30).catch(() => ({} as any))])
+async function loadEventsAndAlerts() {
+  const [alertRes, hardwareRes] = await Promise.all([
+    fetchAlerts(30).catch(() => ({} as any)),
+    fetchHardwareAlerts(30).catch(() => ({} as any))
+  ])
   if (!activeAlive) return
+
   const aRows = (alertRes?.rows || []) as any[]
   const hRows = (hardwareRes?.rows || []) as any[]
   totalAlerts30d.value = aRows.length + hRows.length
   const all = [...aRows, ...hRows]
-  unhandledAlerts.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('未处理') || String(r.status || '').toUpperCase() === 'NEW').length
-  closedAlerts.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('已关闭') || String(r.status || '').toUpperCase() === 'CLOSED').length
+  unhandledAlerts.value = all.filter(
+    (r: any) => String(r.statusText || r.status || '').includes('未处理') || String(r.status || '').toUpperCase() === 'NEW'
+  ).length
+  closedAlerts.value = all.filter(
+    (r: any) => String(r.statusText || r.status || '').includes('已关闭') || String(r.status || '').toUpperCase() === 'CLOSED'
+  ).length
 
   const ev: Array<{ id: string; title: string; time: string }> = []
   aRows.slice(0, 4).forEach((r: any, idx: number) => {
@@ -506,6 +516,10 @@ async function startLoad() {
   cancelIdle?.()
   cancelIdle = scheduleIdle(() => {
     void loadSecondary()
+    // 更晚一点再拉告警/事件，避免首屏拥堵
+    cancelIdle = scheduleIdle(() => {
+      void loadEventsAndAlerts()
+    }, 900)
   }, 800)
 }
 

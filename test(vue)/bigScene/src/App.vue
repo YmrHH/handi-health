@@ -45,7 +45,7 @@ const tabs = [
   { key: 'risk', label: '风险画像舱' },
   { key: 'alert', label: '告警联动舱' },
   { key: 'service', label: '干预服务舱' },
-  { key: 'ai', label: 'AI 洞察舱' }
+  { key: 'ai', label: '智能洞察舱' }
 ]
 
 const active = ref('command')
