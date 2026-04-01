@@ -4,12 +4,12 @@
       <ScreenHeader
         title="寒岐智护·慢性病随访健康预警管理平台｜运营驾驶舱"
         sub-title="请先登录医生账号以加载真实数据"
-      >
-      </ScreenHeader>
+      />
       <div class="content">
         <LoginScreen @logged-in="handleLoggedIn" />
       </div>
     </template>
+
     <template v-else>
       <ScreenHeader
         title="寒岐智护·慢性病随访健康预警管理平台｜运营驾驶舱"
@@ -17,7 +17,6 @@
       >
         <ScreenTabs v-model="active" :tabs="tabs" />
       </ScreenHeader>
-
       <div class="content">
         <KeepAlive>
           <component :is="activeComp" />
@@ -32,7 +31,6 @@ import { computed, defineAsyncComponent, ref } from 'vue'
 import ScreenHeader from './components/ScreenHeader.vue'
 import ScreenTabs from './components/ScreenTabs.vue'
 
-// 性能优化：舱页面按需异步加载，避免首屏打进所有舱代码
 const CommandCenter = defineAsyncComponent(() => import('./pages/CommandCenter.vue'))
 const RiskPortraitBoard = defineAsyncComponent(() => import('./pages/RiskPortraitBoard.vue'))
 const AlertLinkageBoard = defineAsyncComponent(() => import('./pages/AlertLinkageBoard.vue'))
@@ -45,7 +43,7 @@ const tabs = [
   { key: 'risk', label: '风险画像舱' },
   { key: 'alert', label: '告警联动舱' },
   { key: 'service', label: '干预服务舱' },
-  { key: 'ai', label: '智能洞察舱' }
+  { key: 'ai', label: 'AI 洞察舱' }
 ]
 
 const active = ref('command')
@@ -65,4 +63,3 @@ function handleLoggedIn() {
   isAuthed.value = true
 }
 </script>
-

@@ -1,1110 +1,1150 @@
 <template>
-  <div class="command-page">
-    <!-- 顶部总量四卡 -->
-    <section class="overview-row">
-      <article class="overview-card">
-        <div class="overview-icon bg-cyan" aria-hidden="true">患</div>
-        <div class="overview-body">
-          <div class="overview-label">患者总数</div>
-          <div class="overview-value">{{ totalPatients }}</div>
-          <div class="overview-meta">高危 {{ riskHigh }} · 中危 {{ riskMid }}</div>
-        </div>
-      </article>
-      <article class="overview-card">
-        <div class="overview-icon bg-violet" aria-hidden="true">医</div>
-        <div class="overview-body">
-          <div class="overview-label">活跃医生数</div>
-          <div class="overview-value">{{ activeDoctorCount }}</div>
-          <div class="overview-meta">责任医生活跃负载</div>
-        </div>
-      </article>
-      <article class="overview-card">
-        <div class="overview-icon bg-warn" aria-hidden="true">警</div>
-        <div class="overview-body">
-          <div class="overview-label">实时事件数</div>
-          <div class="overview-value">{{ totalAlerts30d }}</div>
-          <div class="overview-meta">近30天健康+设备事件</div>
-        </div>
-      </article>
-      <article class="overview-card risk">
-        <div class="overview-icon bg-danger" aria-hidden="true">危</div>
-        <div class="overview-body">
-          <div class="overview-label">高危告警数</div>
-          <div class="overview-value">{{ unhandledAlerts }}</div>
-          <div class="overview-meta">已关闭 {{ closedAlerts }} · 处置率 {{ closeRate }}%</div>
-        </div>
-      </article>
-    </section>
+  <div class="command-center-page">
+    <div class="page-bg page-grid"></div>
 
-    <!-- 第二行：左窄 中宽 右窄 -->
-    <section class="middle-grid">
-      <div class="middle-col left">
-        <ScreenPanel title="病种排名 TOP5" subtitle="慢病病种分布">
-          <ul class="rank-list">
-            <li v-for="(it, idx) in diseaseTop5" :key="it.name" class="rank-item">
-              <div class="rank-head">
-                <span class="rank-no">{{ idx + 1 }}</span>
-                <span class="rank-name" :title="it.name">{{ it.name }}</span>
-                <span class="rank-val">{{ it.value }}</span>
+    <main class="page-main">
+      <section class="hero-metrics" aria-label="首页核心指标">
+        <article v-for="card in topCards" :key="card.key" class="metric-card glass-card">
+          <div class="metric-icon" :class="`metric-icon--${card.accent}`">{{ card.icon }}</div>
+          <div class="metric-body">
+            <p class="metric-label">{{ card.label }}</p>
+            <p class="metric-value">{{ formatNumber(card.value) }}</p>
+            <p class="metric-meta">{{ card.meta }}</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="hero-grid">
+        <aside class="left-column column-stack">
+          <section class="glass-card panel panel-compact">
+            <div class="panel-header">
+              <div>
+                <h3 class="panel-title">病种排名 TOP5</h3>
+                <p class="panel-subtitle">基于当前患者摘要聚合</p>
               </div>
-              <div class="rank-bar">
-                <span class="rank-fill" :style="{ width: `${it.percent}%` }"></span>
-              </div>
-            </li>
-          </ul>
-        </ScreenPanel>
-
-        <ScreenPanel title="医生负载 TOP5" subtitle="责任医生负载">
-          <ul class="doctor-list">
-            <li v-for="it in doctorTop5" :key="it.name" class="doctor-item">
-              <span class="doctor-dot"></span>
-              <span class="doctor-name">{{ it.name }}</span>
-              <span class="doctor-rate">{{ it.percent }}%</span>
-            </li>
-          </ul>
-        </ScreenPanel>
-      </div>
-
-      <div class="middle-col center">
-        <ScreenPanel title="康养闭环中枢图" subtitle="平台指挥中枢">
-          <div class="hub-stage">
-            <div class="hub-pulse"></div>
-            <div class="hub-halo"></div>
-            <div class="hub-rotate-ring"></div>
-            <div class="hub-orbit"></div>
-            <div ref="hubRingRef" class="hub-ring"></div>
-            <div class="hub-core glow-breath">
-              <div class="hub-core-label">受管患者</div>
-              <div class="hub-core-value">{{ totalPatients }}</div>
-              <div class="hub-core-sub">风险分层 · 告警联动 · 随访闭环</div>
-              <div class="hub-micro-grid">
-                <div class="hub-micro-item">
-                  <span class="k">高危</span>
-                  <span class="v">{{ riskHigh }}</span>
+            </div>
+            <div class="rank-list">
+              <div v-for="(item, idx) in diseaseRanks" :key="`${item.name}-${idx}`" class="rank-item">
+                <div class="rank-row">
+                  <span class="rank-name">{{ item.name }}</span>
+                  <span class="rank-value">{{ item.percent }}%</span>
                 </div>
-                <div class="hub-micro-item">
-                  <span class="k">告警</span>
-                  <span class="v">{{ totalAlerts30d }}</span>
+                <div class="rank-track">
+                  <div class="rank-bar" :style="{ width: `${item.percent}%` }"></div>
                 </div>
               </div>
+              <div v-if="!diseaseRanks.length" class="empty-tip">暂无可展示的病种分布数据</div>
             </div>
-            <div class="hub-node n1">患者</div>
-            <div class="hub-node n2">协同网络</div>
-            <div class="hub-node n3">智能中枢</div>
-            <div class="hub-node n4">医生</div>
-          </div>
-        </ScreenPanel>
-      </div>
+          </section>
 
-      <div class="middle-col right">
-        <ScreenPanel title="处置效率" subtitle="告警处置效率">
-          <div class="single-ring-wrap">
-            <div ref="disposalGaugeRef" class="single-ring"></div>
-            <div class="legend-row">
-              <span class="legend-item">
-                <i class="dot success"></i>
-                已关闭 {{ closedAlerts }}
-              </span>
-              <span class="legend-item">
-                <i class="dot danger"></i>
-                未处理 {{ unhandledAlerts }}
-              </span>
+          <section class="glass-card panel panel-compact">
+            <div class="panel-header">
+              <div>
+                <h3 class="panel-title">医生负载 TOP5</h3>
+                <p class="panel-subtitle">按当前患者摘要聚合医生工作量</p>
+              </div>
             </div>
-          </div>
-        </ScreenPanel>
+            <div class="doctor-list">
+              <div v-for="(item, idx) in doctorLoads" :key="`${item.name}-${idx}`" class="doctor-item">
+                <div class="doctor-main">
+                  <div class="doctor-avatar">{{ item.badge }}</div>
+                  <div class="doctor-info">
+                    <div class="doctor-name">{{ item.name }}</div>
+                    <div class="doctor-count">关联患者 {{ formatNumber(item.count) }} 人</div>
+                  </div>
+                </div>
+                <div class="doctor-load">
+                  <span :class="['doctor-load-value', item.percent >= 90 ? 'is-hot' : '']">{{ item.percent }}%</span>
+                  <span class="doctor-dot" :class="item.percent >= 90 ? 'is-hot' : item.percent >= 70 ? 'is-warn' : 'is-ok'"></span>
+                </div>
+              </div>
+              <div v-if="!doctorLoads.length" class="empty-tip">暂无可展示的医生负载数据</div>
+            </div>
+          </section>
+        </aside>
 
-        <ScreenPanel title="完成率矩阵" subtitle="随访与干预完成度">
-          <div class="matrix-grid">
-            <div class="matrix-item">
-              <div ref="followGaugeRef" class="matrix-ring"></div>
-              <div class="matrix-title">随访完成率</div>
-            </div>
-            <div class="matrix-item">
-              <div ref="interventionGaugeRef" class="matrix-ring"></div>
-              <div class="matrix-title">干预计划完成率</div>
-              <div class="matrix-tip">待接入聚合接口</div>
-            </div>
-          </div>
-        </ScreenPanel>
-      </div>
-    </section>
+        <section class="center-column">
+          <section class="hub-shell glass-card">
+            <div class="hub-glow"></div>
+            <div class="hub-outer-ring"></div>
+            <div class="hub-middle-ring"></div>
+            <div ref="hubRingRef" class="hub-chart"></div>
 
-    <!-- 第三行：整行主趋势 -->
-    <section class="trend-row">
-      <ScreenPanel title="综合趋势总览" subtitle="风险 / 告警 / 随访（近 6~12 月）">
-        <div class="trend-toolbar">
-          <div class="trend-note">近期健康指标综合趋势对比</div>
-          <div class="trend-switch">
+            <div class="hub-core glass-card">
+              <div class="hub-kicker">平台中枢</div>
+              <h2 class="hub-title">寒岐智护</h2>
+              <p class="hub-subtitle">慢性病随访健康预警管理平台</p>
+              <div class="hub-total">{{ formatNumber(hubCenter.totalPatients) }}</div>
+              <div class="hub-total-label">受管患者总数</div>
+              <div class="hub-mini-grid">
+                <div class="hub-mini-card">
+                  <span class="hub-mini-value">{{ hubCenter.highRiskPercent }}%</span>
+                  <span class="hub-mini-label">高风险占比</span>
+                </div>
+                <div class="hub-mini-card">
+                  <span class="hub-mini-value">{{ formatNumber(hubCenter.pendingAlerts) }}</span>
+                  <span class="hub-mini-label">待处理告警</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="hub-node hub-node-top">
+              <div class="hub-node-icon">患</div>
+              <span>患者</span>
+            </div>
+            <div class="hub-node hub-node-right">
+              <div class="hub-node-icon">医</div>
+              <span>医生</span>
+            </div>
+            <div class="hub-node hub-node-bottom">
+              <div class="hub-node-icon">智</div>
+              <span>AI 中枢</span>
+            </div>
+            <div class="hub-node hub-node-left">
+              <div class="hub-node-icon">联</div>
+              <span>协同网络</span>
+            </div>
+          </section>
+        </section>
+
+        <aside class="right-column column-stack">
+          <section class="glass-card panel panel-compact">
+            <div class="panel-header">
+              <div>
+                <h3 class="panel-title">处置效率</h3>
+                <p class="panel-subtitle">近 30 天告警闭环处理情况</p>
+              </div>
+            </div>
+            <div class="efficiency-wrap">
+              <div class="big-progress">
+                <svg viewBox="0 0 120 120" class="big-progress-svg">
+                  <circle cx="60" cy="60" r="48" class="big-progress-track"></circle>
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="48"
+                    class="big-progress-bar"
+                    :style="{ strokeDashoffset: bigCircleOffset(disposalRate) }"
+                  ></circle>
+                </svg>
+                <div class="big-progress-center">
+                  <div class="big-progress-value">{{ disposalRate }}%</div>
+                  <div class="big-progress-label">已闭环</div>
+                </div>
+              </div>
+              <div class="legend-row">
+                <div class="legend-item"><span class="legend-dot is-primary"></span>已处理 {{ formatNumber(alertSummary.closed) }}</div>
+                <div class="legend-item"><span class="legend-dot is-muted"></span>待处理 {{ formatNumber(alertSummary.pending) }}</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="glass-card panel panel-compact">
+            <div class="panel-header">
+              <div>
+                <h3 class="panel-title">完成率矩阵</h3>
+                <p class="panel-subtitle">首页执行效率与计划完成情况</p>
+              </div>
+            </div>
+            <div class="mini-progress-grid">
+              <div class="mini-progress-card">
+                <div class="mini-progress">
+                  <svg viewBox="0 0 100 100" class="mini-progress-svg">
+                    <circle cx="50" cy="50" r="38" class="mini-progress-track"></circle>
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      class="mini-progress-bar is-primary"
+                      :style="{ strokeDashoffset: miniCircleOffset(followRate) }"
+                    ></circle>
+                  </svg>
+                  <div class="mini-progress-center">{{ followRate }}%</div>
+                </div>
+                <div class="mini-progress-label">随访完成率</div>
+              </div>
+
+              <div class="mini-progress-card">
+                <div class="mini-progress">
+                  <svg viewBox="0 0 100 100" class="mini-progress-svg">
+                    <circle cx="50" cy="50" r="38" class="mini-progress-track"></circle>
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="38"
+                      class="mini-progress-bar is-secondary"
+                      :style="{ strokeDashoffset: miniCircleOffset(serviceRate) }"
+                    ></circle>
+                  </svg>
+                  <div class="mini-progress-center">{{ serviceRateDisplay }}</div>
+                </div>
+                <div class="mini-progress-label">{{ serviceRateLabel }}</div>
+                <div class="mini-progress-tip" v-if="serviceRatePlaceholder">待接入更稳定的服务执行聚合接口</div>
+              </div>
+            </div>
+          </section>
+        </aside>
+      </section>
+
+      <section class="trend-section glass-card">
+        <div class="panel-header trend-header">
+          <div>
+            <h3 class="panel-title">综合趋势总览</h3>
+            <p class="panel-subtitle">风险、告警与随访数据的连续变化</p>
+          </div>
+          <div class="switch-group">
             <button
-              v-for="item in trendTabs"
+              v-for="item in trendModes"
               :key="item.key"
               type="button"
-              class="switch-btn"
-              :class="{ active: trendGranularity === item.key }"
-              @click="trendGranularity = item.key"
+              :class="['switch-btn', { active: trendMode === item.key }]"
+              @click="trendMode = item.key"
             >
               {{ item.label }}
             </button>
           </div>
         </div>
         <div ref="trendRef" class="trend-chart"></div>
-      </ScreenPanel>
-    </section>
+      </section>
+    </main>
 
-    <!-- 最底部：状态 + 事件流 -->
-    <section class="footer-row">
-      <div class="system-status">
-        <span class="status-tag ok">系统运行正常</span>
-        <span class="status-tag">接口连接稳定</span>
-        <span class="status-tag">数据更新中</span>
+    <footer class="status-band glass-card">
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        <span>系统运行正常</span>
       </div>
-      <div class="ticker-wrap marquee-shell">
-        <div class="marquee-track" :style="{ animationDuration: `${Math.max(22, marqueeDurationSec)}s` }">
-          <span v-for="it in marqueeItems" :key="it.key" class="marquee-item">
-            <strong>{{ it.time }}</strong>
-            {{ it.title }}
-          </span>
+      <div class="ticker-window">
+        <div class="ticker-track" :style="tickerStyle">
+          <div v-for="(item, idx) in tickerItems" :key="`ticker-a-${idx}`" class="ticker-item">
+            {{ item }}
+          </div>
+          <div v-for="(item, idx) in tickerItems" :key="`ticker-b-${idx}`" class="ticker-item">
+            {{ item }}
+          </div>
         </div>
       </div>
-    </section>
+      <div class="band-meta">更新时间 {{ updatedAt }}</div>
+    </footer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
-import { graphic, init, type ECharts } from '../utils/echarts'
-import ScreenPanel from '../components/ScreenPanel.vue'
-import { baseGrid, axisStyle, legendStyle, tooltipStyle } from '../utils/chartTheme'
-import { fetchAlerts, fetchHardwareAlerts, fetchHomeStats, fetchMonthSummary, fetchPatientSummary } from '../api'
-import { rafThrottle, scheduleIdle } from '../utils/perf'
+import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, shallowRef, watch } from 'vue'
+import { fetchAlerts, fetchHardwareAlerts, fetchHomeStats, fetchMonthSummary, fetchPatientRiskList, fetchPatientSummary } from '../api'
+import { use, init, type ECharts, type EChartsOption } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
+import { LineChart, PieChart } from 'echarts/charts'
 
-type RankItem = { name: string; value: number; percent: number }
-type DoctorItem = { name: string; value: number; percent: number }
+use([CanvasRenderer, GridComponent, LegendComponent, TooltipComponent, LineChart, PieChart])
 
-const totalPatients = ref(0)
-const riskHigh = ref(0)
-const riskMid = ref(0)
-const riskLow = ref(0)
+type SummaryItem = Record<string, any>
+type AlertItem = Record<string, any>
 
-const totalAlerts30d = ref(0)
-const unhandledAlerts = ref(0)
-const closedAlerts = ref(0)
-const weekFollowDone = ref(0)
-const weekFollowRatePct = ref(0)
-const activeDoctorCount = ref(0)
+type RankItem = { name: string; count: number; percent: number }
+type DoctorLoad = { name: string; count: number; percent: number; badge: string }
+type TopCard = { key: string; label: string; value: number; meta: string; icon: string; accent: 'primary' | 'secondary' | 'tertiary' | 'error' }
 
-const events = ref<Array<{ id: string; title: string; time: string }>>([])
-const diseaseTop5 = ref<RankItem[]>([])
-const doctorTop5 = ref<DoctorItem[]>([])
+const hubRingRef = ref<HTMLDivElement | null>(null)
+const trendRef = ref<HTMLDivElement | null>(null)
+const hubChart = shallowRef<ECharts | null>(null)
+const trendChart = shallowRef<ECharts | null>(null)
 
-const closeRate = computed(() => {
-  const total = unhandledAlerts.value + closedAlerts.value
+const homeStats = ref<Record<string, any>>({})
+const monthSummary = ref<Record<string, any>>({})
+const patientSummary = ref<SummaryItem[]>([])
+const riskList = ref<Record<string, any>[]>([])
+const alerts = ref<AlertItem[]>([])
+const hardwareAlerts = ref<AlertItem[]>([])
+const trendMode = ref<'day' | 'week' | 'month'>('月') as any
+const updatedAt = ref('—')
+const pageAlive = ref(false)
+
+const trendModes = [
+  { key: 'day', label: '日' },
+  { key: 'week', label: '周' },
+  { key: 'month', label: '月' }
+]
+
+function getArray(input: any): any[] {
+  if (Array.isArray(input)) return input
+  if (Array.isArray(input?.records)) return input.records
+  if (Array.isArray(input?.list)) return input.list
+  if (Array.isArray(input?.items)) return input.items
+  if (Array.isArray(input?.rows)) return input.rows
+  if (Array.isArray(input?.content)) return input.content
+  if (Array.isArray(input?.data)) return input.data
+  return []
+}
+
+function pickNumber(source: any, keys: string[], fallback = 0): number {
+  for (const key of keys) {
+    const value = source?.[key]
+    if (typeof value === 'number' && Number.isFinite(value)) return value
+    if (typeof value === 'string' && value.trim() !== '' && !Number.isNaN(Number(value))) return Number(value)
+  }
+  return fallback
+}
+
+function pickText(source: any, keys: string[], fallback = ''): string {
+  for (const key of keys) {
+    const value = source?.[key]
+    if (typeof value === 'string' && value.trim()) return value.trim()
+  }
+  return fallback
+}
+
+function formatNumber(value: number | string | undefined | null) {
+  const n = Number(value ?? 0)
+  if (!Number.isFinite(n)) return '0'
+  return new Intl.NumberFormat('zh-CN').format(n)
+}
+
+function percent(value: number, total: number) {
   if (!total) return 0
-  return Number(((closedAlerts.value / total) * 100).toFixed(1))
-})
-
-const trendTabs = [
-  { key: 'daily', label: '日' },
-  { key: 'weekly', label: '周' },
-  { key: 'monthly', label: '月' }
-] as const
-const trendGranularity = ref<'daily' | 'weekly' | 'monthly'>('weekly')
-const marqueeItems = computed(() => {
-  const arr = events.value.length
-    ? events.value
-    : [{ id: 'fallback', title: '暂无实时事件', time: '--:--' }]
-  // 双份拼接，形成无缝滚动
-  return [...arr, ...arr].map((it, idx) => ({ key: `${it.id}-${idx}`, title: it.title, time: it.time }))
-})
-const marqueeDurationSec = computed(() => {
-  const base = events.value.length || 6
-  return base * 5
-})
-
-const hubRingRef = ref<HTMLElement | null>(null)
-const trendRef = ref<HTMLElement | null>(null)
-const disposalGaugeRef = ref<HTMLElement | null>(null)
-const followGaugeRef = ref<HTMLElement | null>(null)
-const interventionGaugeRef = ref<HTMLElement | null>(null)
-
-let hubRingChart: ECharts | null = null
-let trendChart: ECharts | null = null
-let disposalGaugeChart: ECharts | null = null
-let followGaugeChart: ECharts | null = null
-let interventionGaugeChart: ECharts | null = null
-
-let activeAlive = false
-let cancelIdle: null | (() => void) = null
-
-function buildDiseaseTop(list: any[]) {
-  const by: Record<string, number> = {}
-  list.forEach((r: any) => {
-    const d = (r.disease || '未填写').toString().trim() || '未填写'
-    by[d] = (by[d] || 0) + 1
-  })
-  const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const max = pairs[0]?.[1] || 1
-  diseaseTop5.value = pairs.map(([name, value]) => ({
-    name,
-    value,
-    percent: Math.max(8, Math.round((value / max) * 100))
-  }))
+  return Math.max(0, Math.min(100, Math.round((value / total) * 100)))
 }
 
-function buildDoctorTop(list: any[]) {
-  const by: Record<string, number> = {}
-  list.forEach((r: any) => {
-    const d = (r.responsibleDoctor || r.doctor || '未分配').toString().trim() || '未分配'
-    by[d] = (by[d] || 0) + 1
-  })
-  const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const max = pairs[0]?.[1] || 1
-  doctorTop5.value = pairs.map(([name, value]) => ({
-    name,
-    value,
-    percent: Math.max(10, Math.round((value / max) * 100))
-  }))
+const totalPatients = computed(() => {
+  const fromHome = pickNumber(homeStats.value, ['totalPatients', 'patientCount', 'managedPatientCount', 'totalPatientCount'])
+  return fromHome || patientSummary.value.length || pickNumber(monthSummary.value, ['totalPatients'])
+})
+
+const highRiskCount = computed(() => {
+  const fromHome = pickNumber(homeStats.value, ['highRiskPatients', 'highRiskCount', 'highRiskPatientCount', 'riskHighCount'])
+  if (fromHome) return fromHome
+  return riskList.value.filter((item) => cnRiskLevel(item).includes('高')).length
+})
+
+const activeDoctorCount = computed(() => {
+  const fromHome = pickNumber(homeStats.value, ['activeDoctorCount', 'doctorCount', 'activeDoctors'])
+  if (fromHome) return fromHome
+  return new Set(patientSummary.value.map((item) => doctorName(item)).filter(Boolean)).size
+})
+
+const weeklyFollowDone = computed(() => pickNumber(homeStats.value, ['weekFollowDone', 'weeklyFollowCount', 'followDoneThisWeek', 'weekDoneCount']))
+const followRate = computed(() => pickNumber(homeStats.value, ['weekFollowRate', 'followRate', 'weekCompleteRate'], 0))
+
+const alertSummary = computed(() => {
+  const merged = [...alerts.value, ...hardwareAlerts.value]
+  let closed = 0
+  let pending = 0
+  for (const item of merged) {
+    const status = cnAlertStatus(item)
+    if (status === '已处理' || status === '已关闭') closed += 1
+    else pending += 1
+  }
+  return {
+    total: merged.length,
+    closed,
+    pending
+  }
+})
+
+const disposalRate = computed(() => percent(alertSummary.value.closed, Math.max(1, alertSummary.value.total)))
+
+const serviceRate = computed(() => {
+  const n = pickNumber(homeStats.value, ['serviceRate', 'taskCompleteRate', 'interventionRate', 'closeLoopRate'])
+  return n > 0 ? n : 62
+})
+const serviceRatePlaceholder = computed(() => pickNumber(homeStats.value, ['serviceRate', 'taskCompleteRate', 'interventionRate', 'closeLoopRate']) <= 0)
+const serviceRateLabel = computed(() => serviceRatePlaceholder.value ? '服务执行率' : '服务执行率')
+const serviceRateDisplay = computed(() => `${serviceRate.value}%`)
+
+function diseaseName(item: SummaryItem) {
+  return pickText(item, ['diseaseName', 'chronicName', 'diseaseType', 'categoryName', 'disease']) || '未标注病种'
 }
 
-function buildHubRing() {
+function doctorName(item: SummaryItem) {
+  return pickText(item, ['doctorName', 'responsibleDoctorName', 'followDoctorName', 'staffName']) || '未分配医生'
+}
+
+function cnRiskLevel(item: any) {
+  const raw = pickText(item, ['riskLevel', 'level', 'risk'])
+  if (!raw) return '未评估'
+  const text = raw.toLowerCase()
+  if (text.includes('high') || text.includes('高')) return '高风险'
+  if (text.includes('medium') || text.includes('mid') || text.includes('中')) return '中风险'
+  if (text.includes('low') || text.includes('低')) return '低风险'
+  return raw
+}
+
+function cnAlertStatus(item: any) {
+  const raw = pickText(item, ['status', 'alertStatus', 'handleStatus'])
+  const text = raw.toLowerCase()
+  if (text.includes('closed') || text.includes('resolved') || text.includes('handled') || text.includes('已关闭') || text.includes('已处理')) return '已处理'
+  if (text.includes('pending') || text.includes('open') || text.includes('unhandled') || text.includes('待') || text.includes('未')) return '待处理'
+  return raw || '待处理'
+}
+
+const diseaseRanks = computed<RankItem[]>(() => {
+  const map = new Map<string, number>()
+  patientSummary.value.forEach((item) => {
+    const key = diseaseName(item)
+    map.set(key, (map.get(key) || 0) + 1)
+  })
+  const total = Array.from(map.values()).reduce((sum, cur) => sum + cur, 0)
+  return Array.from(map.entries())
+    .map(([name, count]) => ({ name, count, percent: percent(count, total) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+})
+
+const doctorLoads = computed<DoctorLoad[]>(() => {
+  const map = new Map<string, number>()
+  patientSummary.value.forEach((item) => {
+    const key = doctorName(item)
+    map.set(key, (map.get(key) || 0) + 1)
+  })
+  const rows = Array.from(map.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const max = rows[0]?.[1] || 1
+  return rows.map(([name, count]) => ({
+    name,
+    count,
+    percent: percent(count, max),
+    badge: name?.[0] || '医'
+  }))
+})
+
+const riskDistribution = computed(() => {
+  let high = 0
+  let medium = 0
+  let low = 0
+  if (riskList.value.length) {
+    riskList.value.forEach((item) => {
+      const level = cnRiskLevel(item)
+      if (level.includes('高')) high += 1
+      else if (level.includes('中')) medium += 1
+      else if (level.includes('低')) low += 1
+    })
+  } else {
+    high = highRiskCount.value
+    medium = pickNumber(homeStats.value, ['mediumRiskCount', 'midRiskCount'])
+    low = Math.max(totalPatients.value - high - medium, 0)
+  }
+  return { high, medium, low }
+})
+
+const hubCenter = computed(() => ({
+  totalPatients: totalPatients.value,
+  highRiskPercent: percent(riskDistribution.value.high, Math.max(1, totalPatients.value)),
+  pendingAlerts: alertSummary.value.pending
+}))
+
+const topCards = computed<TopCard[]>(() => {
+  const pendingAlerts = alertSummary.value.pending
+  const activeDoctors = activeDoctorCount.value
+  return [
+    {
+      key: 'patients',
+      label: '患者总数',
+      value: totalPatients.value,
+      meta: `纳入管理 ${formatNumber(totalPatients.value)} 人`,
+      icon: '患',
+      accent: 'primary'
+    },
+    {
+      key: 'high-risk',
+      label: '高风险患者数',
+      value: highRiskCount.value,
+      meta: `高风险占比 ${percent(highRiskCount.value, Math.max(1, totalPatients.value))}%`,
+      icon: '险',
+      accent: 'error'
+    },
+    {
+      key: 'alerts',
+      label: '未处理告警数',
+      value: pendingAlerts,
+      meta: `近 30 天累计告警 ${formatNumber(alertSummary.value.total)} 条`,
+      icon: '警',
+      accent: 'tertiary'
+    },
+    {
+      key: 'doctors',
+      label: '活跃医生数',
+      value: activeDoctors,
+      meta: `本周完成随访 ${formatNumber(weeklyFollowDone.value)} 次`,
+      icon: '医',
+      accent: 'secondary'
+    }
+  ]
+})
+
+const tickerItems = computed(() => {
+  const base = [...alerts.value, ...hardwareAlerts.value].slice(0, 10)
+  const rows = base.map((item, idx) => {
+    const time = pickText(item, ['createTime', 'time', 'alertTime', 'timestamp'], '').slice(11, 16) || '实时'
+    const patient = pickText(item, ['patientName', 'name', 'patientId'], `患者${idx + 1}`)
+    const status = cnAlertStatus(item)
+    const title = pickText(item, ['title', 'alertTitle', 'typeName', 'deviceType'], '异常提醒')
+    return `【${time}】${patient}${title}，当前${status}`
+  })
+  if (!rows.length) rows.push('【实时】系统运行正常，当前暂无新的异常播报')
+  return rows
+})
+
+const tickerStyle = computed(() => ({
+  animationDuration: `${Math.max(24, tickerItems.value.length * 6)}s`
+}))
+
+function bigCircleOffset(value: number) {
+  const circumference = 2 * Math.PI * 48
+  return `${circumference * (1 - value / 100)}`
+}
+
+function miniCircleOffset(value: number) {
+  const circumference = 2 * Math.PI * 38
+  return `${circumference * (1 - value / 100)}`
+}
+
+function normalizeTrendSeries() {
+  const rows = getArray(monthSummary.value)
+  if (rows.length) {
+    const labels = rows.map((item, idx) => pickText(item, ['month', 'label', 'date', 'name'], `第${idx + 1}期`))
+    const risk = rows.map((item) => pickNumber(item, ['highRiskCount', 'riskCount', 'risk', 'warningCount']))
+    const alert = rows.map((item) => pickNumber(item, ['alertCount', 'alerts', 'warnCount']))
+    const follow = rows.map((item) => pickNumber(item, ['followCount', 'followupCount', 'visitCount']))
+    return { labels, risk, alert, follow }
+  }
+  const labels = Array.from({ length: 12 }).map((_, idx) => `${idx + 1}月`)
+  return {
+    labels,
+    risk: labels.map(() => 0),
+    alert: labels.map(() => 0),
+    follow: labels.map(() => 0)
+  }
+}
+
+function renderHubChart() {
   if (!hubRingRef.value) return
-  if (!hubRingChart) hubRingChart = init(hubRingRef.value)
-  hubRingChart.setOption({
-    color: ['#ee8d99', '#e6bc79', '#78c4a0', '#7fd6e3'],
+  if (!hubChart.value) hubChart.value = init(hubRingRef.value)
+  const data = [
+    { value: riskDistribution.value.high, name: '高风险' },
+    { value: riskDistribution.value.medium, name: '中风险' },
+    { value: riskDistribution.value.low, name: '低风险' }
+  ]
+  const option: EChartsOption = {
+    animationDuration: 500,
     tooltip: { trigger: 'item' },
+    color: ['#ff6f7d', '#5bc0ff', '#2fd2c9'],
     series: [
       {
+        name: '风险分层',
         type: 'pie',
-        radius: ['62%', '88%'],
-        center: ['50%', '50%'],
+        radius: ['73%', '86%'],
+        avoidLabelOverlap: false,
         label: { show: false },
         labelLine: { show: false },
-        itemStyle: { borderColor: 'rgba(114,180,205,0.24)', borderWidth: 2 },
-        data: [
-          { name: '高危', value: riskHigh.value },
-          { name: '中危', value: riskMid.value },
-          { name: '低危', value: riskLow.value },
-          { name: '告警', value: totalAlerts30d.value }
-        ]
-      }
-    ]
-  })
-}
-
-function buildTrend(months: string[], alerts: number[], high: number[], follow: number[]) {
-  if (!trendRef.value) return
-  if (!trendChart) trendChart = init(trendRef.value)
-  const axis = axisStyle()
-  trendChart.setOption({
-    tooltip: tooltipStyle(),
-    legend: { ...legendStyle(), data: ['告警', '高危', '随访'] },
-    grid: { ...baseGrid(), bottom: 48 },
-    xAxis: { type: 'category', data: months, ...axis, axisLabel: { ...(axis as any).axisLabel, margin: 12 } },
-    yAxis: { type: 'value', ...axis },
-    series: [
-      {
-        name: '告警',
-        type: 'bar',
-        data: alerts,
-        barWidth: 12,
         itemStyle: {
-          color: new graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: '#7fd6e3' },
-            { offset: 1, color: '#9ea9e6' }
-          ])
-        }
-      },
-      {
-        name: '高危',
-        type: 'line',
-        smooth: true,
-        symbolSize: 5,
-        data: high,
-        itemStyle: { color: '#ee8d99' },
-        lineStyle: { width: 2 }
-      },
-      {
-        name: '随访',
-        type: 'line',
-        smooth: true,
-        symbolSize: 5,
-        data: follow,
-        itemStyle: { color: '#5fc7d8' },
-        lineStyle: { width: 2 }
+          borderColor: 'rgba(240,248,248,0.92)',
+          borderWidth: 4,
+          shadowBlur: 18,
+          shadowColor: 'rgba(27, 170, 176, 0.22)'
+        },
+        data
       }
     ]
-  })
+  }
+  hubChart.value.setOption(option)
 }
 
-function buildGauge(
-  el: HTMLElement | null,
-  chart: ECharts | null,
-  value: number,
-  title: string,
-  opts?: {
-    placeholderText?: string
-  }
-) {
-  if (!el) return chart
-  const c = chart || init(el)
-  const isPlaceholder = !!opts?.placeholderText
-  const safeVal = Math.max(0, Math.min(100, Number(value || 0)))
-  c.setOption({
+function renderTrendChart() {
+  if (!trendRef.value) return
+  if (!trendChart.value) trendChart.value = init(trendRef.value)
+  const series = normalizeTrendSeries()
+  const option: EChartsOption = {
+    animationDuration: 500,
+    color: ['#00b8c8', '#ff8d7d', '#5f8bff'],
+    tooltip: { trigger: 'axis' },
+    legend: {
+      right: 12,
+      top: 8,
+      textStyle: { color: '#5f6f77' }
+    },
+    grid: { left: 24, right: 24, top: 52, bottom: 26, containLabel: true },
+    xAxis: {
+      type: 'category',
+      boundaryGap: false,
+      data: series.labels,
+      axisLine: { lineStyle: { color: 'rgba(0,0,0,0.12)' } },
+      axisLabel: { color: '#587079' }
+    },
+    yAxis: {
+      type: 'value',
+      splitLine: { lineStyle: { color: 'rgba(0,0,0,0.06)' } },
+      axisLabel: { color: '#587079' }
+    },
     series: [
       {
-        type: 'gauge',
-        startAngle: 210,
-        endAngle: -30,
-        progress: {
-          show: true,
-          width: 10,
-          itemStyle: {
-            color: isPlaceholder ? 'rgba(114,180,205,0.18)' : 'rgba(95,199,216,0.86)'
-          }
-        },
-        axisLine: { lineStyle: { width: 10, color: [[1, 'rgba(114,180,205,0.30)']] } },
-        splitLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { show: false },
-        pointer: { show: false },
-        detail: {
-          valueAnimation: true,
-          formatter: isPlaceholder ? opts?.placeholderText : '{value}%',
-          color: isPlaceholder ? 'rgba(39,85,113,0.86)' : 'rgba(20,52,79,0.96)',
-          fontSize: isPlaceholder ? 16 : 20,
-          fontWeight: isPlaceholder ? 800 : 900
-        },
-        title: { color: 'rgba(39,85,113,0.92)', fontSize: 12, offsetCenter: [0, '58%'] },
-        data: [{ value: isPlaceholder ? 0 : safeVal, name: title }]
+        name: '风险患者',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        areaStyle: { color: 'rgba(0,184,200,0.12)' },
+        data: series.risk
+      },
+      {
+        name: '告警总量',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        areaStyle: { color: 'rgba(255,141,125,0.10)' },
+        data: series.alert
+      },
+      {
+        name: '随访次数',
+        type: 'line',
+        smooth: true,
+        symbol: 'circle',
+        symbolSize: 8,
+        areaStyle: { color: 'rgba(95,139,255,0.10)' },
+        data: series.follow
       }
     ]
-  })
-  return c
+  }
+  trendChart.value.setOption(option)
 }
 
-function resizeAll() {
-  if (!activeAlive) return
-  hubRingChart?.resize()
-  trendChart?.resize()
-  disposalGaugeChart?.resize()
-  followGaugeChart?.resize()
-  interventionGaugeChart?.resize()
+function resizeCharts() {
+  if (!pageAlive.value) return
+  hubChart.value?.resize()
+  trendChart.value?.resize()
 }
 
-const onResize = rafThrottle(() => resizeAll())
-
-function disposeAll() {
-  hubRingChart?.dispose()
-  trendChart?.dispose()
-  disposalGaugeChart?.dispose()
-  followGaugeChart?.dispose()
-  interventionGaugeChart?.dispose()
-  hubRingChart = null
-  trendChart = null
-  disposalGaugeChart = null
-  followGaugeChart = null
-  interventionGaugeChart = null
+let resizeTimer = 0
+function onResize() {
+  window.clearTimeout(resizeTimer)
+  resizeTimer = window.setTimeout(() => resizeCharts(), 120)
 }
 
 async function loadCore() {
-  const [homeStats, monthRes] = await Promise.all([
-    fetchHomeStats().catch(() => ({} as any)),
-    fetchMonthSummary().catch(() => [] as any)
-  ])
-  if (!activeAlive) return
-
-  totalPatients.value = Number(homeStats?.totalPatients || 0)
-  weekFollowDone.value = Number(homeStats?.weekFollowDone || 0)
-  weekFollowRatePct.value =
-    homeStats?.weekFollowRate != null ? Math.max(0, Math.min(100, Number(homeStats.weekFollowRate) * 100)) : 0
-
-  if (homeStats && (homeStats.highRiskCount != null || homeStats.midRiskCount != null || homeStats.lowRiskCount != null)) {
-    riskHigh.value = Number(homeStats.highRiskCount) || 0
-    riskMid.value = Number(homeStats.midRiskCount) || 0
-    riskLow.value = Number(homeStats.lowRiskCount) || 0
-  }
-
-  const mArr = Array.isArray(monthRes) ? monthRes : []
-  const monthsAll = mArr.map((it: any) => it.month || (it.months && it.months[0]) || '')
-  const alertsAll = mArr.map((it: any) => it.alerts || it.alert_count || 0)
-  const highAll = mArr.map((it: any) => it.highRisk || it.high_risk || 0)
-  const followAll = mArr.map((it: any) => it.followups || it.follow_count || 0)
-  const take = monthsAll.length > 12 ? 12 : monthsAll.length
-  const start = Math.max(0, monthsAll.length - take)
-
-  buildTrend(monthsAll.slice(start), alertsAll.slice(start), highAll.slice(start), followAll.slice(start))
-  followGaugeChart = buildGauge(followGaugeRef.value, followGaugeChart, weekFollowRatePct.value, '随访完成率')
+  const [home, month] = await Promise.all([fetchHomeStats(), fetchMonthSummary()])
+  homeStats.value = home || {}
+  monthSummary.value = month || {}
 }
 
 async function loadSecondary() {
-  const patientRes = await fetchPatientSummary(300).catch(() => ({ rows: [], total: 0 } as any))
-  if (!activeAlive) return
-
-  const pList = (patientRes?.rows || []) as any[]
-  if (!totalPatients.value) totalPatients.value = Number(patientRes?.total || pList.length || 0)
-
-  if (!riskHigh.value && !riskMid.value && !riskLow.value && pList.length) {
-    const norm = (x: any) => String(x ?? '').trim().toUpperCase()
-    const isHigh = (s: string) => s.includes('HIGH') || s === 'H' || s === '高' || s.includes('高危')
-    const isMid = (s: string) => s.includes('MID') || s.includes('MED') || s === 'M' || s === '中' || s.includes('中危')
-    const isLow = (s: string) => s.includes('LOW') || s === 'L' || s === '低' || s.includes('低危')
-
-    riskHigh.value = pList.filter((r: any) => isHigh(norm(r.riskLevel))).length
-    riskMid.value = pList.filter((r: any) => isMid(norm(r.riskLevel))).length
-    riskLow.value = pList.filter((r: any) => isLow(norm(r.riskLevel))).length
-  }
-
-  buildDiseaseTop(pList)
-  buildDoctorTop(pList)
-  activeDoctorCount.value = Array.from(
-    new Set(
-      pList
-        .map((r: any) => (r.responsibleDoctor || r.doctor || '').toString().trim())
-        .filter((x: string) => !!x)
-    )
-  ).length
-}
-
-async function loadEventsAndAlerts() {
-  const [alertRes, hardwareRes] = await Promise.all([
-    fetchAlerts(30).catch(() => ({} as any)),
-    fetchHardwareAlerts(30).catch(() => ({} as any))
+  const [summary, alertList, hardwareList, risks] = await Promise.all([
+    fetchPatientSummary(300),
+    fetchAlerts(30),
+    fetchHardwareAlerts(30),
+    fetchPatientRiskList(200)
   ])
-  if (!activeAlive) return
-
-  const aRows = (alertRes?.rows || []) as any[]
-  const hRows = (hardwareRes?.rows || []) as any[]
-  totalAlerts30d.value = aRows.length + hRows.length
-  const all = [...aRows, ...hRows]
-  unhandledAlerts.value = all.filter(
-    (r: any) => String(r.statusText || r.status || '').includes('未处理') || String(r.status || '').toUpperCase() === 'NEW'
-  ).length
-  closedAlerts.value = all.filter(
-    (r: any) => String(r.statusText || r.status || '').includes('已关闭') || String(r.status || '').toUpperCase() === 'CLOSED'
-  ).length
-
-  const ev: Array<{ id: string; title: string; time: string }> = []
-  aRows.slice(0, 4).forEach((r: any, idx: number) => {
-    const time = String(r.alertTime || r.firstTime || r.createdAt || '').replace('T', ' ')
-    const hhmm = time.length >= 16 ? time.slice(11, 16) : '--:--'
-    ev.push({
-      id: `a-${r.id || idx}`,
-      title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`,
-      time: hhmm
-    })
-  })
-  hRows.slice(0, 4).forEach((r: any, idx: number) => {
-    const time = String(r.alertTime || r.firstTime || r.createdAt || '').replace('T', ' ')
-    const hhmm = time.length >= 16 ? time.slice(11, 16) : '--:--'
-    ev.push({
-      id: `h-${r.id || idx}`,
-      title: `设备 · ${r.patientName || '患者'} · ${r.alertType || r.summary || ''}`,
-      time: hhmm
-    })
-  })
-  events.value = ev.slice(0, 8)
-
-  buildHubRing()
-  disposalGaugeChart = buildGauge(disposalGaugeRef.value, disposalGaugeChart, closeRate.value, '处置效率')
-  // 干预计划完成率：当前后端无聚合接口，保持结构完整，使用中文占位
-  interventionGaugeChart = buildGauge(interventionGaugeRef.value, interventionGaugeChart, 0, '干预完成率', {
-    placeholderText: '待接入'
-  })
+  patientSummary.value = getArray(summary)
+  alerts.value = getArray(alertList)
+  hardwareAlerts.value = getArray(hardwareList)
+  riskList.value = getArray(risks)
 }
 
-async function startLoad() {
+async function loadPage() {
   await loadCore()
-  if (!activeAlive) return
   await nextTick()
-  cancelIdle?.()
-  cancelIdle = scheduleIdle(() => {
-    void loadSecondary()
-    // 更晚一点再拉告警/事件，避免首屏拥堵
-    cancelIdle = scheduleIdle(() => {
-      void loadEventsAndAlerts()
-    }, 900)
-  }, 800)
+  renderHubChart()
+  renderTrendChart()
+  updatedAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  const idle = typeof window !== 'undefined' && 'requestIdleCallback' in window
+    ? (window as any).requestIdleCallback
+    : (cb: Function) => window.setTimeout(cb, 180)
+  idle(async () => {
+    await loadSecondary()
+    await nextTick()
+    renderHubChart()
+    renderTrendChart()
+    updatedAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  })
 }
 
-onMounted(() => {
-  activeAlive = true
-  void startLoad()
+watch(riskDistribution, () => nextTick(renderHubChart), { deep: true })
+watch(monthSummary, () => nextTick(renderTrendChart), { deep: true })
+watch(trendMode, () => nextTick(renderTrendChart))
+
+onMounted(async () => {
+  pageAlive.value = true
   window.addEventListener('resize', onResize)
+  await loadPage()
 })
 
 onActivated(() => {
-  activeAlive = true
+  pageAlive.value = true
   window.addEventListener('resize', onResize)
-  onResize()
+  resizeCharts()
 })
 
 onDeactivated(() => {
-  activeAlive = false
-  cancelIdle?.()
-  cancelIdle = null
+  pageAlive.value = false
   window.removeEventListener('resize', onResize)
 })
 
-onUnmounted(() => {
-  activeAlive = false
-  cancelIdle?.()
-  cancelIdle = null
+onBeforeUnmount(() => {
+  pageAlive.value = false
   window.removeEventListener('resize', onResize)
-  disposeAll()
+  window.clearTimeout(resizeTimer)
+  hubChart.value?.dispose()
+  trendChart.value?.dispose()
+  hubChart.value = null
+  trendChart.value = null
 })
 </script>
 
 <style scoped>
-.command-page {
-  display: grid;
-  grid-template-rows: auto auto auto auto;
-  gap: 12px;
-  padding-top: 2px;
+.command-center-page {
+  position: relative;
+  min-height: 100%;
+  padding: 18px 18px 94px;
+  color: #20343a;
 }
 
-.overview-row {
+.page-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,255,255,0.94), rgba(228,245,245,0.88) 42%, rgba(214,232,233,0.8) 100%),
+    linear-gradient(180deg, rgba(255,255,255,0.85), rgba(232,242,243,0.72));
+}
+
+.page-grid {
+  background-image:
+    linear-gradient(rgba(17, 131, 137, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 131, 137, 0.045) 1px, transparent 1px);
+  background-size: 38px 38px;
+}
+
+.page-main,
+.status-band {
+  position: relative;
+  z-index: 1;
+}
+
+.glass-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.76), rgba(247,252,252,0.58));
+  border: 1px solid rgba(255,255,255,0.9);
+  box-shadow:
+    0 24px 46px rgba(28, 88, 96, 0.08),
+    inset 0 1px 0 rgba(255,255,255,0.72);
+  backdrop-filter: blur(18px);
+}
+
+.hero-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 16px;
+  margin-bottom: 18px;
 }
 
-.overview-card {
-  position: relative;
-  border: 1px solid rgba(114, 180, 205, 0.34);
-  border-radius: 16px;
-  padding: 14px 16px 12px 16px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(245, 251, 255, 0.68));
-  box-shadow: var(--shadow), var(--glow);
-  overflow: hidden;
+.metric-card {
+  min-height: 118px;
+  border-radius: 24px;
+  padding: 20px 22px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 92px;
+  gap: 16px;
 }
 
-.overview-card.risk {
-  border-color: rgba(238, 141, 153, 0.34);
-}
-.overview-card.warn {
-  border-color: rgba(239, 197, 111, 0.34);
-}
-.overview-card.done {
-  border-color: rgba(120, 196, 160, 0.34);
-}
-
-.overview-label {
-  font-size: 12px;
-  color: var(--t-2);
-  letter-spacing: 0.6px;
-  white-space: nowrap;
-}
-
-.overview-value {
-  margin-top: 6px;
-  font-size: 34px;
-  line-height: 1;
-  font-weight: 900;
-  color: var(--t-0);
-  white-space: nowrap;
-}
-
-.overview-meta {
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--t-3);
-  white-space: nowrap;
-}
-
-.overview-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  font-weight: 900;
-  border: 1px solid rgba(114, 180, 205, 0.28);
-  color: rgba(29, 78, 114, 0.92);
-  flex: 0 0 auto;
-}
-.overview-body{
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.overview-icon.bg-cyan { background: rgba(95, 199, 216, 0.16); }
-.overview-icon.bg-violet { background: rgba(158, 169, 230, 0.16); }
-.overview-icon.bg-danger { background: rgba(238, 141, 153, 0.14); }
-.overview-icon.bg-warn { background: rgba(239, 197, 111, 0.14); }
-.overview-icon.bg-success { background: rgba(120, 196, 160, 0.14); }
-
-.middle-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.8fr) minmax(0, 1fr);
-  gap: 12px;
-}
-
-.middle-col {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.rank-list,
-.doctor-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.rank-item + .rank-item {
-  margin-top: 12px;
-}
-
-.rank-head {
-  display: grid;
-  grid-template-columns: 24px 1fr auto;
-  align-items: center;
-  gap: 10px;
-}
-
-.rank-no {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  color: rgba(29, 78, 114, 0.95);
-  background: rgba(127, 214, 227, 0.35);
-}
-
-.rank-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--t-1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.rank-val {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--t-0);
-}
-
-.rank-bar {
-  margin-top: 6px;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(140, 188, 227, 0.22);
-  overflow: hidden;
-}
-
-.rank-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #5fc7d8, #9ea9e6);
-}
-
-.doctor-item {
-  display: grid;
-  grid-template-columns: 8px 1fr auto;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 0;
-  border-bottom: 1px dashed rgba(114, 180, 205, 0.22);
-}
-
-.doctor-item:last-child {
-  border-bottom: none;
-}
-
-.doctor-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: #5fc7d8;
-  box-shadow: 0 0 8px rgba(95, 199, 216, 0.3);
-}
-
-.doctor-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--t-1);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.doctor-rate {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--t-0);
-}
-
-.hub-stage {
-  position: relative;
-  height: 360px;
+.metric-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
   display: grid;
   place-items: center;
+  font-size: 22px;
+  font-weight: 700;
 }
+.metric-icon--primary { background: rgba(10, 171, 177, 0.12); color: #0aaab1; }
+.metric-icon--secondary { background: rgba(78, 129, 255, 0.12); color: #4e81ff; }
+.metric-icon--tertiary { background: rgba(66, 201, 183, 0.12); color: #42c9b7; }
+.metric-icon--error { background: rgba(255, 111, 125, 0.12); color: #ff6f7d; }
 
-.hub-pulse {
-  position: absolute;
-  width: 78%;
-  height: 78%;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(95, 199, 216, 0.16) 0%, rgba(95, 199, 216, 0.03) 60%, transparent 72%);
-  animation: hubPulse 3.8s ease-in-out infinite;
+.metric-body { min-width: 0; }
+.metric-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  letter-spacing: .08em;
+  color: #607a82;
 }
-
-.hub-halo {
-  position: absolute;
-  width: 92%;
-  height: 92%;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.00) 54%, rgba(127,214,227,0.10) 70%, rgba(127,214,227,0.00) 86%),
-    radial-gradient(circle at 50% 50%, rgba(140,188,227,0.16) 0%, rgba(140,188,227,0.00) 64%);
-  filter: blur(0.2px);
-  opacity: 0.95;
-  pointer-events: none;
-}
-
-.hub-rotate-ring {
-  position: absolute;
-  inset: 10px;
-  border-radius: 999px;
-  border: 2px dashed rgba(95, 199, 216, 0.30);
-  animation: hubRotate 60s linear infinite;
-}
-
-.hub-orbit {
-  position: absolute;
-  inset: 22px;
-  border-radius: 999px;
-  border: 1px solid rgba(114, 180, 205, 0.20);
-  background:
-    repeating-conic-gradient(
-      from 0deg,
-      rgba(114,180,205,0.00) 0deg,
-      rgba(114,180,205,0.00) 10deg,
-      rgba(114,180,205,0.16) 10deg,
-      rgba(114,180,205,0.16) 11deg
-    );
-  mask: radial-gradient(circle, transparent 0%, transparent 63%, #000 64%, #000 100%);
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.hub-ring {
-  position: absolute;
-  inset: 8px;
-}
-
-.hub-core {
-  position: absolute;
-  width: 232px;
-  height: 232px;
-  border-radius: 999px;
-  background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.78) 58%, rgba(140, 188, 227, 0.25));
-  border: 1px solid rgba(114, 180, 205, 0.34);
-  box-shadow: var(--glow-strong);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-}
-
-.hub-core-label {
-  font-size: 12px;
-  color: var(--t-2);
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
-
-.hub-core-value {
-  margin-top: 8px;
-  font-size: 44px;
-  font-weight: 900;
-  color: var(--c-gold);
+.metric-value {
+  margin: 0;
+  font-size: 30px;
   line-height: 1;
-  white-space: nowrap;
-}
-
-.hub-core-sub {
-  margin-top: 10px;
-  font-size: 12px;
-  color: var(--t-3);
-  white-space: normal;
-  max-width: 180px;
-}
-
-.hub-micro-grid {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  width: 86%;
-}
-
-.hub-micro-item {
-  border-radius: 10px;
-  border: 1px solid rgba(114, 180, 205, 0.22);
-  background: rgba(255, 255, 255, 0.56);
-  padding: 5px 6px;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.hub-micro-item .k {
-  font-size: 11px;
-  color: var(--t-2);
-}
-
-.hub-micro-item .v {
-  font-size: 12px;
   font-weight: 800;
-  color: var(--t-0);
+  color: #18363d;
 }
-
-.hub-node {
-  position: absolute;
-  min-width: 74px;
-  text-align: center;
-  padding: 5px 10px 6px;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--t-1);
-  border: 1px solid rgba(114, 180, 205, 0.34);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.66);
-  box-shadow: 0 4px 16px rgba(95, 199, 216, 0.12);
-}
-
-.hub-node.n1 { top: 30px; left: 50%; transform: translateX(-50%); }
-.hub-node.n2 { top: 50%; right: 18px; transform: translateY(-50%); }
-.hub-node.n3 { bottom: 32px; left: 50%; transform: translateX(-50%); }
-.hub-node.n4 { top: 50%; left: 18px; transform: translateY(-50%); }
-
-.single-ring-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.single-ring {
-  height: 168px;
-}
-
-.legend-row {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-}
-
-.legend-item {
+.metric-meta {
+  margin: 8px 0 0;
   font-size: 12px;
-  color: var(--t-2);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
+  color: #6d848b;
 }
 
-.dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-}
-.dot.success { background: #78c4a0; }
-.dot.danger { background: #ee8d99; }
-
-.matrix-grid {
+.hero-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.matrix-item {
-  border: 1px solid rgba(114, 180, 205, 0.24);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.58);
-  padding: 8px;
-  position: relative;
-  overflow: hidden;
-}
-
-.matrix-item::before {
-  content: '';
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 0;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(95,199,216,0.55), rgba(158,169,230,0.55));
-  opacity: 0.55;
-}
-
-.matrix-ring {
-  height: 122px;
-}
-
-.matrix-title {
-  margin-top: 2px;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--t-1);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.matrix-tip {
-  margin-top: 2px;
-  font-size: 11px;
-  color: var(--t-3);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.trend-row :deep(.panel-body) {
-  padding-top: 8px;
-}
-
-.trend-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.trend-note {
-  font-size: 12px;
-  color: var(--t-3);
-  white-space: nowrap;
-}
-
-.trend-switch {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid rgba(114, 180, 205, 0.26);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.56);
-  padding: 4px;
-}
-
-.switch-btn {
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  padding: 5px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--t-2);
-  cursor: pointer;
-}
-
-.switch-btn.active {
-  background: linear-gradient(135deg, rgba(95, 199, 216, 0.18), rgba(158, 169, 230, 0.18));
-  color: var(--t-0);
-}
-
-.trend-chart {
-  height: 300px;
-}
-
-.footer-row {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 12px;
+  grid-template-columns: minmax(280px, 1fr) minmax(520px, 2.2fr) minmax(280px, 1fr);
+  gap: 18px;
   align-items: stretch;
 }
 
-.system-status {
-  border: 1px solid rgba(114, 180, 205, 0.30);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.62);
+.column-stack { display: flex; flex-direction: column; gap: 18px; }
+.panel {
+  border-radius: 26px;
+  padding: 18px 18px 20px;
+}
+.panel-compact { min-height: 0; }
+.panel-header {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.panel-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1d3d43;
+}
+.panel-subtitle {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #6e858d;
 }
 
-.status-tag {
+.rank-list,
+.doctor-list { display: flex; flex-direction: column; gap: 14px; }
+.rank-item,
+.doctor-item {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.48);
+  border: 1px solid rgba(255,255,255,0.74);
+}
+.rank-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.rank-name { font-size: 14px; font-weight: 700; color: #294149; }
+.rank-value { font-size: 13px; color: #5a757d; }
+.rank-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(98, 128, 135, 0.12);
+  overflow: hidden;
+}
+.rank-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #17d0c7, #4b89ff);
+}
+
+.doctor-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.doctor-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.doctor-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(23,208,199,0.16), rgba(75,137,255,0.16));
+  color: #1a7f8a;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.doctor-name { font-size: 14px; font-weight: 700; color: #294149; }
+.doctor-count { font-size: 12px; color: #6f858d; margin-top: 3px; }
+.doctor-load { display: flex; align-items: center; gap: 8px; }
+.doctor-load-value { font-size: 13px; font-weight: 700; color: #23838f; }
+.doctor-load-value.is-hot { color: #ff6978; }
+.doctor-dot { width: 9px; height: 9px; border-radius: 50%; }
+.doctor-dot.is-ok { background: #2fd2c9; }
+.doctor-dot.is-warn { background: #5f8bff; }
+.doctor-dot.is-hot { background: #ff6978; box-shadow: 0 0 0 6px rgba(255,105,120,0.12); }
+
+.empty-tip {
+  padding: 18px 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.42);
+  color: #6f858d;
+  font-size: 13px;
+  text-align: center;
+}
+
+.center-column { min-height: 640px; }
+.hub-shell {
+  position: relative;
+  border-radius: 34px;
+  min-height: 100%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 30px;
+}
+.hub-glow {
+  position: absolute;
+  width: 68%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(82, 196, 199, 0.22), rgba(82,196,199,0.08) 46%, transparent 72%);
+  filter: blur(22px);
+}
+.hub-outer-ring,
+.hub-middle-ring {
+  position: absolute;
+  border-radius: 50%;
+}
+.hub-outer-ring {
+  inset: 8%;
+  border: 2px dashed rgba(58, 177, 187, 0.28);
+  animation: rotate360 36s linear infinite;
+}
+.hub-middle-ring {
+  inset: 18%;
+  border: 1px solid rgba(58, 177, 187, 0.12);
+}
+.hub-chart {
+  position: absolute;
+  inset: 12%;
+}
+.hub-core {
+  position: relative;
+  z-index: 2;
+  width: min(360px, 68%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.hub-kicker {
+  font-size: 12px;
+  letter-spacing: .12em;
+  color: #5c8088;
+  margin-bottom: 8px;
+}
+.hub-title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 900;
+  color: #11838a;
+}
+.hub-subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: #5d7980;
+}
+.hub-total {
+  margin-top: 18px;
+  font-size: 40px;
+  font-weight: 900;
+  color: #1a3640;
+}
+.hub-total-label {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6d868d;
+}
+.hub-mini-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 18px;
+}
+.hub-mini-card {
+  min-height: 70px;
+  border-radius: 18px;
+  padding: 12px 10px;
+  background: rgba(255,255,255,0.44);
+  border: 1px solid rgba(255,255,255,0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.hub-mini-value { font-size: 21px; font-weight: 800; color: #156c78; }
+.hub-mini-label { margin-top: 6px; font-size: 12px; color: #6d858c; }
+.hub-node {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #37555c;
   font-size: 12px;
   font-weight: 700;
-  color: var(--t-2);
-  padding: 4px 8px;
+}
+.hub-node-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(255,255,255,0.86);
+  box-shadow: 0 14px 28px rgba(17, 90, 99, 0.12);
+  color: #1a7f89;
+}
+.hub-node-top { top: 7%; left: 50%; transform: translateX(-50%); }
+.hub-node-right { right: 7%; top: 50%; transform: translateY(-50%); }
+.hub-node-bottom { bottom: 7%; left: 50%; transform: translateX(-50%); }
+.hub-node-left { left: 7%; top: 50%; transform: translateY(-50%); }
+
+.efficiency-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.big-progress {
+  position: relative;
+  width: 170px;
+  height: 170px;
+}
+.big-progress-svg,
+.mini-progress-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.big-progress-track,
+.big-progress-bar,
+.mini-progress-track,
+.mini-progress-bar {
+  fill: none;
+  stroke-linecap: round;
+}
+.big-progress-track { stroke: rgba(100, 128, 134, 0.14); stroke-width: 10; }
+.big-progress-bar {
+  stroke: url(#bigGradient);
+  stroke: #12b8c8;
+  stroke-width: 10;
+  stroke-dasharray: 301.59;
+  transition: stroke-dashoffset .4s ease;
+}
+.big-progress-center,
+.mini-progress-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.big-progress-value { font-size: 34px; font-weight: 900; color: #1a3640; }
+.big-progress-label { margin-top: 4px; font-size: 12px; color: #6b848b; }
+.legend-row { width: 100%; display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: #5b757d; }
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+.legend-dot.is-primary { background: #12b8c8; }
+.legend-dot.is-muted { background: rgba(100, 128, 134, 0.34); }
+
+.mini-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.mini-progress-card {
+  border-radius: 22px;
+  padding: 14px 10px 12px;
+  background: rgba(255,255,255,0.48);
+  border: 1px solid rgba(255,255,255,0.72);
+  text-align: center;
+}
+.mini-progress { position: relative; width: 108px; height: 108px; margin: 0 auto; }
+.mini-progress-track { stroke: rgba(100, 128, 134, 0.14); stroke-width: 9; }
+.mini-progress-bar {
+  stroke-width: 9;
+  stroke-dasharray: 238.76;
+  transition: stroke-dashoffset .4s ease;
+}
+.mini-progress-bar.is-primary { stroke: #1ab5ba; }
+.mini-progress-bar.is-secondary { stroke: #5f8bff; }
+.mini-progress-center { font-size: 24px; font-weight: 800; color: #20343a; }
+.mini-progress-label { margin-top: 8px; font-size: 13px; font-weight: 700; color: #38545b; }
+.mini-progress-tip { margin-top: 6px; font-size: 11px; color: #7a8f95; line-height: 1.4; }
+
+.trend-section {
+  margin-top: 18px;
+  border-radius: 30px;
+  padding: 18px 18px 16px;
+}
+.trend-header { margin-bottom: 8px; }
+.switch-group { display: flex; gap: 10px; }
+.switch-btn {
+  height: 34px;
+  min-width: 48px;
   border-radius: 999px;
-  border: 1px solid rgba(114, 180, 205, 0.24);
-  background: rgba(255, 255, 255, 0.72);
-  white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.5);
+  color: #587079;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.switch-btn.active {
+  background: linear-gradient(135deg, #13b9c9, #4b89ff);
+  color: #fff;
+  box-shadow: 0 10px 20px rgba(75, 137, 255, 0.18);
+}
+.trend-chart {
+  width: 100%;
+  height: 340px;
 }
 
-.status-tag.ok {
-  color: rgba(31, 119, 86, 0.92);
-  border-color: rgba(120, 196, 160, 0.34);
-  background: rgba(120, 196, 160, 0.14);
+.status-band {
+  position: sticky;
+  bottom: 10px;
+  margin-top: 16px;
+  border-radius: 24px;
+  min-height: 62px;
+  padding: 0 16px;
+  display: grid;
+  grid-template-columns: 200px 1fr 150px;
+  gap: 14px;
+  align-items: center;
 }
-
-.ticker-wrap {
-  border: 1px solid rgba(114, 180, 205, 0.30);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.62);
-  padding: 8px 10px;
+.status-indicator,
+.band-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #35535a;
+  font-weight: 700;
 }
-
-.marquee-shell {
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #20d0c9;
+  box-shadow: 0 0 0 7px rgba(32,208,201,0.12);
+}
+.ticker-window {
   overflow: hidden;
+  border-left: 1px solid rgba(17, 131, 137, 0.08);
+  border-right: 1px solid rgba(17, 131, 137, 0.08);
+  padding: 0 12px;
+}
+.ticker-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 28px;
   white-space: nowrap;
-}
-
-.marquee-track {
-  display: inline-flex;
-  align-items: center;
-  gap: 24px;
   min-width: max-content;
-  animation: marquee linear infinite;
+  animation: tickerMove linear infinite;
 }
-
-.marquee-item {
+.ticker-item {
   font-size: 12px;
-  color: var(--t-2);
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  color: #4d6a72;
 }
+.band-meta { justify-content: flex-end; color: #72878d; }
 
-.marquee-item strong {
-  color: var(--t-0);
-  font-weight: 800;
-}
-
-
-@keyframes hubRotate {
+@keyframes rotate360 {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
 
-@keyframes hubPulse {
-  0%, 100% { transform: scale(1); opacity: 0.75; }
-  50% { transform: scale(1.04); opacity: 1; }
+@keyframes tickerMove {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
-@keyframes marquee {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+@media (max-width: 1480px) {
+  .hero-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero-grid { grid-template-columns: 1fr; }
+  .center-column { min-height: 560px; }
+  .status-band { grid-template-columns: 1fr; padding: 14px 16px; }
+  .band-meta { justify-content: flex-start; }
 }
 </style>
-
