@@ -1,3 +1,96 @@
+# 寒岐智护大屏首页修正版代码与 Cursor 同步说明
+
+本次文档基于你当前仓库的最新首页代码结构整理，目标是：
+
+- 直接替换首页 `CommandCenter.vue`
+- 让首页布局更接近 Stitch 方案
+- 保留当前真实数据请求与聚合逻辑
+- 文案保持中文化
+- 底部状态带改为固定贴底样式
+- 中间 Hub 主视觉和左右两侧版式进一步收紧
+
+---
+
+## 一、本次修改的文件
+
+本次只需要替换 1 个文件：
+
+`test(vue)/bigScene/src/pages/CommandCenter.vue`
+
+如果你后续还想继续调 Header 或 Tab 的视觉，再单独改：
+
+`test(vue)/bigScene/src/App.vue`
+
+但本次文档中不要求你改它。
+
+---
+
+## 二、给 Cursor 的执行要求
+
+你可以把下面这段话直接发给 Cursor：
+
+```text
+请直接按照我提供的文档内容，把首页文件替换到项目中：
+
+目标文件路径：
+`test(vue)/bigScene/src/pages/CommandCenter.vue`
+
+操作要求：
+1. 打开项目中的这个文件。
+2. 删除原有全部内容。
+3. 用文档里“CommandCenter.vue 完整代码”这一节的代码完整覆盖。
+4. 保存文件。
+5. 不要修改其他页面。
+6. 不要再输出分析说明。
+7. 如果项目里存在同名文件冲突，以文档中的代码为准。
+```
+
+---
+
+## 三、Cursor 在项目中同步代码的具体步骤
+
+### 方法一：最直接的方法
+
+1. 在 Cursor 中打开你的项目根目录。
+2. 在左侧文件树中找到：
+   `test(vue)/bigScene/src/pages/CommandCenter.vue`
+3. 打开这个文件。
+4. 全选原文件内容并删除。
+5. 复制本文档里 **“四、CommandCenter.vue 完整代码”** 章节中的全部代码。
+6. 粘贴进该文件。
+7. 保存。
+8. 运行项目查看首页效果。
+
+### 方法二：让 Cursor 帮你自动替换
+
+你也可以直接把这段话发给 Cursor：
+
+```text
+请打开 `test(vue)/bigScene/src/pages/CommandCenter.vue`，
+把该文件完整替换成我提供文档中的完整版代码。
+不要分析，不要解释，直接替换并保存。
+```
+
+### 方法三：如果你把这个文档也放进项目里
+
+你可以把本文档一起放到例如：
+
+`docs/首页重构代码与Cursor同步说明.md`
+
+然后直接对 Cursor 说：
+
+```text
+请读取 `docs/首页重构代码与Cursor同步说明.md`，
+将其中“CommandCenter.vue 完整代码”同步覆盖到
+`test(vue)/bigScene/src/pages/CommandCenter.vue`。
+不要输出说明，直接替换保存。
+```
+
+---
+
+## 四、CommandCenter.vue 完整代码
+
+```vue
 <template>
   <div class="command-center-page">
     <div class="page-bg page-grid"></div>
@@ -1181,3 +1274,35 @@ onBeforeUnmount(() => {
   .band-meta { justify-content: flex-start; }
 }
 </style>
+```
+
+---
+
+## 五、同步完成后建议做的事
+
+1. 保存 `CommandCenter.vue`
+2. 在 Cursor 终端运行项目
+3. 检查：
+   - 顶部四卡是否独立成一行
+   - 左侧是否为信息面板风格
+   - 中间 Hub 是否更居中
+   - 右侧是否为大环 + 双小环
+   - 底部状态带是否固定在页面底部
+   - 所有展示文案是否仍然是中文
+
+---
+
+## 六、如果你还要继续让 Cursor 自动细调
+
+你可以继续发给 Cursor 下面这段话：
+
+```text
+我已经把首页替换成文档中的新版 CommandCenter.vue。
+请你在不改变真实数据逻辑的前提下，继续只优化视觉细节：
+1. 继续增强中间 Hub 的中心感
+2. 调整左右列与中间列比例
+3. 优化顶部四卡与底部状态带的精致度
+4. 不要改动接口逻辑
+5. 不要输出分析，直接改代码
+```
+
