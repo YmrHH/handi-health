@@ -48,13 +48,14 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import * as echarts from 'echarts'
+import { onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
+import { init, type ECharts } from '../utils/echarts'
 import ScreenPanel from '../components/ScreenPanel.vue'
 import EventTicker from '../components/EventTicker.vue'
 import StatCard from '../components/StatCard.vue'
 import { axisStyle, baseGrid, tooltipStyle } from '../utils/chartTheme'
 import { getBigscreenDemoData } from '../mock/bigscreenData'
+import { rafThrottle } from '../utils/perf'
 
 const demo = getBigscreenDemoData()
 const events = ref(demo.lists.interventions.map((x) => ({ id: x.id, title: `${x.patient} · ${x.plan} · ${x.status}`, time: x.time })))
@@ -66,16 +67,18 @@ const serviceTrendRef = ref<HTMLElement | null>(null)
 const reachGaugeRef = ref<HTMLElement | null>(null)
 const areaRef = ref<HTMLElement | null>(null)
 
-let planTypeChart: echarts.ECharts | null = null
-let hotPlanChart: echarts.ECharts | null = null
-let serviceRingChart: echarts.ECharts | null = null
-let serviceTrendChart: echarts.ECharts | null = null
-let reachGaugeChart: echarts.ECharts | null = null
-let areaChart: echarts.ECharts | null = null
+let planTypeChart: ECharts | null = null
+let hotPlanChart: ECharts | null = null
+let serviceRingChart: ECharts | null = null
+let serviceTrendChart: ECharts | null = null
+let reachGaugeChart: ECharts | null = null
+let areaChart: ECharts | null = null
+
+let activeAlive = false
 
 function buildPlanType() {
   if (!planTypeRef.value) return
-  if (!planTypeChart) planTypeChart = echarts.init(planTypeRef.value)
+  if (!planTypeChart) planTypeChart = init(planTypeRef.value)
   const data = [
     { name: '健康评估', value: 22 },
     { name: '用药指导', value: 18 },
@@ -99,7 +102,7 @@ function buildPlanType() {
 
 function buildHotPlan() {
   if (!hotPlanRef.value) return
-  if (!hotPlanChart) hotPlanChart = echarts.init(hotPlanRef.value)
+  if (!hotPlanChart) hotPlanChart = init(hotPlanRef.value)
   const names = ['血压管理', '血糖管理', '睡眠改善', '运动处方', '饮食指导']
   const vals = [34, 26, 22, 18, 16]
   const axis = axisStyle()
@@ -114,7 +117,7 @@ function buildHotPlan() {
 
 function buildServiceRing() {
   if (!serviceRingRef.value) return
-  if (!serviceRingChart) serviceRingChart = echarts.init(serviceRingRef.value)
+  if (!serviceRingChart) serviceRingChart = init(serviceRingRef.value)
   serviceRingChart.setOption({
     tooltip: { trigger: 'item', ...tooltipStyle() },
     series: [
@@ -137,7 +140,7 @@ function buildServiceRing() {
 
 function buildServiceTrend() {
   if (!serviceTrendRef.value) return
-  if (!serviceTrendChart) serviceTrendChart = echarts.init(serviceTrendRef.value)
+  if (!serviceTrendChart) serviceTrendChart = init(serviceTrendRef.value)
   const axis = axisStyle()
   const labels = demo.trends.last7Days.map((x) => x.day)
   const vals = demo.trends.last7Days.map((x) => x.followups)
@@ -162,7 +165,7 @@ function buildServiceTrend() {
 
 function buildReachGauge() {
   if (!reachGaugeRef.value) return
-  if (!reachGaugeChart) reachGaugeChart = echarts.init(reachGaugeRef.value)
+  if (!reachGaugeChart) reachGaugeChart = init(reachGaugeRef.value)
   reachGaugeChart.setOption({
     series: [
       {
@@ -185,7 +188,7 @@ function buildReachGauge() {
 
 function buildArea() {
   if (!areaRef.value) return
-  if (!areaChart) areaChart = echarts.init(areaRef.value)
+  if (!areaChart) areaChart = init(areaRef.value)
   const names = ['哈尔滨', '齐齐哈尔', '牡丹江', '佳木斯', '大庆']
   const vals = [38, 24, 19, 16, 14]
   const axis = axisStyle()
@@ -199,6 +202,7 @@ function buildArea() {
 }
 
 function resizeAll() {
+  if (!activeAlive) return
   planTypeChart?.resize()
   hotPlanChart?.resize()
   serviceRingChart?.resize()
@@ -207,18 +211,22 @@ function resizeAll() {
   areaChart?.resize()
 }
 
+const onResize = rafThrottle(() => resizeAll())
+
 onMounted(() => {
+  activeAlive = true
   buildPlanType()
   buildHotPlan()
   buildServiceRing()
   buildServiceTrend()
   buildReachGauge()
   buildArea()
-  window.addEventListener('resize', resizeAll)
+  window.addEventListener('resize', onResize)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeAll)
+  activeAlive = false
+  window.removeEventListener('resize', onResize)
   planTypeChart?.dispose()
   hotPlanChart?.dispose()
   serviceRingChart?.dispose()
@@ -231,6 +239,17 @@ onUnmounted(() => {
   serviceTrendChart = null
   reachGaugeChart = null
   areaChart = null
+})
+
+onActivated(() => {
+  activeAlive = true
+  window.addEventListener('resize', onResize)
+  onResize()
+})
+
+onDeactivated(() => {
+  activeAlive = false
+  window.removeEventListener('resize', onResize)
 })
 </script>
 

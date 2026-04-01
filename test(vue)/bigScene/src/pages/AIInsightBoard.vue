@@ -46,12 +46,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import * as echarts from 'echarts'
+import { onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
+import { init, type ECharts } from '../utils/echarts'
 import ScreenPanel from '../components/ScreenPanel.vue'
 import EventTicker from '../components/EventTicker.vue'
 import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
 import { fetchReportBoard } from '../api'
+import { rafThrottle } from '../utils/perf'
 
 const kpiRef = ref<HTMLElement | null>(null)
 const trend3Ref = ref<HTMLElement | null>(null)
@@ -60,12 +61,14 @@ const insightRef = ref<HTMLElement | null>(null)
 const diseaseTrendRef = ref<HTMLElement | null>(null)
 const rankRef = ref<HTMLElement | null>(null)
 
-let kpiChart: echarts.ECharts | null = null
-let trend3Chart: echarts.ECharts | null = null
-let typeChart: echarts.ECharts | null = null
-let insightChart: echarts.ECharts | null = null
-let diseaseTrendChart: echarts.ECharts | null = null
-let rankChart: echarts.ECharts | null = null
+let kpiChart: ECharts | null = null
+let trend3Chart: ECharts | null = null
+let typeChart: ECharts | null = null
+let insightChart: ECharts | null = null
+let diseaseTrendChart: ECharts | null = null
+let rankChart: ECharts | null = null
+
+let activeAlive = false
 
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
 
@@ -76,7 +79,7 @@ const stableHasData = ref(false)
 
 function buildKpi(auc: number, f1: number) {
   if (!kpiRef.value) return
-  if (!kpiChart) kpiChart = echarts.init(kpiRef.value)
+  if (!kpiChart) kpiChart = init(kpiRef.value)
   kpiChart.setOption({
     series: [
       {
@@ -99,7 +102,7 @@ function buildKpi(auc: number, f1: number) {
 
 function buildTrend3(months: string[], alerts: number[], follow: number[], high: number[]) {
   if (!trend3Ref.value) return
-  if (!trend3Chart) trend3Chart = echarts.init(trend3Ref.value)
+  if (!trend3Chart) trend3Chart = init(trend3Ref.value)
   const axis = axisStyle()
   trend3Chart.setOption({
     tooltip: tooltipStyle(),
@@ -117,7 +120,7 @@ function buildTrend3(months: string[], alerts: number[], follow: number[], high:
 
 function buildSourcePie(names: string[], counts: number[]) {
   if (!typeRef.value) return
-  if (!typeChart) typeChart = echarts.init(typeRef.value)
+  if (!typeChart) typeChart = init(typeRef.value)
   typeChart.setOption({
     legend: legendStyle(),
     series: [
@@ -135,7 +138,7 @@ function buildSourcePie(names: string[], counts: number[]) {
 
 function buildInsightCenter(latest: { alerts?: number; followups?: number; highRisk?: number; auc?: number; f1?: number }) {
   if (!insightRef.value) return
-  if (!insightChart) insightChart = echarts.init(insightRef.value)
+  if (!insightChart) insightChart = init(insightRef.value)
   const a = Number(latest.alerts || 0)
   const f = Number(latest.followups || 0)
   const h = Number(latest.highRisk || 0)
@@ -162,7 +165,7 @@ function buildInsightCenter(latest: { alerts?: number; followups?: number; highR
 
 function buildDiseaseTop(diseaseAnalysis: any[]) {
   if (!diseaseTrendRef.value) return
-  if (!diseaseTrendChart) diseaseTrendChart = echarts.init(diseaseTrendRef.value)
+  if (!diseaseTrendChart) diseaseTrendChart = init(diseaseTrendRef.value)
   const top = [...diseaseAnalysis]
     .filter((x: any) => x && x.disease)
     .sort((a: any, b: any) => Number(b.patientCount || 0) - Number(a.patientCount || 0))
@@ -183,7 +186,7 @@ function buildDiseaseTop(diseaseAnalysis: any[]) {
 
 function buildStableRank(diseaseAnalysis: any[]) {
   if (!rankRef.value) return
-  if (!rankChart) rankChart = echarts.init(rankRef.value)
+  if (!rankChart) rankChart = init(rankRef.value)
   const top = [...diseaseAnalysis]
     .filter((x: any) => x && x.disease && x.stableRate != null)
     .sort((a: any, b: any) => Number(b.stableRate || 0) - Number(a.stableRate || 0))
@@ -201,6 +204,7 @@ function buildStableRank(diseaseAnalysis: any[]) {
 }
 
 function resizeAll() {
+  if (!activeAlive) return
   kpiChart?.resize()
   trend3Chart?.resize()
   typeChart?.resize()
@@ -210,6 +214,7 @@ function resizeAll() {
 }
 
 onMounted(async () => {
+  activeAlive = true
   const board = await fetchReportBoard().catch(() => ({} as any))
   const auc = Number(board?.latestAuc || 0) * 100
   const f1 = Number(board?.latestF1 || 0) * 100
@@ -251,11 +256,12 @@ onMounted(async () => {
     { id: 'h', title: `高危变化率：${board?.highRiskChangeRate != null ? Math.round(Number(board.highRiskChangeRate) * 100) + '%' : '—'}`, time: '最新' }
   ]
 
-  window.addEventListener('resize', resizeAll)
+  window.addEventListener('resize', onResize)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeAll)
+  activeAlive = false
+  window.removeEventListener('resize', onResize)
   kpiChart?.dispose()
   trend3Chart?.dispose()
   typeChart?.dispose()
@@ -268,6 +274,19 @@ onUnmounted(() => {
   insightChart = null
   diseaseTrendChart = null
   rankChart = null
+})
+
+const onResize = rafThrottle(() => resizeAll())
+
+onActivated(() => {
+  activeAlive = true
+  window.addEventListener('resize', onResize)
+  onResize()
+})
+
+onDeactivated(() => {
+  activeAlive = false
+  window.removeEventListener('resize', onResize)
 })
 </script>
 

@@ -28,18 +28,32 @@ http.interceptors.request.use((config) => {
 
 type CacheEntry<T> = {
   promise: Promise<T>
+  createdAt: number
+  ttlMs: number
 }
 
 const memCache = new Map<string, CacheEntry<any>>()
 
-async function cached<T>(key: string, fetcher: () => Promise<T>) {
+async function cached<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  opts?: {
+    ttlMs?: number
+  }
+) {
+  const ttlMs = Math.max(0, Number(opts?.ttlMs ?? 0))
   const hit = memCache.get(key) as CacheEntry<T> | undefined
-  if (hit) return await hit.promise
+  const now = Date.now()
+  if (hit) {
+    if (!hit.ttlMs) return await hit.promise
+    if (now - hit.createdAt <= hit.ttlMs) return await hit.promise
+    memCache.delete(key)
+  }
   const promise = fetcher().catch((err) => {
     memCache.delete(key)
     throw err
   })
-  memCache.set(key, { promise })
+  memCache.set(key, { promise, createdAt: now, ttlMs })
   return await promise
 }
 
@@ -51,49 +65,49 @@ export async function fetchReportBoard() {
   return await cached('reportBoard', async () => {
     const res = await http.get('/api/report/board')
     return (res.data as any)?.data ?? res.data
-  })
+  }, { ttlMs: 30_000 })
 }
 
 export async function fetchMonthSummary() {
   return await cached('monthSummary', async () => {
     const res = await http.get('/api/report/month-summary')
     return (res.data as any)?.data ?? res.data
-  })
+  }, { ttlMs: 60_000 })
 }
 
 export async function fetchHomeStats() {
   return await cached('homeStats', async () => {
     const res = await http.get('/api/home/stats')
     return (res.data as any)?.data ?? res.data
-  })
+  }, { ttlMs: 15_000 })
 }
 
 export async function fetchAlerts(range = 30) {
   return await cached(`alerts:${range}`, async () => {
     const res = await http.get(`/api/alert/alerts?status=&type=&range=${range}`)
     return (res.data as any)?.data ?? res.data
-  })
+  }, { ttlMs: 10_000 })
 }
 
 export async function fetchHardwareAlerts(range = 30) {
   return await cached(`hardwareAlerts:${range}`, async () => {
     const res = await http.get(`/api/alert/hardware?status=&deviceType=&range=${range}`)
     return (res.data as any)?.data ?? res.data
-  })
+  }, { ttlMs: 10_000 })
 }
 
 export async function fetchPatientRiskList(pageSize = 2000) {
   return await cached(`patientRiskList:page1:${pageSize}`, async () => {
     const res = await http.get(`/api/patient/risk-list?level=&pageNo=1&pageSize=${pageSize}`)
     return (res.data as any)?.data ?? res.data
-  })
+  }, { ttlMs: 60_000 })
 }
 
 export async function fetchPatientSummary(pageSize = 200) {
   return await cached(`patientSummary:${pageSize}`, async () => {
     const res = await http.get(`/api/patient/summary?pageNo=1&pageSize=${pageSize}`)
     return (res.data as any)?.data ?? res.data
-  })
+  }, { ttlMs: 60_000 })
 }
 
 // 登录（与主系统保持同样接口）

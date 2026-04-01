@@ -62,13 +62,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import * as echarts from 'echarts'
+import { computed, nextTick, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
+import { graphic, init, type ECharts } from '../utils/echarts'
 import ScreenPanel from '../components/ScreenPanel.vue'
 import StatCard from '../components/StatCard.vue'
 import EventTicker from '../components/EventTicker.vue'
 import { baseGrid, axisStyle, colorPalette, legendStyle, tooltipStyle } from '../utils/chartTheme'
-import { fetchAlerts, fetchHardwareAlerts, fetchHomeStats, fetchMonthSummary, fetchPatientRiskList, fetchPatientSummary } from '../api'
+import { fetchAlerts, fetchHardwareAlerts, fetchHomeStats, fetchMonthSummary, fetchPatientSummary } from '../api'
+import { rafThrottle, scheduleIdle } from '../utils/perf'
 
 const totalPatients = ref(0)
 const riskHigh = ref(0)
@@ -95,15 +96,18 @@ const hubRingRef = ref<HTMLElement | null>(null)
 const trendRef = ref<HTMLElement | null>(null)
 const followGaugeRef = ref<HTMLElement | null>(null)
 
-let diseaseRankChart: echarts.ECharts | null = null
-let doctorRankChart: echarts.ECharts | null = null
-let hubRingChart: echarts.ECharts | null = null
-let trendChart: echarts.ECharts | null = null
-let followGaugeChart: echarts.ECharts | null = null
+let diseaseRankChart: ECharts | null = null
+let doctorRankChart: ECharts | null = null
+let hubRingChart: ECharts | null = null
+let trendChart: ECharts | null = null
+let followGaugeChart: ECharts | null = null
+
+let activeAlive = false
+let cancelIdle: null | (() => void) = null
 
 function buildDiseaseRank(list: any[]) {
   if (!diseaseRankRef.value) return
-  if (!diseaseRankChart) diseaseRankChart = echarts.init(diseaseRankRef.value)
+  if (!diseaseRankChart) diseaseRankChart = init(diseaseRankRef.value)
   const by: Record<string, number> = {}
   list.forEach((r) => {
     const d = (r.disease || '未填写').toString()
@@ -128,7 +132,7 @@ function buildDiseaseRank(list: any[]) {
         barWidth: 14,
         itemStyle: {
           borderRadius: [0, 8, 8, 0],
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          color: new graphic.LinearGradient(0, 0, 1, 0, [
             { offset: 0, color: '#5fc7d8' },
             { offset: 1, color: '#9ea9e6' }
           ])
@@ -140,7 +144,7 @@ function buildDiseaseRank(list: any[]) {
 
 function buildDoctorRank(pList: any[]) {
   if (!doctorRankRef.value) return
-  if (!doctorRankChart) doctorRankChart = echarts.init(doctorRankRef.value)
+  if (!doctorRankChart) doctorRankChart = init(doctorRankRef.value)
   const by: Record<string, number> = {}
   pList.forEach((r: any) => {
     const d = (r.responsibleDoctor || r.doctor || '未分配').toString().trim() || '未分配'
@@ -164,7 +168,7 @@ function buildDoctorRank(pList: any[]) {
         barWidth: 14,
         itemStyle: {
           borderRadius: [0, 8, 8, 0],
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          color: new graphic.LinearGradient(0, 0, 1, 0, [
             { offset: 0, color: '#78c4a0' },
             { offset: 1, color: '#9ea9e6' }
           ])
@@ -176,7 +180,7 @@ function buildDoctorRank(pList: any[]) {
 
 function buildHubRing() {
   if (!hubRingRef.value) return
-  if (!hubRingChart) hubRingChart = echarts.init(hubRingRef.value)
+  if (!hubRingChart) hubRingChart = init(hubRingRef.value)
   hubRingChart.setOption({
     color: ['#ee8d99', '#e6bc79', '#78c4a0', '#7fd6e3', '#9ea9e6'],
     tooltip: { trigger: 'item' },
@@ -215,7 +219,7 @@ function buildHubRing() {
 
 function buildTrend(months: string[], alerts: number[], high: number[]) {
   if (!trendRef.value) return
-  if (!trendChart) trendChart = echarts.init(trendRef.value)
+  if (!trendChart) trendChart = init(trendRef.value)
   const axis = axisStyle()
   trendChart.setOption({
     tooltip: tooltipStyle(),
@@ -231,7 +235,7 @@ function buildTrend(months: string[], alerts: number[], high: number[]) {
         data: alerts,
         barWidth: 14,
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          color: new graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: '#5fc7d8' },
             { offset: 1, color: '#9ea9e6' }
           ])
@@ -252,7 +256,7 @@ function buildTrend(months: string[], alerts: number[], high: number[]) {
 
 function buildFollowGauge() {
   if (!followGaugeRef.value) return
-  if (!followGaugeChart) followGaugeChart = echarts.init(followGaugeRef.value)
+  if (!followGaugeChart) followGaugeChart = init(followGaugeRef.value)
   followGaugeChart.setOption({
     series: [
       {
@@ -280,6 +284,7 @@ function buildFollowGauge() {
 }
 
 function resizeAll() {
+  if (!activeAlive) return
   diseaseRankChart?.resize()
   doctorRankChart?.resize()
   hubRingChart?.resize()
@@ -287,71 +292,9 @@ function resizeAll() {
   followGaugeChart?.resize()
 }
 
-onMounted(async () => {
-  const [homeStats, riskRes, patientRes, alertRes, hardwareRes, monthRes] = await Promise.all([
-    fetchHomeStats().catch(() => ({} as any)),
-    fetchPatientRiskList(200),
-    fetchPatientSummary(200),
-    fetchAlerts(30),
-    fetchHardwareAlerts(30),
-    fetchMonthSummary()
-  ])
+const onResize = rafThrottle(() => resizeAll())
 
-  // 受管患者：与网页版一致，优先用 /api/home/stats 的 totalPatients
-  const pList = (patientRes?.rows || []) as any[]
-  totalPatients.value = Number(homeStats?.totalPatients || patientRes?.total || pList.length || riskRes?.total || 0)
-  weekFollowDone.value = Number(homeStats?.weekFollowDone || 0)
-  weekFollowRatePct.value =
-    homeStats?.weekFollowRate != null ? Math.max(0, Math.min(100, Number(homeStats.weekFollowRate) * 100)) : 0
-  const listForRisk = pList.length ? pList : ((riskRes?.rows || []) as any[])
-  riskHigh.value = listForRisk.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('HIGH')).length
-  riskMid.value = listForRisk.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('MID')).length
-  riskLow.value = listForRisk.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('LOW')).length
-
-  // 如果网页版 stats 里直接给了分层数量，则覆盖（口径一致）
-  if (homeStats && (homeStats.highRiskCount != null || homeStats.midRiskCount != null || homeStats.lowRiskCount != null)) {
-    if (homeStats.highRiskCount != null) riskHigh.value = Number(homeStats.highRiskCount) || 0
-    if (homeStats.midRiskCount != null) riskMid.value = Number(homeStats.midRiskCount) || 0
-    if (homeStats.lowRiskCount != null) riskLow.value = Number(homeStats.lowRiskCount) || 0
-  }
-
-  // 告警统计（健康 + 设备）
-  const aRows = (alertRes?.rows || []) as any[]
-  const hRows = (hardwareRes?.rows || []) as any[]
-  totalAlerts30d.value = aRows.length + hRows.length
-  const all = [...aRows, ...hRows]
-  unhandledAlerts.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('未处理') || String(r.status || '').toUpperCase() === 'NEW').length
-  closedAlerts.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('已关闭') || String(r.status || '').toUpperCase() === 'CLOSED').length
-
-  // 中心趋势（month-summary：取近 6~12）
-  const mArr = Array.isArray(monthRes) ? monthRes : []
-  const monthsAll = mArr.map((it: any) => it.month || (it.months && it.months[0]) || '')
-  const alertsAll = mArr.map((it: any) => it.alerts || it.alert_count || 0)
-  const highAll = mArr.map((it: any) => it.highRisk || it.high_risk || 0)
-  const take = monthsAll.length > 12 ? 12 : monthsAll.length
-  const start = monthsAll.length - take
-
-  buildDiseaseRank(pList)
-  buildDoctorRank(pList)
-  buildHubRing()
-  buildTrend(monthsAll.slice(start), alertsAll.slice(start), highAll.slice(start))
-  buildFollowGauge()
-
-  // 事件流
-  const ev: Array<{ id: string; title: string; time: string }> = []
-  aRows.slice(0, 4).forEach((r: any, idx: number) => {
-    ev.push({ id: `a-${r.id || idx}`, title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`, time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ') })
-  })
-  hRows.slice(0, 4).forEach((r: any, idx: number) => {
-    ev.push({ id: `h-${r.id || idx}`, title: `设备 · ${r.patientName || '患者'} · ${r.alertType || r.summary || ''}`, time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ') })
-  })
-  events.value = ev.slice(0, 8)
-
-  window.addEventListener('resize', resizeAll)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', resizeAll)
+function disposeAll() {
   diseaseRankChart?.dispose()
   doctorRankChart?.dispose()
   hubRingChart?.dispose()
@@ -362,6 +305,114 @@ onUnmounted(() => {
   hubRingChart = null
   trendChart = null
   followGaugeChart = null
+}
+
+async function loadCore() {
+  const [homeStats, monthRes] = await Promise.all([
+    fetchHomeStats().catch(() => ({} as any)),
+    fetchMonthSummary().catch(() => [] as any)
+  ])
+
+  if (!activeAlive) return
+
+  totalPatients.value = Number(homeStats?.totalPatients || 0)
+  weekFollowDone.value = Number(homeStats?.weekFollowDone || 0)
+  weekFollowRatePct.value =
+    homeStats?.weekFollowRate != null ? Math.max(0, Math.min(100, Number(homeStats.weekFollowRate) * 100)) : 0
+
+  // 风险分层：优先用后端 stats 口径（不再额外请求 risk-list）
+  if (homeStats && (homeStats.highRiskCount != null || homeStats.midRiskCount != null || homeStats.lowRiskCount != null)) {
+    riskHigh.value = Number(homeStats.highRiskCount) || 0
+    riskMid.value = Number(homeStats.midRiskCount) || 0
+    riskLow.value = Number(homeStats.lowRiskCount) || 0
+  }
+
+  const mArr = Array.isArray(monthRes) ? monthRes : []
+  const monthsAll = mArr.map((it: any) => it.month || (it.months && it.months[0]) || '')
+  const alertsAll = mArr.map((it: any) => it.alerts || it.alert_count || 0)
+  const highAll = mArr.map((it: any) => it.highRisk || it.high_risk || 0)
+  const take = monthsAll.length > 12 ? 12 : monthsAll.length
+  const start = Math.max(0, monthsAll.length - take)
+
+  // 核心图：趋势 + 仪表盘先出
+  buildTrend(monthsAll.slice(start), alertsAll.slice(start), highAll.slice(start))
+  buildFollowGauge()
+}
+
+async function loadSecondary() {
+  // 次级：排名与事件流延后加载，减轻首屏压测
+  const patientRes = await fetchPatientSummary(300).catch(() => ({ rows: [], total: 0 } as any))
+  if (!activeAlive) return
+  const pList = (patientRes?.rows || []) as any[]
+  if (!totalPatients.value) totalPatients.value = Number(patientRes?.total || pList.length || 0)
+
+  // 如果 stats 没给风险分层，才用列表兜底计算
+  if (!riskHigh.value && !riskMid.value && !riskLow.value && pList.length) {
+    riskHigh.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('HIGH')).length
+    riskMid.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('MID')).length
+    riskLow.value = pList.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('LOW')).length
+  }
+
+  buildDiseaseRank(pList)
+  buildDoctorRank(pList)
+  buildHubRing()
+
+  const [alertRes, hardwareRes] = await Promise.all([fetchAlerts(30).catch(() => ({} as any)), fetchHardwareAlerts(30).catch(() => ({} as any))])
+  if (!activeAlive) return
+  const aRows = (alertRes?.rows || []) as any[]
+  const hRows = (hardwareRes?.rows || []) as any[]
+  totalAlerts30d.value = aRows.length + hRows.length
+  const all = [...aRows, ...hRows]
+  unhandledAlerts.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('未处理') || String(r.status || '').toUpperCase() === 'NEW').length
+  closedAlerts.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('已关闭') || String(r.status || '').toUpperCase() === 'CLOSED').length
+
+  const ev: Array<{ id: string; title: string; time: string }> = []
+  aRows.slice(0, 4).forEach((r: any, idx: number) => {
+    ev.push({ id: `a-${r.id || idx}`, title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`, time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ') })
+  })
+  hRows.slice(0, 4).forEach((r: any, idx: number) => {
+    ev.push({ id: `h-${r.id || idx}`, title: `设备 · ${r.patientName || '患者'} · ${r.alertType || r.summary || ''}`, time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ') })
+  })
+  events.value = ev.slice(0, 8)
+}
+
+async function startLoad() {
+  await loadCore()
+  if (!activeAlive) return
+  // 等首屏核心渲染后再拉次级模块（空白更少，首屏更快）
+  await nextTick()
+  cancelIdle?.()
+  cancelIdle = scheduleIdle(() => {
+    void loadSecondary()
+  }, 900)
+}
+
+onMounted(() => {
+  activeAlive = true
+  void startLoad()
+  window.addEventListener('resize', onResize)
+})
+
+onActivated(() => {
+  activeAlive = true
+  window.addEventListener('resize', onResize)
+  // 恢复后只做一次轻量 resize（避免隐藏期间的无意义计算）
+  onResize()
+})
+
+onDeactivated(() => {
+  activeAlive = false
+  cancelIdle?.()
+  cancelIdle = null
+  window.removeEventListener('resize', onResize)
+})
+
+onUnmounted(() => {
+  activeAlive = false
+  cancelIdle?.()
+  cancelIdle = null
+  window.removeEventListener('resize', onResize)
+  disposeAll()
 })
 </script>
 

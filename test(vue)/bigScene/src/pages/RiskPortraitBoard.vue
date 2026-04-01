@@ -40,12 +40,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import * as echarts from 'echarts'
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
+import { init, type ECharts } from '../utils/echarts'
 import ScreenPanel from '../components/ScreenPanel.vue'
 import EventTicker from '../components/EventTicker.vue'
 import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
 import { fetchAlerts, fetchHomeStats, fetchPatientRiskList, fetchPatientSummary, fetchReportBoard } from '../api'
+import { rafThrottle } from '../utils/perf'
 
 const total = ref(0)
 const high = ref(0)
@@ -68,15 +69,17 @@ const diseaseRef = ref<HTMLElement | null>(null)
 const portraitRef = ref<HTMLElement | null>(null)
 const adviceRef = ref<HTMLElement | null>(null)
 
-let ageChart: echarts.ECharts | null = null
-let genderChart: echarts.ECharts | null = null
-let diseaseChart: echarts.ECharts | null = null
-let portraitChart: echarts.ECharts | null = null
-let adviceChart: echarts.ECharts | null = null
+let ageChart: ECharts | null = null
+let genderChart: ECharts | null = null
+let diseaseChart: ECharts | null = null
+let portraitChart: ECharts | null = null
+let adviceChart: ECharts | null = null
+
+let activeAlive = false
 
 function buildAge(list: any[]) {
   if (!ageRef.value) return
-  if (!ageChart) ageChart = echarts.init(ageRef.value)
+  if (!ageChart) ageChart = init(ageRef.value)
   const highList = list.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('HIGH'))
   const buckets: Record<string, number> = { '0-44': 0, '45-59': 0, '60-74': 0, '75+': 0 }
   highList.forEach((r: any) => {
@@ -106,7 +109,7 @@ function normalizeGender(v: any) {
 
 function buildGender(list: any[]) {
   if (!genderRef.value) return
-  if (!genderChart) genderChart = echarts.init(genderRef.value)
+  if (!genderChart) genderChart = init(genderRef.value)
   const w = genderRef.value.clientWidth || 320
   const fontSize = Math.max(10, Math.min(14, Math.round(w / 26)))
   const labelWidth = Math.max(56, Math.min(96, Math.round(w / 4.6)))
@@ -166,7 +169,7 @@ function buildGender(list: any[]) {
 
 function buildDisease(list: any[]) {
   if (!diseaseRef.value) return
-  if (!diseaseChart) diseaseChart = echarts.init(diseaseRef.value)
+  if (!diseaseChart) diseaseChart = init(diseaseRef.value)
   const by: Record<string, number> = {}
   list.forEach((r: any) => {
     const d = (r.disease || '未填写').toString()
@@ -188,7 +191,7 @@ function buildDisease(list: any[]) {
 
 function buildPortrait() {
   if (!portraitRef.value) return
-  if (!portraitChart) portraitChart = echarts.init(portraitRef.value)
+  if (!portraitChart) portraitChart = init(portraitRef.value)
   // 从现有真实字段衍生画像维度（不造假）：高危占比、病种集中度、活跃告警率
   // 其余维度后端未提供可复用聚合口径时，按 0 展示
   const p = Number(highRatio.value.replace('%', '') || 0)
@@ -227,7 +230,7 @@ function buildPortrait() {
 
 function buildAdvice(board: any) {
   if (!adviceRef.value) return
-  if (!adviceChart) adviceChart = echarts.init(adviceRef.value)
+  if (!adviceChart) adviceChart = init(adviceRef.value)
   const auc = Number(board?.latestAuc || 0) * 100
   const f1 = Number(board?.latestF1 || 0) * 100
   adviceChart.setOption({
@@ -251,6 +254,7 @@ function buildAdvice(board: any) {
 }
 
 function resizeAll() {
+  if (!activeAlive) return
   ageChart?.resize()
   genderChart?.resize()
   diseaseChart?.resize()
@@ -260,7 +264,10 @@ function resizeAll() {
   if (patientList.value.length) buildGender(patientList.value)
 }
 
+const onResize = rafThrottle(() => resizeAll())
+
 onMounted(async () => {
+  activeAlive = true
   const [homeStats, riskRes, patientRes, alertRes, board] = await Promise.all([
     fetchHomeStats().catch(() => ({} as any)),
     fetchPatientRiskList(200),
@@ -295,11 +302,12 @@ onMounted(async () => {
   buildPortrait()
   buildAdvice(board)
 
-  window.addEventListener('resize', resizeAll)
+  window.addEventListener('resize', onResize)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeAll)
+  activeAlive = false
+  window.removeEventListener('resize', onResize)
   ageChart?.dispose()
   genderChart?.dispose()
   diseaseChart?.dispose()
@@ -310,6 +318,17 @@ onUnmounted(() => {
   diseaseChart = null
   portraitChart = null
   adviceChart = null
+})
+
+onActivated(() => {
+  activeAlive = true
+  window.addEventListener('resize', onResize)
+  onResize()
+})
+
+onDeactivated(() => {
+  activeAlive = false
+  window.removeEventListener('resize', onResize)
 })
 </script>
 

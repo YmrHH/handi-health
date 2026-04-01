@@ -70,13 +70,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import * as echarts from 'echarts'
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
+import { init, type ECharts } from '../utils/echarts'
 import ScreenPanel from '../components/ScreenPanel.vue'
 import StatCard from '../components/StatCard.vue'
 import EventTicker from '../components/EventTicker.vue'
 import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
 import { fetchAlerts, fetchHardwareAlerts, fetchPatientSummary } from '../api'
+import { rafThrottle } from '../utils/perf'
 
 const totalAlerts = ref(0)
 const unhandled = ref(0)
@@ -96,14 +97,16 @@ const patientTrendRef = ref<HTMLElement | null>(null)
 const hardwareTrendRef = ref<HTMLElement | null>(null)
 const doctorRef = ref<HTMLElement | null>(null)
 
-let levelChart: echarts.ECharts | null = null
-let patientTrendChart: echarts.ECharts | null = null
-let hardwareTrendChart: echarts.ECharts | null = null
-let doctorChart: echarts.ECharts | null = null
+let levelChart: ECharts | null = null
+let patientTrendChart: ECharts | null = null
+let hardwareTrendChart: ECharts | null = null
+let doctorChart: ECharts | null = null
+
+let activeAlive = false
 
 function buildLevel(healthCount: number, deviceCount: number) {
   if (!levelRef.value) return
-  if (!levelChart) levelChart = echarts.init(levelRef.value)
+  if (!levelChart) levelChart = init(levelRef.value)
   levelChart.setOption({
     tooltip: { trigger: 'item' },
     series: [
@@ -152,13 +155,13 @@ function buildLevel(healthCount: number, deviceCount: number) {
 
 function buildTrend(
   refEl: HTMLElement | null,
-  chart: echarts.ECharts | null,
+  chart: ECharts | null,
   color: string,
   labels: string[],
   vals: number[]
 ) {
   if (!refEl) return chart
-  const c = chart || echarts.init(refEl)
+  const c = chart || init(refEl)
   const axis = axisStyle()
   c.setOption({
     tooltip: tooltipStyle(),
@@ -181,7 +184,7 @@ function buildTrend(
 
 function buildDoctor(rows: any[]) {
   if (!doctorRef.value) return
-  if (!doctorChart) doctorChart = echarts.init(doctorRef.value)
+  if (!doctorChart) doctorChart = init(doctorRef.value)
   const by: Record<string, number> = {}
   rows.forEach((r: any) => {
     const d = (r.responsibleDoctor || r.doctor || '未分配').toString().trim() || '未分配'
@@ -214,11 +217,14 @@ function buildDoctor(rows: any[]) {
 }
 
 function resizeAll() {
+  if (!activeAlive) return
   levelChart?.resize()
   patientTrendChart?.resize()
   hardwareTrendChart?.resize()
   doctorChart?.resize()
 }
+
+const onResize = rafThrottle(() => resizeAll())
 
 function parseTs(v: any) {
   if (!v) return NaN
@@ -252,7 +258,8 @@ function countByDay(rows: any[], n: number, getTime: (r: any) => number) {
 }
 
 onMounted(async () => {
-  const [a, h, ps] = await Promise.all([fetchAlerts(30), fetchHardwareAlerts(30), fetchPatientSummary(2000)])
+  activeAlive = true
+  const [a, h, ps] = await Promise.all([fetchAlerts(30), fetchHardwareAlerts(30), fetchPatientSummary(300)])
   const aRows = (a?.rows || []) as any[]
   const hRows = (h?.rows || []) as any[]
   const all = [...aRows, ...hRows]
@@ -275,14 +282,17 @@ onMounted(async () => {
   const hByDay = countByDay(hRows, 7, (r) => parseTs(r.alertTime || r.firstTime || r.createdAt))
   patientTrendChart = buildTrend(patientTrendRef.value, patientTrendChart, 'rgb(95,199,216)', labels, aByDay)
   hardwareTrendChart = buildTrend(hardwareTrendRef.value, hardwareTrendChart, 'rgb(158,169,230)', labels, hByDay)
+  // 性能优化：2000 属于重请求；仅用于“医生负载 Top5”摘要时先降载。
+  // TODO(后端): 建议新增聚合接口：按 responsibleDoctor 聚合 activeAlertCount 与随访任务量，避免大屏拉全量患者列表。
   const pRows = (ps?.rows || []) as any[]
   buildDoctor(pRows)
 
-  window.addEventListener('resize', resizeAll)
+  window.addEventListener('resize', onResize)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', resizeAll)
+  activeAlive = false
+  window.removeEventListener('resize', onResize)
   levelChart?.dispose()
   patientTrendChart?.dispose()
   hardwareTrendChart?.dispose()
@@ -291,6 +301,17 @@ onUnmounted(() => {
   patientTrendChart = null
   hardwareTrendChart = null
   doctorChart = null
+})
+
+onActivated(() => {
+  activeAlive = true
+  window.addEventListener('resize', onResize)
+  onResize()
+})
+
+onDeactivated(() => {
+  activeAlive = false
+  window.removeEventListener('resize', onResize)
 })
 </script>
 

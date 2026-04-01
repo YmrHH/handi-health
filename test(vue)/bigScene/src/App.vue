@@ -28,15 +28,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import ScreenHeader from './components/ScreenHeader.vue'
 import ScreenTabs from './components/ScreenTabs.vue'
-import CommandCenter from './pages/CommandCenter.vue'
-import RiskPortraitBoard from './pages/RiskPortraitBoard.vue'
-import AlertLinkageBoard from './pages/AlertLinkageBoard.vue'
-import InterventionServiceBoard from './pages/InterventionServiceBoard.vue'
-import AIInsightBoard from './pages/AIInsightBoard.vue'
-import LoginScreen from './pages/LoginScreen.vue'
+
+// 性能优化：舱页面按需异步加载，避免首屏打进所有舱代码
+const CommandCenter = defineAsyncComponent(() => import('./pages/CommandCenter.vue'))
+const RiskPortraitBoard = defineAsyncComponent(() => import('./pages/RiskPortraitBoard.vue'))
+const AlertLinkageBoard = defineAsyncComponent(() => import('./pages/AlertLinkageBoard.vue'))
+const InterventionServiceBoard = defineAsyncComponent(() => import('./pages/InterventionServiceBoard.vue'))
+const AIInsightBoard = defineAsyncComponent(() => import('./pages/AIInsightBoard.vue'))
+const LoginScreen = defineAsyncComponent(() => import('./pages/LoginScreen.vue'))
 
 const tabs = [
   { key: 'command', label: '总指挥舱' },
