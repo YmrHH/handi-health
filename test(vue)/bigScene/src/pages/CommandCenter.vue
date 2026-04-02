@@ -60,7 +60,7 @@
                   <span class="doctor-dot" :class="item.percent >= 90 ? 'is-hot' : item.percent >= 70 ? 'is-warn' : 'is-ok'"></span>
                 </div>
               </div>
-              <div v-if="rankingsPending" class="loading-tip">正在统计...</div>
+              <div v-if="rankingsPending || doctorRankPending" class="loading-tip">正在统计...</div>
               <div v-else-if="!finalDoctorLoads.length" class="empty-tip">暂无可展示的医生负载数据</div>
             </div>
           </section>
@@ -1110,7 +1110,7 @@ const finalDiseaseRanks = computed<any[]>(() => {
   }))
 })
 
-const finalDoctorLoads = computed<any[]>(() => {
+const directDoctorLoads = computed<DoctorLoad[]>(() => {
   const rows = patientRowsForRank.value
   const map = new Map<string, number>()
   for (const item of rows) {
@@ -1118,7 +1118,10 @@ const finalDoctorLoads = computed<any[]>(() => {
     if (!key) continue
     map.set(key, (map.get(key) || 0) + 1)
   }
-  const rowsTop = Array.from(map.entries()).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const rowsTop = Array.from(map.entries())
+    .filter(([, c]) => c > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
   if (!rowsTop.length) return []
   const max = rowsTop[0]?.[1] || 1
   return rowsTop.map(([name, count]) => ({
@@ -1128,6 +1131,52 @@ const finalDoctorLoads = computed<any[]>(() => {
     percent: percent(count, max)
   }))
 })
+
+const doctorRankPending = ref(false)
+const doctorProfileFallbackStarted = ref(false)
+
+const finalDoctorLoads = computed<DoctorLoad[]>(() => {
+  if (directDoctorLoads.value.length) return directDoctorLoads.value
+  return profileDoctorLoads.value
+})
+
+async function loadDoctorProfileFallback() {
+  if (doctorProfileFallbackStarted.value) return
+  doctorProfileFallbackStarted.value = true
+  doctorRankPending.value = true
+  try {
+    profileDoctorLoads.value = []
+    const ids = extractRiskIdsFromRows(patientSummary.value, PROFILE_RANK_MAX_IDS)
+    if (!ids.length || !pageAlive.value) return
+
+    const doctorMap = new Map<string, number>()
+    for (let i = 0; i < ids.length; i += PROFILE_RANK_BATCH) {
+      if (!pageAlive.value) break
+      const batch = ids.slice(i, i + PROFILE_RANK_BATCH)
+      const results = await Promise.allSettled(batch.map((id) => fetchPatientProfile(id)))
+      for (const r of results) {
+        if (r.status !== 'fulfilled') continue
+        const docStr = pickDoctorFromProfileInner(r.value)
+        if (docStr) doctorMap.set(docStr, (doctorMap.get(docStr) || 0) + 1)
+      }
+    }
+
+    profileDoctorLoads.value = mapToDoctorLoadsFromCounts(doctorMap)
+  } finally {
+    doctorRankPending.value = false
+  }
+}
+
+watch(
+  [rankingsLoadDone, directDoctorLoads],
+  async ([done, direct]) => {
+    if (!done) return
+    if (direct.length) return
+    if (doctorProfileFallbackStarted.value) return
+    await loadDoctorProfileFallback()
+  },
+  { immediate: true }
+)
 
 const rankingsPending = computed(() => !rankingsLoadDone.value)
 
