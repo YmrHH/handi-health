@@ -692,6 +692,7 @@ function extractRiskIdsFromRows(rows: SummaryItem[], maxN: number): string[] {
 const PROFILE_DISEASE_KEYS = [
   'disease',
   'mainDisease',
+  'primaryDisease',
   'diseaseName',
   'diagnosisName',
   'chronicDiseaseName',
@@ -1272,7 +1273,7 @@ onBeforeUnmount(() => {
 .command-center-page {
   position: relative;
   min-height: 100%;
-  padding: 18px 18px calc(104px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 18px calc(124px + env(safe-area-inset-bottom, 0px));
   color: #20343a;
 }
 
