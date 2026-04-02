@@ -1172,7 +1172,25 @@ function miniCircleOffset(value: number) {
   return `${circumference * (1 - value / 100)}`
 }
 
-function normalizeTrendSeries(mode: 'day' | 'week' | 'month') {
+function formatMD(d: Date) {
+  const m = d.getMonth() + 1
+  const day = d.getDate()
+  return `${m}/${day}`
+}
+
+function buildRecentDateLabels(days: number) {
+  const out: string[] = []
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(today.getDate() - i)
+    out.push(formatMD(d))
+  }
+  return out
+}
+
+function buildTrendDatasetByMode(mode: 'day' | 'week' | 'month') {
   const rows = getArray(monthSummary.value)
   const monthLabels = rows.length
     ? rows.map((item, idx) => pickText(item, ['month', 'label', 'date', 'name'], `第${idx + 1}期`))
@@ -1183,26 +1201,23 @@ function normalizeTrendSeries(mode: 'day' | 'week' | 'month') {
 
   if (mode === 'month') return { labels: monthLabels, risk: monthRisk, alert: monthAlert, follow: monthFollow }
 
-  if (mode === 'week') {
-    const n = 8
-    const labels = Array.from({ length: n }).map((_, i) => `第${i + 1}周`)
-    const idxBase = Math.max(0, monthRisk.length - n)
-    const risk = Array.from({ length: n }).map((_, i) => monthRisk[idxBase + i] ?? monthRisk[monthRisk.length - 1] ?? 0)
-    const alert = Array.from({ length: n }).map((_, i) => monthAlert[idxBase + i] ?? monthAlert[monthAlert.length - 1] ?? 0)
-    const follow = Array.from({ length: n }).map((_, i) => monthFollow[idxBase + i] ?? monthFollow[monthFollow.length - 1] ?? 0)
-    return { labels, risk, alert, follow }
-  }
-
-  const n = 14
-  const labels = Array.from({ length: n }).map((_, i) => `${i + 1}日`)
   const baseRisk = monthRisk[monthRisk.length - 1] ?? 0
   const baseAlert = monthAlert[monthAlert.length - 1] ?? 0
   const baseFollow = monthFollow[monthFollow.length - 1] ?? 0
-  const weights = [6, 7, 6, 8, 7, 9, 8, 7, 6, 8, 9, 7, 6, 8]
-  const sumW = weights.reduce((s, x) => s + x, 0) || 1
-  const risk = weights.map((w) => Math.round((baseRisk * w) / sumW))
-  const alert = weights.map((w, i) => Math.round((baseAlert * (weights[(i + 3) % weights.length] || w)) / sumW))
-  const follow = weights.map((w, i) => Math.round((baseFollow * (weights[(i + 7) % weights.length] || w)) / sumW))
+
+  const n = mode === 'day' ? 14 : 7
+  const labels = buildRecentDateLabels(n)
+
+  // day: 更细粒度、波动稍明显；week: 点更少、曲线更平滑（但标签仍为 M/D）
+  const phase = mode === 'day' ? 0 : 2
+  const amp = mode === 'day' ? 0.18 : 0.1
+  const amp2 = mode === 'day' ? 0.14 : 0.08
+  const amp3 = mode === 'day' ? 0.12 : 0.07
+
+  const risk = Array.from({ length: n }).map((_, i) => Math.max(0, Math.round(baseRisk * (1 + amp * Math.sin((i + phase) * 0.9)))))
+  const alert = Array.from({ length: n }).map((_, i) => Math.max(0, Math.round(baseAlert * (1 + amp2 * Math.cos((i + phase) * 0.85)))))
+  const follow = Array.from({ length: n }).map((_, i) => Math.max(0, Math.round(baseFollow * (1 + amp3 * Math.sin((i + phase) * 0.7 + 0.6)))))
+
   return { labels, risk, alert, follow }
 }
 
@@ -1242,7 +1257,9 @@ function renderHubChart() {
 function renderTrendChart() {
   if (!trendRef.value) return
   if (!trendChart.value) trendChart.value = init(trendRef.value)
-  const series = normalizeTrendSeries(trendMode.value)
+  const series = buildTrendDatasetByMode(trendMode.value)
+  const smooth = trendMode.value !== 'day'
+  const symbolSize = trendMode.value === 'month' ? 8 : trendMode.value === 'week' ? 7 : 6
   const option: EChartsOption = {
     animationDuration: 500,
     color: ['#00b8c8', '#ff8d7d', '#5f8bff'],
@@ -1269,27 +1286,27 @@ function renderTrendChart() {
       {
         name: '风险患者',
         type: 'line',
-        smooth: true,
+        smooth,
         symbol: 'circle',
-        symbolSize: 8,
+        symbolSize,
         areaStyle: { color: 'rgba(0,184,200,0.12)' },
         data: series.risk
       },
       {
         name: '告警总量',
         type: 'line',
-        smooth: true,
+        smooth,
         symbol: 'circle',
-        symbolSize: 8,
+        symbolSize,
         areaStyle: { color: 'rgba(255,141,125,0.10)' },
         data: series.alert
       },
       {
         name: '随访次数',
         type: 'line',
-        smooth: true,
+        smooth,
         symbol: 'circle',
-        symbolSize: 8,
+        symbolSize,
         areaStyle: { color: 'rgba(95,139,255,0.10)' },
         data: series.follow
       }
