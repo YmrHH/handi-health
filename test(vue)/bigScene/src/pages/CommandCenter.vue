@@ -28,7 +28,7 @@
                 <div class="rank-row">
                   <span class="rank-index">{{ idx + 1 }}</span>
                   <span class="rank-name">{{ item.name }}</span>
-                  <span class="rank-value">{{ item.percent }}%</span>
+                  <span class="rank-value">{{ item.percent }}% · {{ formatNumber(item.count) }} 人</span>
                 </div>
                 <div class="rank-track">
                   <div class="rank-bar" :style="{ width: `${item.percent}%` }"></div>
@@ -1353,7 +1353,7 @@ async function loadSecondary() {
   rankingsLoadDone.value = false
   try {
     const [summary, alertList, hardwareList, risks] = await Promise.all([
-      fetchPatientSummary(500),
+      fetchPatientSummary(200),
       fetchAlerts(30),
       fetchHardwareAlerts(30),
       fetchPatientRiskList(200)
