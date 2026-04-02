@@ -990,13 +990,144 @@ const doctorLoadsFallback = computed<DoctorLoad[]>(() => {
   }))
 })
 
-const finalDiseaseRanks = computed<RankItem[]>(() =>
-  profileDiseaseRanks.value.length ? profileDiseaseRanks.value : diseaseRanksFallback.value
-)
+const patientRowsForRank = computed<SummaryItem[]>(() => {
+  const src: any = patientSummary.value
+  return getArray(src)
+})
 
-const finalDoctorLoads = computed<DoctorLoad[]>(() =>
-  profileDoctorLoads.value.length ? profileDoctorLoads.value : doctorLoadsFallback.value
-)
+const INVALID_DISEASE_RANK = new Set(['未标注病种', '未知', '暂无'])
+const INVALID_DOCTOR_RANK = new Set(['未分配医生', '未知', '暂无'])
+
+function normalizeRankText(v: any): string {
+  if (v === null || v === undefined) return ''
+  const t = String(v).trim()
+  return t
+}
+
+function pickDiseaseKeyForRank(item: any): string {
+  const directKeys = [
+    'disease',
+    'mainDisease',
+    'primaryDisease',
+    'diseaseName',
+    'diagnosisName',
+    'mainDiagnosis',
+    'primaryDiagnosis',
+    'chronicDiseaseName',
+    'diagnosis',
+    'diseaseType',
+    'illnessName',
+    'categoryName',
+    'conditionName',
+    'clinicalDiagnosis',
+    'diagnosisLabel',
+    'diseaseLabel'
+  ]
+  for (const k of directKeys) {
+    const t = normalizeRankText(item?.[k])
+    if (!t) continue
+    if (INVALID_DISEASE_RANK.has(t)) return ''
+    return t
+  }
+  const nestedVals = [
+    item?.disease?.name,
+    item?.diagnosis?.name,
+    item?.category?.name,
+    item?.mainDisease?.name,
+    item?.mainDiagnosis?.name,
+    item?.primaryDisease?.name,
+    item?.primaryDiagnosis?.name
+  ]
+  for (const raw of nestedVals) {
+    const t = normalizeRankText(raw)
+    if (!t) continue
+    if (INVALID_DISEASE_RANK.has(t)) return ''
+    return t
+  }
+  return ''
+}
+
+function pickDoctorKeyForRank(item: any): string {
+  const directKeys = [
+    'doctor',
+    'doctorName',
+    'responsibleDoctorName',
+    'followDoctorName',
+    'realName',
+    'attendingDoctorName',
+    'familyDoctorName',
+    'physicianName',
+    'ownerName',
+    'managerName',
+    'staffName',
+    'userName',
+    'chargeDoctorName',
+    'chiefDoctorName',
+    'doctorInCharge',
+    'gpName',
+    'doctorLabel'
+  ]
+  for (const k of directKeys) {
+    const t = normalizeRankText(item?.[k])
+    if (!t) continue
+    if (INVALID_DOCTOR_RANK.has(t)) return ''
+    return t
+  }
+  const nestedVals = [
+    item?.doctor?.name,
+    item?.doctor?.realName,
+    item?.staff?.name,
+    item?.staff?.realName,
+    item?.owner?.name,
+    item?.manager?.name,
+    item?.user?.name
+  ]
+  for (const raw of nestedVals) {
+    const t = normalizeRankText(raw)
+    if (!t) continue
+    if (INVALID_DOCTOR_RANK.has(t)) return ''
+    return t
+  }
+  return ''
+}
+
+const finalDiseaseRanks = computed<any[]>(() => {
+  const rows = patientRowsForRank.value
+  const map = new Map<string, number>()
+  for (const item of rows) {
+    const key = pickDiseaseKeyForRank(item)
+    if (!key) continue
+    map.set(key, (map.get(key) || 0) + 1)
+  }
+  const entries = Array.from(map.entries()).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  if (!entries.length) return []
+  const total = Array.from(map.values()).reduce((s, c) => s + c, 0) || 1
+  const max = entries[0]?.[1] || 1
+  return entries.map(([name, count]) => ({
+    name,
+    count,
+    percent: percent(count, total)
+  }))
+})
+
+const finalDoctorLoads = computed<any[]>(() => {
+  const rows = patientRowsForRank.value
+  const map = new Map<string, number>()
+  for (const item of rows) {
+    const key = pickDoctorKeyForRank(item)
+    if (!key) continue
+    map.set(key, (map.get(key) || 0) + 1)
+  }
+  const rowsTop = Array.from(map.entries()).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  if (!rowsTop.length) return []
+  const max = rowsTop[0]?.[1] || 1
+  return rowsTop.map(([name, count]) => ({
+    name,
+    count,
+    badge: name?.[0] || '医',
+    percent: percent(count, max)
+  }))
+})
 
 const rankingsPending = computed(() => !rankingsLoadDone.value)
 
@@ -1235,8 +1366,6 @@ async function loadSecondary() {
     if (!patientSummary.value.length) {
       patientSummary.value = getArray(summary?.data) || getArray(summary?.result) || getArray(summary?.page) || []
     }
-
-    await loadRankingProfiles()
   } finally {
     rankingsLoadDone.value = true
   }
