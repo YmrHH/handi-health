@@ -24,7 +24,7 @@
               </div>
             </div>
             <div class="rank-list">
-              <div v-for="(item, idx) in diseaseRanks" :key="`${item.name}-${idx}`" class="rank-item">
+              <div v-for="(item, idx) in diseaseRanksDisplay" :key="`${item.name}-${idx}`" class="rank-item">
                 <div class="rank-row">
                   <span class="rank-index">{{ idx + 1 }}</span>
                   <span class="rank-name">{{ item.name }}</span>
@@ -34,7 +34,7 @@
                   <div class="rank-bar" :style="{ width: `${item.percent}%` }"></div>
                 </div>
               </div>
-              <div v-if="!diseaseRanks.length" class="empty-tip">暂无可展示的病种分布数据</div>
+              <div v-if="!diseaseRanksDisplay.length" class="empty-tip">暂无可展示的病种分布数据</div>
             </div>
           </section>
 
@@ -46,7 +46,7 @@
               </div>
             </div>
             <div class="doctor-list">
-              <div v-for="(item, idx) in doctorLoads" :key="`${item.name}-${idx}`" class="doctor-item">
+              <div v-for="(item, idx) in doctorLoadsDisplay" :key="`${item.name}-${idx}`" class="doctor-item">
                 <div class="doctor-main">
                   <div class="doctor-avatar">{{ item.badge }}</div>
                   <div class="doctor-info">
@@ -59,7 +59,7 @@
                   <span class="doctor-dot" :class="item.percent >= 90 ? 'is-hot' : item.percent >= 70 ? 'is-warn' : 'is-ok'"></span>
                 </div>
               </div>
-              <div v-if="!doctorLoads.length" class="empty-tip">暂无可展示的医生负载数据</div>
+              <div v-if="!doctorLoadsDisplay.length" class="empty-tip">暂无可展示的医生负载数据</div>
             </div>
           </section>
         </aside>
@@ -233,7 +233,15 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, shallowRef, watch } from 'vue'
-import { fetchAlerts, fetchHardwareAlerts, fetchHomeStats, fetchMonthSummary, fetchPatientRiskList, fetchPatientSummary } from '../api'
+import {
+  fetchAlerts,
+  fetchHardwareAlerts,
+  fetchHomeStats,
+  fetchMonthSummary,
+  fetchPatientProfile,
+  fetchPatientRiskList,
+  fetchPatientSummary
+} from '../api'
 import { use, init, type ECharts, type EChartsOption } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
@@ -511,7 +519,150 @@ function cnAlertStatus(item: any) {
   return raw || '待处理'
 }
 
-const diseaseRanks = computed<RankItem[]>(() => {
+const PROFILE_RANK_MAX_IDS = 60
+const PROFILE_RANK_BATCH = 10
+
+const profileDiseaseRanks = ref<RankItem[]>([])
+const profileDoctorLoads = ref<DoctorLoad[]>([])
+
+function profileInnerPayload(root: any): any {
+  if (root == null || typeof root !== 'object') return {}
+  const d = root.data
+  if (d != null && typeof d === 'object' && !Array.isArray(d)) return d
+  return root
+}
+
+function normalizeProfileField(v: any): string {
+  if (v == null) return ''
+  if (typeof v === 'string') return v.trim()
+  if (typeof v === 'object') {
+    return pickFirstText([
+      v.name,
+      v.label,
+      v.text,
+      v.title,
+      v.value != null ? String(v.value) : ''
+    ])
+  }
+  return String(v).trim()
+}
+
+function isValidProfileDisease(s: string) {
+  const t = (s || '').trim()
+  if (!t) return false
+  const bad = ['未标注病种', '未知', '-', '——', '无', '暂无']
+  if (bad.includes(t)) return false
+  return true
+}
+
+function isValidProfileDoctor(s: string) {
+  const t = (s || '').trim()
+  if (!t) return false
+  const bad = ['未分配医生', '未知', '-', '——', '无', '暂无']
+  if (bad.includes(t)) return false
+  return true
+}
+
+function extractRiskIdsFromRows(rows: SummaryItem[], maxN: number): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const row of rows) {
+    const candidates = [row?.riskId, row?.risk_id, row?.id, row?.patientId, row?.patient_id]
+    let id: string | null = null
+    for (const c of candidates) {
+      if (c == null || c === '') continue
+      const s = String(c).trim()
+      if (!s || s === '0') continue
+      id = s
+      break
+    }
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    out.push(id)
+    if (out.length >= maxN) break
+  }
+  return out
+}
+
+function mapToRankItemsFromCounts(map: Map<string, number>): RankItem[] {
+  const entries = Array.from(map.entries())
+    .filter(([, c]) => c > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+  if (!entries.length) return []
+  const total = entries.reduce((s, [, c]) => s + c, 0)
+  return entries.map(([name, count]) => ({ name, count, percent: percent(count, Math.max(1, total)) }))
+}
+
+function mapToDoctorLoadsFromCounts(map: Map<string, number>): DoctorLoad[] {
+  const rows = Array.from(map.entries())
+    .filter(([, c]) => c > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+  if (!rows.length) return []
+  const max = rows[0][1] || 1
+  return rows.map(([name, count]) => ({
+    name,
+    count,
+    percent: percent(count, max),
+    badge: name?.[0] || '医'
+  }))
+}
+
+async function loadRankingProfiles() {
+  profileDiseaseRanks.value = []
+  profileDoctorLoads.value = []
+  let ids = extractRiskIdsFromRows(patientSummary.value, PROFILE_RANK_MAX_IDS)
+  if (ids.length < PROFILE_RANK_MAX_IDS && riskList.value.length) {
+    const more = extractRiskIdsFromRows(riskList.value as SummaryItem[], PROFILE_RANK_MAX_IDS)
+    const seen = new Set(ids)
+    for (const id of more) {
+      if (seen.has(id)) continue
+      seen.add(id)
+      ids.push(id)
+      if (ids.length >= PROFILE_RANK_MAX_IDS) break
+    }
+  }
+  if (!ids.length || !pageAlive.value) return
+
+  const diseaseMap = new Map<string, number>()
+  const doctorMap = new Map<string, number>()
+  let settledOk = 0
+  let contributed = 0
+
+  for (let i = 0; i < ids.length; i += PROFILE_RANK_BATCH) {
+    if (!pageAlive.value) break
+    const batch = ids.slice(i, i + PROFILE_RANK_BATCH)
+    const results = await Promise.allSettled(batch.map((id) => fetchPatientProfile(id)))
+    for (const r of results) {
+      if (r.status !== 'fulfilled') continue
+      settledOk += 1
+      const inner = profileInnerPayload(r.value)
+      const dStr = normalizeProfileField(inner?.disease)
+      const docStr = normalizeProfileField(inner?.doctor)
+      let added = false
+      if (isValidProfileDisease(dStr)) {
+        diseaseMap.set(dStr, (diseaseMap.get(dStr) || 0) + 1)
+        added = true
+      }
+      if (isValidProfileDoctor(docStr)) {
+        doctorMap.set(docStr, (doctorMap.get(docStr) || 0) + 1)
+        added = true
+      }
+      if (added) contributed += 1
+    }
+  }
+
+  const disRanks = mapToRankItemsFromCounts(diseaseMap)
+  const docLoads = mapToDoctorLoadsFromCounts(doctorMap)
+
+  if (settledOk >= 2 && contributed >= 1) {
+    if (disRanks.length) profileDiseaseRanks.value = disRanks
+    if (docLoads.length) profileDoctorLoads.value = docLoads
+  }
+}
+
+const diseaseRanksFallback = computed<RankItem[]>(() => {
   const map = new Map<string, number>()
   const sources: SummaryItem[] = [...patientSummary.value, ...riskList.value]
   sources.forEach((item) => {
@@ -539,7 +690,7 @@ const diseaseRanks = computed<RankItem[]>(() => {
     .slice(0, 5)
 })
 
-const doctorLoads = computed<DoctorLoad[]>(() => {
+const doctorLoadsFallback = computed<DoctorLoad[]>(() => {
   const map = new Map<string, number>()
   const sources: SummaryItem[] = [...patientSummary.value, ...riskList.value]
   sources.forEach((item) => {
@@ -570,6 +721,14 @@ const doctorLoads = computed<DoctorLoad[]>(() => {
     badge: name?.[0] || '医'
   }))
 })
+
+const diseaseRanksDisplay = computed<RankItem[]>(() =>
+  profileDiseaseRanks.value.length ? profileDiseaseRanks.value : diseaseRanksFallback.value
+)
+
+const doctorLoadsDisplay = computed<DoctorLoad[]>(() =>
+  profileDoctorLoads.value.length ? profileDoctorLoads.value : doctorLoadsFallback.value
+)
 
 const riskDistribution = computed(() => {
   let high = 0
@@ -805,6 +964,8 @@ async function loadSecondary() {
   if (!patientSummary.value.length) {
     patientSummary.value = getArray(summary?.data) || getArray(summary?.result) || getArray(summary?.page) || []
   }
+
+  await loadRankingProfiles()
 }
 
 async function loadPage() {

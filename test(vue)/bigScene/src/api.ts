@@ -110,6 +110,15 @@ export async function fetchPatientSummary(pageSize = 200) {
   }, { ttlMs: 60_000 })
 }
 
+/** 患者画像（大屏左侧排行二级聚合用） */
+export async function fetchPatientProfile(riskId: number | string) {
+  const id = String(riskId ?? '').trim()
+  return await cached(`patientProfile:${id}`, async () => {
+    const res = await http.get('/api/patient/profile', { params: { riskId: id } })
+    return (res.data as any)?.data ?? res.data
+  }, { ttlMs: 120_000 })
+}
+
 // 登录（与主系统保持同样接口）
 export async function loginByPhone(phone: string, password: string) {
   const res = await http.post('/api/auth/loginByPhone', { phone, password })
