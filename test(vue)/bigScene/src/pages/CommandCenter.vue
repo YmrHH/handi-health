@@ -24,7 +24,7 @@
               </div>
             </div>
             <div class="rank-list">
-              <div v-for="(item, idx) in diseaseRanksDisplay" :key="`${item.name}-${idx}`" class="rank-item">
+              <div v-for="(item, idx) in finalDiseaseRanks" :key="`${item.name}-${idx}`" class="rank-item">
                 <div class="rank-row">
                   <span class="rank-index">{{ idx + 1 }}</span>
                   <span class="rank-name">{{ item.name }}</span>
@@ -34,7 +34,8 @@
                   <div class="rank-bar" :style="{ width: `${item.percent}%` }"></div>
                 </div>
               </div>
-              <div v-if="!diseaseRanksDisplay.length" class="empty-tip">暂无可展示的病种分布数据</div>
+              <div v-if="rankingsPending" class="loading-tip">正在统计…</div>
+              <div v-else-if="!finalDiseaseRanks.length" class="empty-tip">暂无可展示的病种分布数据</div>
             </div>
           </section>
 
@@ -46,7 +47,7 @@
               </div>
             </div>
             <div class="doctor-list">
-              <div v-for="(item, idx) in doctorLoadsDisplay" :key="`${item.name}-${idx}`" class="doctor-item">
+              <div v-for="(item, idx) in finalDoctorLoads" :key="`${item.name}-${idx}`" class="doctor-item">
                 <div class="doctor-main">
                   <div class="doctor-avatar">{{ item.badge }}</div>
                   <div class="doctor-info">
@@ -59,7 +60,8 @@
                   <span class="doctor-dot" :class="item.percent >= 90 ? 'is-hot' : item.percent >= 70 ? 'is-warn' : 'is-ok'"></span>
                 </div>
               </div>
-              <div v-if="!doctorLoadsDisplay.length" class="empty-tip">暂无可展示的医生负载数据</div>
+              <div v-if="rankingsPending" class="loading-tip">正在统计…</div>
+              <div v-else-if="!finalDoctorLoads.length" class="empty-tip">暂无可展示的医生负载数据</div>
             </div>
           </section>
         </aside>
@@ -270,6 +272,7 @@ const hardwareAlerts = ref<AlertItem[]>([])
 const trendMode = ref<'day' | 'week' | 'month'>('month')
 const updatedAt = ref('—')
 const pageAlive = ref(false)
+const rankingsLoadDone = ref(false)
 
 const trendModes = [
   { key: 'day', label: '日' },
@@ -664,7 +667,8 @@ function pickDiseaseFromProfileInner(inner: any): string {
     'diagnosis',
     'diseaseType',
     'illnessName',
-    'categoryName'
+    'categoryName',
+    'conditionName'
   ]
   for (const k of keys) {
     const s = normalizeProfileField(inner[k])
@@ -677,7 +681,9 @@ function pickDiseaseFromProfileInner(inner: any): string {
     inner?.chronicDisease?.name,
     inner?.illness?.name,
     inner?.category?.name,
-    inner?.categoryName
+    inner?.categoryName,
+    inner?.condition?.name,
+    inner?.conditionName
   ])
   if (isValidProfileDisease(nested)) return nested
   if (Array.isArray(inner?.diagnosisList)) {
@@ -706,7 +712,8 @@ function pickDoctorFromProfileInner(inner: any): string {
     'attendingDoctorName',
     'familyDoctorName',
     'physicianName',
-    'ownerName'
+    'ownerName',
+    'managerName'
   ]
   for (const k of keys) {
     const s = normalizeProfileField(inner[k])
@@ -717,6 +724,7 @@ function pickDoctorFromProfileInner(inner: any): string {
     inner?.doctor?.realName,
     inner?.physician?.name,
     inner?.owner?.name,
+    inner?.manager?.name,
     inner?.staff?.name,
     inner?.staff?.realName
   ])
@@ -864,13 +872,15 @@ const doctorLoadsFallback = computed<DoctorLoad[]>(() => {
   }))
 })
 
-const diseaseRanksDisplay = computed<RankItem[]>(() =>
+const finalDiseaseRanks = computed<RankItem[]>(() =>
   profileDiseaseRanks.value.length ? profileDiseaseRanks.value : diseaseRanksFallback.value
 )
 
-const doctorLoadsDisplay = computed<DoctorLoad[]>(() =>
+const finalDoctorLoads = computed<DoctorLoad[]>(() =>
   profileDoctorLoads.value.length ? profileDoctorLoads.value : doctorLoadsFallback.value
 )
+
+const rankingsPending = computed(() => !rankingsLoadDone.value)
 
 const riskDistribution = computed(() => {
   let high = 0
@@ -1091,23 +1101,27 @@ async function loadCore() {
 }
 
 async function loadSecondary() {
-  const [summary, alertList, hardwareList, risks] = await Promise.all([
-    fetchPatientSummary(500),
-    fetchAlerts(30),
-    fetchHardwareAlerts(30),
-    fetchPatientRiskList(200)
-  ])
-  patientSummary.value = getArray(summary)
-  alerts.value = getArray(alertList)
-  hardwareAlerts.value = getArray(hardwareList)
-  riskList.value = getArray(risks)
+  rankingsLoadDone.value = false
+  try {
+    const [summary, alertList, hardwareList, risks] = await Promise.all([
+      fetchPatientSummary(500),
+      fetchAlerts(30),
+      fetchHardwareAlerts(30),
+      fetchPatientRiskList(200)
+    ])
+    patientSummary.value = getArray(summary)
+    alerts.value = getArray(alertList)
+    hardwareAlerts.value = getArray(hardwareList)
+    riskList.value = getArray(risks)
 
-  // 二次兜底：若摘要列表仍为空，尝试从其他首页返回中提取记录数组
-  if (!patientSummary.value.length) {
-    patientSummary.value = getArray(summary?.data) || getArray(summary?.result) || getArray(summary?.page) || []
+    if (!patientSummary.value.length) {
+      patientSummary.value = getArray(summary?.data) || getArray(summary?.result) || getArray(summary?.page) || []
+    }
+
+    await loadRankingProfiles()
+  } finally {
+    rankingsLoadDone.value = true
   }
-
-  await loadRankingProfiles()
 }
 
 async function loadPage() {
@@ -1164,7 +1178,7 @@ onBeforeUnmount(() => {
 .command-center-page {
   position: relative;
   min-height: 100%;
-  padding: 18px 18px 122px;
+  padding: 18px 18px calc(88px + env(safe-area-inset-bottom, 0px));
   color: #20343a;
 }
 
@@ -1344,6 +1358,16 @@ onBeforeUnmount(() => {
 .doctor-dot.is-ok { background: #2fd2c9; }
 .doctor-dot.is-warn { background: #5f8bff; }
 .doctor-dot.is-hot { background: #ff6978; box-shadow: 0 0 0 6px rgba(255,105,120,0.12); }
+
+.loading-tip {
+  padding: 18px 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.38);
+  color: #7a9097;
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 0.04em;
+}
 
 .empty-tip {
   padding: 18px 14px;
@@ -1593,18 +1617,21 @@ onBeforeUnmount(() => {
 
 .status-band {
   position: fixed;
-  left: 50%;
-  bottom: 12px;
-  transform: translateX(-50%);
-  width: min(1880px, calc(100vw - 36px));
-  border-radius: 24px;
-  min-height: 64px;
-  padding: 0 16px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: none;
+  transform: none;
+  border-radius: 20px 20px 0 0;
+  min-height: 58px;
+  padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px));
   display: grid;
-  grid-template-columns: 200px 1fr 150px;
-  gap: 14px;
+  grid-template-columns: minmax(160px, 200px) 1fr minmax(120px, 150px);
+  gap: 12px;
   align-items: center;
-  z-index: 8;
+  z-index: 24;
+  box-sizing: border-box;
 }
 .status-indicator,
 .band-meta {
@@ -1657,13 +1684,8 @@ onBeforeUnmount(() => {
   .hero-grid { grid-template-columns: 1fr; }
   .center-column { min-height: 560px; }
   .status-band {
-    position: relative;
-    left: auto;
-    bottom: auto;
-    transform: none;
-    width: 100%;
     grid-template-columns: 1fr;
-    padding: 14px 16px;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
   }
   .band-meta { justify-content: flex-start; }
 }
