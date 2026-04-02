@@ -60,12 +60,8 @@
                   <span class="doctor-dot" :class="item.percent >= 90 ? 'is-hot' : item.percent >= 70 ? 'is-warn' : 'is-ok'"></span>
                 </div>
               </div>
-              <div
-                v-if="!directDoctorLoads.length && !profileDoctorLoads.length && (rankingsPending || doctorRankPending)"
-                class="loading-tip"
-              >
-                正在统计...
-              </div>
+              <div v-if="doctorLoadsLoading" class="loading-tip">正在统计...</div>
+              <div v-else-if="doctorLoadsEnhancing" class="enhance-tip">持续补充中</div>
               <div v-else-if="!finalDoctorLoads.length" class="empty-tip">暂无可展示的医生负载数据</div>
             </div>
           </section>
@@ -594,7 +590,6 @@ function cnAlertStatus(item: any) {
 const PROFILE_RANK_MAX_IDS = 72
 const PROFILE_RANK_BATCH = 8
 
-const profileDiseaseRanks = ref<RankItem[]>([])
 const profileDoctorLoads = ref<DoctorLoad[]>([])
 
 function collectProfileBuckets(root: any): any[] {
@@ -872,128 +867,33 @@ function mapToDoctorLoadsFromCounts(map: Map<string, number>): DoctorLoad[] {
 }
 
 async function loadRankingProfiles() {
-  profileDiseaseRanks.value = []
-  profileDoctorLoads.value = []
-  let ids = extractRiskIdsFromRows(patientSummary.value, PROFILE_RANK_MAX_IDS)
-  if (ids.length < PROFILE_RANK_MAX_IDS && riskList.value.length) {
-    const more = extractRiskIdsFromRows(riskList.value as SummaryItem[], PROFILE_RANK_MAX_IDS)
-    const seen = new Set(ids)
-    for (const id of more) {
-      if (seen.has(id)) continue
-      seen.add(id)
-      ids.push(id)
-      if (ids.length >= PROFILE_RANK_MAX_IDS) break
-    }
-  }
-  if (ids.length < PROFILE_RANK_MAX_IDS) {
-    const homeExtra = extractRiskIdsFromRows(getArray(homeStats.value) as SummaryItem[], PROFILE_RANK_MAX_IDS)
-    const monthExtra = extractRiskIdsFromRows(getArray(monthSummary.value) as SummaryItem[], PROFILE_RANK_MAX_IDS)
-    const seen = new Set(ids)
-    for (const id of [...homeExtra, ...monthExtra]) {
-      if (seen.has(id)) continue
-      seen.add(id)
-      ids.push(id)
-      if (ids.length >= PROFILE_RANK_MAX_IDS) break
-    }
-  }
-  if (!ids.length || !pageAlive.value) return
+  const PROFILE_ENHANCE_MAX_IDS = 25
+  const PROFILE_ENHANCE_BATCH = 5
 
-  const diseaseMap = new Map<string, number>()
+  doctorRankPending.value = true
+  try {
+    let ids = extractRiskIdsFromRows(patientSummary.value, PROFILE_ENHANCE_MAX_IDS)
+    if (!ids.length || !pageAlive.value) return
+
   const doctorMap = new Map<string, number>()
 
-  for (let i = 0; i < ids.length; i += PROFILE_RANK_BATCH) {
-    if (!pageAlive.value) break
-    const batch = ids.slice(i, i + PROFILE_RANK_BATCH)
-    const results = await Promise.allSettled(batch.map((id) => fetchPatientProfile(id)))
-    for (const r of results) {
-      if (r.status !== 'fulfilled') continue
-      const dStr = pickDiseaseFromProfileInner(r.value)
-      const docStr = pickDoctorFromProfileInner(r.value)
-      if (dStr) diseaseMap.set(dStr, (diseaseMap.get(dStr) || 0) + 1)
-      if (docStr) doctorMap.set(docStr, (doctorMap.get(docStr) || 0) + 1)
+    for (let i = 0; i < ids.length; i += PROFILE_ENHANCE_BATCH) {
+      if (!pageAlive.value) break
+      const batch = ids.slice(i, i + PROFILE_ENHANCE_BATCH)
+      const results = await Promise.allSettled(batch.map((id) => fetchPatientProfile(id)))
+      for (const r of results) {
+        if (r.status !== 'fulfilled') continue
+        const docStr = pickDoctorFromProfileInner(r.value)
+        if (docStr) doctorMap.set(docStr, (doctorMap.get(docStr) || 0) + 1)
+      }
     }
+
+    const docLoads = mapToDoctorLoadsFromCounts(doctorMap)
+    if (docLoads.length) profileDoctorLoads.value = docLoads
+  } finally {
+    doctorRankPending.value = false
   }
-
-  const disRanks = mapToRankItemsFromCounts(diseaseMap)
-  const docLoads = mapToDoctorLoadsFromCounts(doctorMap)
-
-  if (disRanks.length) profileDiseaseRanks.value = disRanks
-  if (docLoads.length) profileDoctorLoads.value = docLoads
 }
-
-const diseaseRanksFallback = computed<RankItem[]>(() => {
-  const map = new Map<string, number>()
-  const sources: SummaryItem[] = [
-    ...patientSummary.value,
-    ...riskList.value,
-    ...getArray(monthSummary.value),
-    ...getArray(homeStats.value)
-  ]
-  sources.forEach((item) => {
-    const key = diseaseName(item)
-    if (isValidProfileDisease(key)) {
-      map.set(key, (map.get(key) || 0) + 1)
-    }
-  })
-
-  if (!map.size) {
-    const homeRows = getArray(homeStats.value)
-    homeRows.forEach((item: any) => {
-      const key = diseaseName(item)
-      if (isValidProfileDisease(key)) {
-        map.set(key, (map.get(key) || 0) + 1)
-      }
-    })
-  }
-
-  const entries = Array.from(map.entries()).filter(([, c]) => c > 0)
-  if (!entries.length) return []
-  const total = entries.reduce((sum, [, cur]) => sum + cur, 0)
-  if (total <= 0) return []
-  return entries
-    .map(([name, count]) => ({ name, count, percent: percent(count, total) }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5)
-})
-
-const doctorLoadsFallback = computed<DoctorLoad[]>(() => {
-  const map = new Map<string, number>()
-  const sources: SummaryItem[] = [
-    ...patientSummary.value,
-    ...riskList.value,
-    ...getArray(monthSummary.value),
-    ...getArray(homeStats.value)
-  ]
-  sources.forEach((item) => {
-    const key = doctorName(item)
-    if (isValidProfileDoctor(key)) {
-      map.set(key, (map.get(key) || 0) + 1)
-    }
-  })
-
-  if (!map.size) {
-    const homeRows = getArray(homeStats.value)
-    homeRows.forEach((item: any) => {
-      const key = doctorName(item)
-      if (isValidProfileDoctor(key)) {
-        map.set(key, (map.get(key) || 0) + 1)
-      }
-    })
-  }
-
-  const rows = Array.from(map.entries())
-    .filter(([, c]) => c > 0)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-  if (!rows.length) return []
-  const max = rows[0]?.[1] || 1
-  return rows.map(([name, count]) => ({
-    name,
-    count,
-    percent: percent(count, max),
-    badge: name?.[0] || '医'
-  }))
-})
 
 const patientRowsForRank = computed<SummaryItem[]>(() => {
   const src: any = patientSummary.value
@@ -1138,52 +1038,29 @@ const directDoctorLoads = computed<DoctorLoad[]>(() => {
 })
 
 const doctorRankPending = ref(false)
-const doctorProfileFallbackStarted = ref(false)
 
 const finalDoctorLoads = computed<DoctorLoad[]>(() => {
-  if (directDoctorLoads.value.length) return directDoctorLoads.value
-  return profileDoctorLoads.value
+  if (!directDoctorLoads.value.length) return profileDoctorLoads.value
+  if (profileDoctorLoads.value.length > directDoctorLoads.value.length) return profileDoctorLoads.value
+  return directDoctorLoads.value
 })
 
-async function loadDoctorProfileFallback() {
-  if (doctorProfileFallbackStarted.value) return
-  doctorProfileFallbackStarted.value = true
-  doctorRankPending.value = true
-  try {
-    profileDoctorLoads.value = []
-    const ids = extractRiskIdsFromRows(patientSummary.value, PROFILE_RANK_MAX_IDS)
-    if (!ids.length || !pageAlive.value) return
-
-    const doctorMap = new Map<string, number>()
-    for (let i = 0; i < ids.length; i += PROFILE_RANK_BATCH) {
-      if (!pageAlive.value) break
-      const batch = ids.slice(i, i + PROFILE_RANK_BATCH)
-      const results = await Promise.allSettled(batch.map((id) => fetchPatientProfile(id)))
-      for (const r of results) {
-        if (r.status !== 'fulfilled') continue
-        const docStr = pickDoctorFromProfileInner(r.value)
-        if (docStr) doctorMap.set(docStr, (doctorMap.get(docStr) || 0) + 1)
-      }
-    }
-
-    profileDoctorLoads.value = mapToDoctorLoadsFromCounts(doctorMap)
-  } finally {
-    doctorRankPending.value = false
-  }
-}
+const doctorLoadsLoading = computed(() => rankingsPending.value && !directDoctorLoads.value.length && !profileDoctorLoads.value.length)
+const doctorLoadsEnhancing = computed(() => !!directDoctorLoads.value.length && doctorRankPending.value)
 
 watch(
-  [rankingsLoadDone, directDoctorLoads],
-  async ([done, direct]) => {
+  [rankingsLoadDone, patientRowsForRank],
+  ([done, rows]) => {
     if (!done) return
-    if (direct.length) return
-    if (doctorProfileFallbackStarted.value) return
+    if (!rows.length) return
+    if (doctorRankPending.value) return
     if (profileDoctorLoads.value.length) return
-    doctorRankPending.value = true
-    const schedule = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: any) => setTimeout(cb, 0)
-    schedule(() => {
-      void loadDoctorProfileFallback()
-    })
+    const start = () => void loadRankingProfiles()
+    if (typeof (window as any).requestIdleCallback === 'function') {
+      ;(window as any).requestIdleCallback(start, { timeout: 1200 })
+    } else {
+      setTimeout(start, 0)
+    }
   },
   { immediate: true }
 )
