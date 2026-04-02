@@ -23,19 +23,19 @@ defineEmits<{ (e: 'update:modelValue', v: string): void }>()
 
 <style scoped>
 .tabs {
-  gap: 3px;
-  padding: 2px;
+  gap: 2px;
+  padding: 1px;
   border-radius: 999px;
   border-color: rgba(114, 180, 205, 0.12);
   background: rgba(255, 255, 255, 0.28);
 }
 
 .tab-btn {
-  padding: 3px 8px;
-  font-size: 9px;
-  font-weight: 400;
+  padding: 2px 7px;
+  font-size: 8px;
+  font-weight: 380;
   letter-spacing: 0.02em;
-  line-height: 1.25;
+  line-height: 1.15;
 }
 
 .tab-btn.active {

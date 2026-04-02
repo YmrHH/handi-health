@@ -522,6 +522,7 @@ function diseaseName(item: SummaryItem) {
 function doctorName(item: SummaryItem) {
   const direct = pickText(item, [
     'doctorName',
+    'doctorLabel',
     'responsibleDoctorName',
     'followDoctorName',
     'attendingDoctorName',
@@ -550,6 +551,7 @@ function doctorName(item: SummaryItem) {
   const nested = pickFirstText([
     item?.doctor?.name,
     item?.doctor?.realName,
+    item?.doctor?.label,
     item?.doctor?.nickname,
     item?.staff?.name,
     item?.staff?.realName,
@@ -711,6 +713,7 @@ const PROFILE_DISEASE_KEYS = [
   'diagnosisName',
   'chronicDiseaseName',
   'diagnosis',
+  'diagnosisLabel',
   'diseaseType',
   'illnessName',
   'categoryName',
@@ -725,7 +728,8 @@ const PROFILE_DISEASE_KEYS = [
   'healthConditionName',
   'mainDiagnosis',
   'primaryDiagnosis',
-  'clinicalDiagnosis'
+  'clinicalDiagnosis',
+  'diseaseLabel'
 ]
 
 function pickDiseaseFromOneObject(inner: any): string {
@@ -739,6 +743,7 @@ function pickDiseaseFromOneObject(inner: any): string {
     inner?.disease?.label,
     inner?.mainDisease?.name,
     inner?.diagnosis?.name,
+    inner?.diagnosis?.label,
     inner?.chronicDisease?.name,
     inner?.illness?.name,
     inner?.category?.name,
@@ -782,6 +787,7 @@ const PROFILE_DOCTOR_KEYS = [
   'responsibleDoctorName',
   'followDoctorName',
   'realName',
+  'doctorLabel',
   'attendingDoctorName',
   'familyDoctorName',
   'physicianName',
@@ -811,6 +817,7 @@ function pickDoctorFromOneObject(inner: any): string {
   const nested = pickFirstText([
     inner?.doctor?.name,
     inner?.doctor?.realName,
+    inner?.doctor?.label,
     inner?.physician?.name,
     inner?.owner?.name,
     inner?.manager?.name,
@@ -1289,7 +1296,7 @@ onBeforeUnmount(() => {
 .command-center-page {
   position: relative;
   min-height: 100%;
-  padding: 18px 18px calc(148px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 18px calc(120px + env(safe-area-inset-bottom, 0px));
   color: #20343a;
 }
 
