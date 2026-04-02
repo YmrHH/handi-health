@@ -2,11 +2,11 @@
   <div>
     <div class="header-bar">
       <div class="header-title">
-        <div class="header-sub">{{ subTitle }}</div>
         <div class="header-main">
           <h1>{{ title }}</h1>
           <span class="header-pill">{{ timeText }}</span>
         </div>
+        <div class="header-sub">{{ subTitle }}</div>
       </div>
       <div class="header-right">
         <slot />

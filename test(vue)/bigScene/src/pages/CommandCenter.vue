@@ -20,7 +20,7 @@
             <div class="panel-header">
               <div>
                 <h3 class="panel-title">病种排名 TOP5</h3>
-                <p class="panel-subtitle">基于当前患者摘要数据聚合</p>
+                <p class="panel-subtitle">基于患者档案与画像数据统计</p>
               </div>
             </div>
             <div class="rank-list">
@@ -42,7 +42,7 @@
             <div class="panel-header">
               <div>
                 <h3 class="panel-title">医生负载 TOP5</h3>
-                <p class="panel-subtitle">按当前患者摘要聚合医生工作量</p>
+                <p class="panel-subtitle">基于患者归属与画像数据统计</p>
               </div>
             </div>
             <div class="doctor-list">
@@ -598,6 +598,8 @@ function normalizeProfileField(v: any): string {
 function isValidProfileDisease(s: string) {
   const t = (s || '').trim()
   if (!t) return false
+  const lower = t.toLowerCase()
+  if (lower === 'null' || lower === 'undefined') return false
   const bad = ['未标注病种', '未知', '-', '——', '无', '暂无']
   if (bad.includes(t)) return false
   return true
@@ -606,6 +608,8 @@ function isValidProfileDisease(s: string) {
 function isValidProfileDoctor(s: string) {
   const t = (s || '').trim()
   if (!t) return false
+  const lower = t.toLowerCase()
+  if (lower === 'null' || lower === 'undefined') return false
   const bad = ['未分配医生', '未知', '-', '——', '无', '暂无']
   if (bad.includes(t)) return false
   return true
@@ -657,8 +661,10 @@ function pickDiseaseFromProfileInner(inner: any): string {
     'diseaseName',
     'diagnosisName',
     'chronicDiseaseName',
+    'diagnosis',
     'diseaseType',
-    'diagnosis'
+    'illnessName',
+    'categoryName'
   ]
   for (const k of keys) {
     const s = normalizeProfileField(inner[k])
@@ -668,7 +674,10 @@ function pickDiseaseFromProfileInner(inner: any): string {
     inner?.disease?.name,
     inner?.mainDisease?.name,
     inner?.diagnosis?.name,
-    inner?.chronicDisease?.name
+    inner?.chronicDisease?.name,
+    inner?.illness?.name,
+    inner?.category?.name,
+    inner?.categoryName
   ])
   if (isValidProfileDisease(nested)) return nested
   if (Array.isArray(inner?.diagnosisList)) {
@@ -695,7 +704,9 @@ function pickDoctorFromProfileInner(inner: any): string {
     'followDoctorName',
     'realName',
     'attendingDoctorName',
-    'familyDoctorName'
+    'familyDoctorName',
+    'physicianName',
+    'ownerName'
   ]
   for (const k of keys) {
     const s = normalizeProfileField(inner[k])
@@ -704,6 +715,8 @@ function pickDoctorFromProfileInner(inner: any): string {
   const nested = pickFirstText([
     inner?.doctor?.name,
     inner?.doctor?.realName,
+    inner?.physician?.name,
+    inner?.owner?.name,
     inner?.staff?.name,
     inner?.staff?.realName
   ])
@@ -782,11 +795,9 @@ async function loadRankingProfiles() {
 
   const disRanks = mapToRankItemsFromCounts(diseaseMap)
   const docLoads = mapToDoctorLoadsFromCounts(doctorMap)
-  const diseaseKeys = diseaseMap.size
-  const doctorKeys = doctorMap.size
 
-  if (diseaseKeys >= 2 && disRanks.length) profileDiseaseRanks.value = disRanks
-  if (doctorKeys >= 2 && docLoads.length) profileDoctorLoads.value = docLoads
+  if (disRanks.length) profileDiseaseRanks.value = disRanks
+  if (docLoads.length) profileDoctorLoads.value = docLoads
 }
 
 const diseaseRanksFallback = computed<RankItem[]>(() => {
@@ -794,7 +805,7 @@ const diseaseRanksFallback = computed<RankItem[]>(() => {
   const sources: SummaryItem[] = [...patientSummary.value, ...riskList.value]
   sources.forEach((item) => {
     const key = diseaseName(item)
-    if (key && key !== '未标注病种') {
+    if (isValidProfileDisease(key)) {
       map.set(key, (map.get(key) || 0) + 1)
     }
   })
@@ -803,7 +814,7 @@ const diseaseRanksFallback = computed<RankItem[]>(() => {
     const homeRows = getArray(homeStats.value)
     homeRows.forEach((item: any) => {
       const key = diseaseName(item)
-      if (key && key !== '未标注病种') {
+      if (isValidProfileDisease(key)) {
         map.set(key, (map.get(key) || 0) + 1)
       }
     })
@@ -824,7 +835,7 @@ const doctorLoadsFallback = computed<DoctorLoad[]>(() => {
   const sources: SummaryItem[] = [...patientSummary.value, ...riskList.value]
   sources.forEach((item) => {
     const key = doctorName(item)
-    if (key && key !== '未分配医生') {
+    if (isValidProfileDoctor(key)) {
       map.set(key, (map.get(key) || 0) + 1)
     }
   })
@@ -833,7 +844,7 @@ const doctorLoadsFallback = computed<DoctorLoad[]>(() => {
     const homeRows = getArray(homeStats.value)
     homeRows.forEach((item: any) => {
       const key = doctorName(item)
-      if (key && key !== '未分配医生') {
+      if (isValidProfileDoctor(key)) {
         map.set(key, (map.get(key) || 0) + 1)
       }
     })
