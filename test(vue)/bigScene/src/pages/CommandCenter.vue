@@ -167,7 +167,7 @@
                 <div class="mini-progress-label">随访完成率</div>
               </div>
 
-              <div class="mini-progress-card">
+              <div class="mini-progress-card" :class="{ 'is-pending': !serviceRateHasData }">
                 <div class="mini-progress">
                   <svg viewBox="0 0 100 100" class="mini-progress-svg">
                     <circle cx="50" cy="50" r="38" class="mini-progress-track"></circle>
@@ -176,13 +176,13 @@
                       cy="50"
                       r="38"
                       class="mini-progress-bar is-secondary"
-                      :style="{ strokeDashoffset: miniCircleOffset(serviceRate) }"
+                      :class="{ 'is-muted': !serviceRateHasData }"
+                      :style="{ strokeDashoffset: miniCircleOffset(serviceRateForRing) }"
                     ></circle>
                   </svg>
-                  <div class="mini-progress-center">{{ serviceRateDisplay }}</div>
+                  <div class="mini-progress-center" :class="{ 'is-pending-text': !serviceRateHasData }">{{ serviceRateDisplay }}</div>
                 </div>
-                <div class="mini-progress-label">{{ serviceRateLabel }}</div>
-                <div class="mini-progress-tip" v-if="serviceRatePlaceholder">待接入稳定的服务执行聚合接口</div>
+                <div class="mini-progress-label" :class="{ 'is-pending-caption': !serviceRateHasData }">{{ serviceRateLabel }}</div>
               </div>
             </div>
           </section>
@@ -413,13 +413,49 @@ const alertSummary = computed(() => {
 
 const disposalRate = computed(() => percent(alertSummary.value.closed, Math.max(1, alertSummary.value.total)))
 
-const serviceRate = computed(() => {
-  const n = pickNumber(homeStats.value, ['serviceRate', 'taskCompleteRate', 'interventionRate', 'closeLoopRate'])
-  return n > 0 ? n : 62
-})
-const serviceRatePlaceholder = computed(() => pickNumber(homeStats.value, ['serviceRate', 'taskCompleteRate', 'interventionRate', 'closeLoopRate']) <= 0)
+const SERVICE_RATE_KEYS = [
+  'serviceRate',
+  'taskCompleteRate',
+  'interventionRate',
+  'closeLoopRate',
+  'planFinishRate',
+  'executionRate',
+  'completionRate'
+]
+
+function normalizePercentish(n: number): number {
+  if (!Number.isFinite(n) || n < 0) return 0
+  if (n > 0 && n <= 1) return Math.round(n * 100)
+  return Math.round(Math.min(100, n))
+}
+
+function pickServiceRateFromObject(obj: any): number | null {
+  if (!obj || typeof obj !== 'object') return null
+  for (const key of SERVICE_RATE_KEYS) {
+    const v = obj[key]
+    if (typeof v === 'number' && Number.isFinite(v)) return normalizePercentish(v)
+    if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return normalizePercentish(Number(v))
+  }
+  return null
+}
+
+function pickServiceRateFromHome(): number | null {
+  const src = homeStats.value
+  const direct = pickServiceRateFromObject(src)
+  if (direct != null) return direct
+  if (!src || typeof src !== 'object') return null
+  for (const nest of ['data', 'stats', 'summary', 'board', 'overview', 'result']) {
+    const v = pickServiceRateFromObject(src[nest])
+    if (v != null) return v
+  }
+  return null
+}
+
+const serviceRateValue = computed(() => pickServiceRateFromHome())
+const serviceRateHasData = computed(() => serviceRateValue.value !== null)
+const serviceRateForRing = computed(() => (serviceRateHasData.value ? (serviceRateValue.value as number) : 0))
 const serviceRateLabel = computed(() => '服务执行率')
-const serviceRateDisplay = computed(() => `${serviceRate.value}%`)
+const serviceRateDisplay = computed(() => (serviceRateHasData.value ? `${serviceRateValue.value}%` : '待接入'))
 
 function diseaseName(item: SummaryItem) {
   const direct = pickText(item, [
@@ -428,6 +464,7 @@ function diseaseName(item: SummaryItem) {
     'diseaseType',
     'categoryName',
     'disease',
+    'mainDisease',
     'diagnosisName',
     'diagnosis',
     'diseaseLabel',
@@ -445,13 +482,18 @@ function diseaseName(item: SummaryItem) {
   const nested = pickFirstText([
     item?.disease?.name,
     item?.disease?.label,
+    item?.mainDisease?.name,
     item?.diagnosis?.name,
     item?.diagnosis?.label,
     item?.category?.name,
     item?.chronicDisease?.name,
     item?.chronicDiseaseInfo?.name,
     item?.majorDiseaseInfo?.name,
-    item?.condition?.name
+    item?.condition?.name,
+    item?.patient?.disease,
+    item?.patient?.diseaseName,
+    item?.profile?.diseaseName,
+    item?.archive?.diseaseName
   ])
   if (nested) return nested
 
@@ -471,6 +513,8 @@ function doctorName(item: SummaryItem) {
     'doctorName',
     'responsibleDoctorName',
     'followDoctorName',
+    'attendingDoctorName',
+    'familyDoctorName',
     'staffName',
     'ownerName',
     'managerName',
@@ -496,7 +540,11 @@ function doctorName(item: SummaryItem) {
     item?.staff?.realName,
     item?.owner?.name,
     item?.manager?.name,
-    item?.user?.name
+    item?.user?.name,
+    item?.patient?.doctorName,
+    item?.patient?.responsibleDoctorName,
+    item?.profile?.doctorName,
+    item?.profile?.realName
   ])
   return nested || '未分配医生'
 }
@@ -519,8 +567,8 @@ function cnAlertStatus(item: any) {
   return raw || '待处理'
 }
 
-const PROFILE_RANK_MAX_IDS = 60
-const PROFILE_RANK_BATCH = 10
+const PROFILE_RANK_MAX_IDS = 72
+const PROFILE_RANK_BATCH = 8
 
 const profileDiseaseRanks = ref<RankItem[]>([])
 const profileDoctorLoads = ref<DoctorLoad[]>([])
@@ -567,7 +615,24 @@ function extractRiskIdsFromRows(rows: SummaryItem[], maxN: number): string[] {
   const seen = new Set<string>()
   const out: string[] = []
   for (const row of rows) {
-    const candidates = [row?.riskId, row?.risk_id, row?.id, row?.patientId, row?.patient_id]
+    const candidates = [
+      row?.riskId,
+      row?.risk_id,
+      row?.patientId,
+      row?.patient_id,
+      row?.id,
+      row?.patientBasicInfoId,
+      row?.archiveId,
+      row?.userId,
+      row?.patient?.id,
+      row?.patient?.patientId,
+      row?.patient?.riskId,
+      row?.profile?.id,
+      row?.profile?.patientId,
+      row?.archive?.id,
+      row?.archive?.patientId,
+      row?.patientBasicInfo?.id
+    ]
     let id: string | null = null
     for (const c of candidates) {
       if (c == null || c === '') continue
@@ -582,6 +647,79 @@ function extractRiskIdsFromRows(rows: SummaryItem[], maxN: number): string[] {
     if (out.length >= maxN) break
   }
   return out
+}
+
+function pickDiseaseFromProfileInner(inner: any): string {
+  if (!inner || typeof inner !== 'object') return ''
+  const keys = [
+    'disease',
+    'mainDisease',
+    'diseaseName',
+    'diagnosisName',
+    'chronicDiseaseName',
+    'diseaseType',
+    'diagnosis'
+  ]
+  for (const k of keys) {
+    const s = normalizeProfileField(inner[k])
+    if (isValidProfileDisease(s)) return s
+  }
+  const nested = pickFirstText([
+    inner?.disease?.name,
+    inner?.mainDisease?.name,
+    inner?.diagnosis?.name,
+    inner?.chronicDisease?.name
+  ])
+  if (isValidProfileDisease(nested)) return nested
+  if (Array.isArray(inner?.diagnosisList)) {
+    for (const x of inner.diagnosisList) {
+      const s = normalizeProfileField(typeof x === 'string' ? x : x?.name ?? x?.diagnosisName ?? x?.label)
+      if (isValidProfileDisease(s)) return s
+    }
+  }
+  if (inner?.patient && typeof inner.patient === 'object') {
+    for (const k of keys) {
+      const s = normalizeProfileField(inner.patient[k])
+      if (isValidProfileDisease(s)) return s
+    }
+  }
+  return ''
+}
+
+function pickDoctorFromProfileInner(inner: any): string {
+  if (!inner || typeof inner !== 'object') return ''
+  const keys = [
+    'doctor',
+    'doctorName',
+    'responsibleDoctorName',
+    'followDoctorName',
+    'realName',
+    'attendingDoctorName',
+    'familyDoctorName'
+  ]
+  for (const k of keys) {
+    const s = normalizeProfileField(inner[k])
+    if (isValidProfileDoctor(s)) return s
+  }
+  const nested = pickFirstText([
+    inner?.doctor?.name,
+    inner?.doctor?.realName,
+    inner?.staff?.name,
+    inner?.staff?.realName
+  ])
+  if (isValidProfileDoctor(nested)) return nested
+  if (inner?.patient && typeof inner.patient === 'object') {
+    for (const k of keys) {
+      const s = normalizeProfileField(inner.patient[k])
+      if (isValidProfileDoctor(s)) return s
+    }
+    const pn = pickFirstText([
+      inner.patient?.doctor?.name,
+      inner.patient?.doctor?.realName
+    ])
+    if (isValidProfileDoctor(pn)) return pn
+  }
+  return ''
 }
 
 function mapToRankItemsFromCounts(map: Map<string, number>): RankItem[] {
@@ -627,8 +765,6 @@ async function loadRankingProfiles() {
 
   const diseaseMap = new Map<string, number>()
   const doctorMap = new Map<string, number>()
-  let settledOk = 0
-  let contributed = 0
 
   for (let i = 0; i < ids.length; i += PROFILE_RANK_BATCH) {
     if (!pageAlive.value) break
@@ -636,30 +772,21 @@ async function loadRankingProfiles() {
     const results = await Promise.allSettled(batch.map((id) => fetchPatientProfile(id)))
     for (const r of results) {
       if (r.status !== 'fulfilled') continue
-      settledOk += 1
       const inner = profileInnerPayload(r.value)
-      const dStr = normalizeProfileField(inner?.disease)
-      const docStr = normalizeProfileField(inner?.doctor)
-      let added = false
-      if (isValidProfileDisease(dStr)) {
-        diseaseMap.set(dStr, (diseaseMap.get(dStr) || 0) + 1)
-        added = true
-      }
-      if (isValidProfileDoctor(docStr)) {
-        doctorMap.set(docStr, (doctorMap.get(docStr) || 0) + 1)
-        added = true
-      }
-      if (added) contributed += 1
+      const dStr = pickDiseaseFromProfileInner(inner)
+      const docStr = pickDoctorFromProfileInner(inner)
+      if (dStr) diseaseMap.set(dStr, (diseaseMap.get(dStr) || 0) + 1)
+      if (docStr) doctorMap.set(docStr, (doctorMap.get(docStr) || 0) + 1)
     }
   }
 
   const disRanks = mapToRankItemsFromCounts(diseaseMap)
   const docLoads = mapToDoctorLoadsFromCounts(doctorMap)
+  const diseaseKeys = diseaseMap.size
+  const doctorKeys = doctorMap.size
 
-  if (settledOk >= 2 && contributed >= 1) {
-    if (disRanks.length) profileDiseaseRanks.value = disRanks
-    if (docLoads.length) profileDoctorLoads.value = docLoads
-  }
+  if (diseaseKeys >= 2 && disRanks.length) profileDiseaseRanks.value = disRanks
+  if (doctorKeys >= 2 && docLoads.length) profileDoctorLoads.value = docLoads
 }
 
 const diseaseRanksFallback = computed<RankItem[]>(() => {
@@ -682,8 +809,10 @@ const diseaseRanksFallback = computed<RankItem[]>(() => {
     })
   }
 
-  const entries = Array.from(map.entries())
+  const entries = Array.from(map.entries()).filter(([, c]) => c > 0)
+  if (!entries.length) return []
   const total = entries.reduce((sum, [, cur]) => sum + cur, 0)
+  if (total <= 0) return []
   return entries
     .map(([name, count]) => ({ name, count, percent: percent(count, total) }))
     .sort((a, b) => b.count - a.count)
@@ -711,8 +840,10 @@ const doctorLoadsFallback = computed<DoctorLoad[]>(() => {
   }
 
   const rows = Array.from(map.entries())
+    .filter(([, c]) => c > 0)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
+  if (!rows.length) return []
   const max = rows[0]?.[1] || 1
   return rows.map(([name, count]) => ({
     name,
@@ -1400,8 +1531,25 @@ onBeforeUnmount(() => {
 }
 .mini-progress-bar.is-primary { stroke: #1ab5ba; }
 .mini-progress-bar.is-secondary { stroke: #5f8bff; }
+.mini-progress-bar.is-muted {
+  stroke: rgba(100, 128, 134, 0.32);
+}
 .mini-progress-center { font-size: 24px; font-weight: 800; color: #20343a; }
+.mini-progress-center.is-pending-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #8a9da3;
+  letter-spacing: 0.02em;
+}
 .mini-progress-label { margin-top: 8px; font-size: 13px; font-weight: 700; color: #38545b; }
+.mini-progress-label.is-pending-caption {
+  color: #8a9da3;
+  font-weight: 600;
+}
+.mini-progress-card.is-pending {
+  opacity: 0.92;
+  background: rgba(255,255,255,0.38);
+}
 .mini-progress-tip { margin-top: 6px; font-size: 11px; color: #7a8f95; line-height: 1.4; }
 
 .trend-section {

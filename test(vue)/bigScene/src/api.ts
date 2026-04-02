@@ -10,15 +10,15 @@ export const http = axios.create({
 http.interceptors.request.use((config) => {
   try {
     if (typeof sessionStorage !== 'undefined') {
-      // 如果主系统已经登录，会有 token；否则给大屏指定一个只读 userId（比如 1），由后端按需识别
-      let token = sessionStorage.getItem('token')
-      if (!token) {
-        token = '1'
-        sessionStorage.setItem('token', token)
-      }
+      const token = sessionStorage.getItem('token')
+      const userId = sessionStorage.getItem('userId') || sessionStorage.getItem('xUserId')
       config.headers = (config.headers || {}) as any
-      ;(config.headers as any)['Authorization'] = `Bearer ${token}`
-      ;(config.headers as any)['X-User-Id'] = String(token)
+      if (token) {
+        ;(config.headers as any)['Authorization'] = `Bearer ${token}`
+      }
+      if (userId) {
+        ;(config.headers as any)['X-User-Id'] = String(userId)
+      }
     }
   } catch {
     // ignore
