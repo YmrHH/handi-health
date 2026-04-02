@@ -34,7 +34,7 @@
                   <div class="rank-bar" :style="{ width: `${item.percent}%` }"></div>
                 </div>
               </div>
-              <div v-if="rankingsPending" class="loading-tip">正在统计…</div>
+              <div v-if="rankingsPending" class="loading-tip">正在统计...</div>
               <div v-else-if="!finalDiseaseRanks.length" class="empty-tip">暂无可展示的病种分布数据</div>
             </div>
           </section>
@@ -60,7 +60,7 @@
                   <span class="doctor-dot" :class="item.percent >= 90 ? 'is-hot' : item.percent >= 70 ? 'is-warn' : 'is-ok'"></span>
                 </div>
               </div>
-              <div v-if="rankingsPending" class="loading-tip">正在统计…</div>
+              <div v-if="rankingsPending" class="loading-tip">正在统计...</div>
               <div v-else-if="!finalDoctorLoads.length" class="empty-tip">暂无可展示的医生负载数据</div>
             </div>
           </section>
@@ -576,11 +576,30 @@ const PROFILE_RANK_BATCH = 8
 const profileDiseaseRanks = ref<RankItem[]>([])
 const profileDoctorLoads = ref<DoctorLoad[]>([])
 
-function profileInnerPayload(root: any): any {
-  if (root == null || typeof root !== 'object') return {}
-  const d = root.data
-  if (d != null && typeof d === 'object' && !Array.isArray(d)) return d
-  return root
+function collectProfileBuckets(root: any): any[] {
+  const seen = new Set<object>()
+  const out: any[] = []
+  function push(x: any) {
+    if (x == null || typeof x !== 'object' || Array.isArray(x)) return
+    if (seen.has(x)) return
+    seen.add(x)
+    out.push(x)
+  }
+  push(root)
+  let cur: any = root
+  for (let i = 0; i < 4 && cur && typeof cur === 'object'; i++) {
+    const next = cur.data ?? cur.result
+    if (next && typeof next === 'object' && !Array.isArray(next)) {
+      push(next)
+      cur = next
+    } else break
+  }
+  const nestKeys = ['patient', 'profile', 'archive', 'detail', 'record', 'vo', 'payload', 'entity', 'info']
+  const snapshot = [...out]
+  for (const obj of snapshot) {
+    for (const k of nestKeys) push(obj[k])
+  }
+  return out
 }
 
 function normalizeProfileField(v: any): string {
@@ -603,7 +622,7 @@ function isValidProfileDisease(s: string) {
   if (!t) return false
   const lower = t.toLowerCase()
   if (lower === 'null' || lower === 'undefined') return false
-  const bad = ['未标注病种', '未知', '-', '——', '无', '暂无']
+  const bad = ['未标注病种', '未知', '-', '——', '--', '无', '暂无', 'N/A', 'n/a']
   if (bad.includes(t)) return false
   return true
 }
@@ -613,7 +632,7 @@ function isValidProfileDoctor(s: string) {
   if (!t) return false
   const lower = t.toLowerCase()
   if (lower === 'null' || lower === 'undefined') return false
-  const bad = ['未分配医生', '未知', '-', '——', '无', '暂无']
+  const bad = ['未分配医生', '未知', '-', '——', '--', '无', '暂无', 'N/A', 'n/a']
   if (bad.includes(t)) return false
   return true
 }
@@ -625,20 +644,34 @@ function extractRiskIdsFromRows(rows: SummaryItem[], maxN: number): string[] {
     const candidates = [
       row?.riskId,
       row?.risk_id,
+      row?.patientRiskId,
+      row?.riskPatientId,
       row?.patientId,
       row?.patient_id,
       row?.id,
       row?.patientBasicInfoId,
       row?.archiveId,
       row?.userId,
+      row?.profileId,
+      row?.recordId,
+      row?.record_id,
+      row?.summaryId,
+      row?.bizId,
+      row?.memberId,
       row?.patient?.id,
       row?.patient?.patientId,
       row?.patient?.riskId,
       row?.profile?.id,
       row?.profile?.patientId,
+      row?.profile?.riskId,
       row?.archive?.id,
       row?.archive?.patientId,
-      row?.patientBasicInfo?.id
+      row?.archive?.riskId,
+      row?.patientBasicInfo?.id,
+      row?.detail?.patientId,
+      row?.detail?.id,
+      row?.data?.patientId,
+      row?.data?.riskId
     ]
     let id: string | null = null
     for (const c of candidates) {
@@ -656,26 +689,38 @@ function extractRiskIdsFromRows(rows: SummaryItem[], maxN: number): string[] {
   return out
 }
 
-function pickDiseaseFromProfileInner(inner: any): string {
+const PROFILE_DISEASE_KEYS = [
+  'disease',
+  'mainDisease',
+  'diseaseName',
+  'diagnosisName',
+  'chronicDiseaseName',
+  'diagnosis',
+  'diseaseType',
+  'illnessName',
+  'categoryName',
+  'conditionName',
+  'chronicDisease',
+  'chronicName',
+  'tagName',
+  'typeName',
+  'majorDisease',
+  'patientDisease',
+  'icdName',
+  'healthConditionName',
+  'mainDiagnosis',
+  'clinicalDiagnosis'
+]
+
+function pickDiseaseFromOneObject(inner: any): string {
   if (!inner || typeof inner !== 'object') return ''
-  const keys = [
-    'disease',
-    'mainDisease',
-    'diseaseName',
-    'diagnosisName',
-    'chronicDiseaseName',
-    'diagnosis',
-    'diseaseType',
-    'illnessName',
-    'categoryName',
-    'conditionName'
-  ]
-  for (const k of keys) {
+  for (const k of PROFILE_DISEASE_KEYS) {
     const s = normalizeProfileField(inner[k])
     if (isValidProfileDisease(s)) return s
   }
   const nested = pickFirstText([
     inner?.disease?.name,
+    inner?.disease?.label,
     inner?.mainDisease?.name,
     inner?.diagnosis?.name,
     inner?.chronicDisease?.name,
@@ -683,39 +728,66 @@ function pickDiseaseFromProfileInner(inner: any): string {
     inner?.category?.name,
     inner?.categoryName,
     inner?.condition?.name,
-    inner?.conditionName
+    inner?.conditionName,
+    inner?.healthRecord?.diagnosis,
+    inner?.healthRecord?.diseaseName
   ])
   if (isValidProfileDisease(nested)) return nested
-  if (Array.isArray(inner?.diagnosisList)) {
-    for (const x of inner.diagnosisList) {
-      const s = normalizeProfileField(typeof x === 'string' ? x : x?.name ?? x?.diagnosisName ?? x?.label)
-      if (isValidProfileDisease(s)) return s
-    }
-  }
-  if (inner?.patient && typeof inner.patient === 'object') {
-    for (const k of keys) {
-      const s = normalizeProfileField(inner.patient[k])
+  const lists = [
+    inner?.diagnosisList,
+    inner?.chronicDiseaseList,
+    inner?.chronicList,
+    inner?.diseaseTags,
+    inner?.diseaseNames,
+    inner?.tags
+  ]
+  for (const list of lists) {
+    if (!Array.isArray(list)) continue
+    for (const x of list) {
+      const s = normalizeProfileField(typeof x === 'string' ? x : x?.name ?? x?.diagnosisName ?? x?.label ?? x?.title ?? x?.text)
       if (isValidProfileDisease(s)) return s
     }
   }
   return ''
 }
 
-function pickDoctorFromProfileInner(inner: any): string {
+function pickDiseaseFromProfileInner(root: any): string {
+  if (root == null || typeof root !== 'object') return ''
+  for (const bucket of collectProfileBuckets(root)) {
+    const s = pickDiseaseFromOneObject(bucket)
+    if (s) return s
+  }
+  return ''
+}
+
+const PROFILE_DOCTOR_KEYS = [
+  'doctor',
+  'doctorName',
+  'responsibleDoctorName',
+  'followDoctorName',
+  'realName',
+  'attendingDoctorName',
+  'familyDoctorName',
+  'physicianName',
+  'ownerName',
+  'managerName',
+  'chiefDoctorName',
+  'doctorInCharge',
+  'gpName',
+  'followUpDoctor',
+  'caregiverName',
+  'operatorName',
+  'createByName',
+  'updateByName',
+  'staffName',
+  'userName',
+  'nickname',
+  'nickName'
+]
+
+function pickDoctorFromOneObject(inner: any): string {
   if (!inner || typeof inner !== 'object') return ''
-  const keys = [
-    'doctor',
-    'doctorName',
-    'responsibleDoctorName',
-    'followDoctorName',
-    'realName',
-    'attendingDoctorName',
-    'familyDoctorName',
-    'physicianName',
-    'ownerName',
-    'managerName'
-  ]
-  for (const k of keys) {
+  for (const k of PROFILE_DOCTOR_KEYS) {
     const s = normalizeProfileField(inner[k])
     if (isValidProfileDoctor(s)) return s
   }
@@ -726,19 +798,21 @@ function pickDoctorFromProfileInner(inner: any): string {
     inner?.owner?.name,
     inner?.manager?.name,
     inner?.staff?.name,
-    inner?.staff?.realName
+    inner?.staff?.realName,
+    inner?.user?.name,
+    inner?.user?.realName,
+    inner?.operator?.name,
+    inner?.operator?.realName
   ])
   if (isValidProfileDoctor(nested)) return nested
-  if (inner?.patient && typeof inner.patient === 'object') {
-    for (const k of keys) {
-      const s = normalizeProfileField(inner.patient[k])
-      if (isValidProfileDoctor(s)) return s
-    }
-    const pn = pickFirstText([
-      inner.patient?.doctor?.name,
-      inner.patient?.doctor?.realName
-    ])
-    if (isValidProfileDoctor(pn)) return pn
+  return ''
+}
+
+function pickDoctorFromProfileInner(root: any): string {
+  if (root == null || typeof root !== 'object') return ''
+  for (const bucket of collectProfileBuckets(root)) {
+    const s = pickDoctorFromOneObject(bucket)
+    if (s) return s
   }
   return ''
 }
@@ -782,6 +856,17 @@ async function loadRankingProfiles() {
       if (ids.length >= PROFILE_RANK_MAX_IDS) break
     }
   }
+  if (ids.length < PROFILE_RANK_MAX_IDS) {
+    const homeExtra = extractRiskIdsFromRows(getArray(homeStats.value) as SummaryItem[], PROFILE_RANK_MAX_IDS)
+    const monthExtra = extractRiskIdsFromRows(getArray(monthSummary.value) as SummaryItem[], PROFILE_RANK_MAX_IDS)
+    const seen = new Set(ids)
+    for (const id of [...homeExtra, ...monthExtra]) {
+      if (seen.has(id)) continue
+      seen.add(id)
+      ids.push(id)
+      if (ids.length >= PROFILE_RANK_MAX_IDS) break
+    }
+  }
   if (!ids.length || !pageAlive.value) return
 
   const diseaseMap = new Map<string, number>()
@@ -793,9 +878,8 @@ async function loadRankingProfiles() {
     const results = await Promise.allSettled(batch.map((id) => fetchPatientProfile(id)))
     for (const r of results) {
       if (r.status !== 'fulfilled') continue
-      const inner = profileInnerPayload(r.value)
-      const dStr = pickDiseaseFromProfileInner(inner)
-      const docStr = pickDoctorFromProfileInner(inner)
+      const dStr = pickDiseaseFromProfileInner(r.value)
+      const docStr = pickDoctorFromProfileInner(r.value)
       if (dStr) diseaseMap.set(dStr, (diseaseMap.get(dStr) || 0) + 1)
       if (docStr) doctorMap.set(docStr, (doctorMap.get(docStr) || 0) + 1)
     }
@@ -810,7 +894,12 @@ async function loadRankingProfiles() {
 
 const diseaseRanksFallback = computed<RankItem[]>(() => {
   const map = new Map<string, number>()
-  const sources: SummaryItem[] = [...patientSummary.value, ...riskList.value]
+  const sources: SummaryItem[] = [
+    ...patientSummary.value,
+    ...riskList.value,
+    ...getArray(monthSummary.value),
+    ...getArray(homeStats.value)
+  ]
   sources.forEach((item) => {
     const key = diseaseName(item)
     if (isValidProfileDisease(key)) {
@@ -840,7 +929,12 @@ const diseaseRanksFallback = computed<RankItem[]>(() => {
 
 const doctorLoadsFallback = computed<DoctorLoad[]>(() => {
   const map = new Map<string, number>()
-  const sources: SummaryItem[] = [...patientSummary.value, ...riskList.value]
+  const sources: SummaryItem[] = [
+    ...patientSummary.value,
+    ...riskList.value,
+    ...getArray(monthSummary.value),
+    ...getArray(homeStats.value)
+  ]
   sources.forEach((item) => {
     const key = doctorName(item)
     if (isValidProfileDoctor(key)) {
@@ -1178,7 +1272,7 @@ onBeforeUnmount(() => {
 .command-center-page {
   position: relative;
   min-height: 100%;
-  padding: 18px 18px calc(88px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 18px calc(104px + env(safe-area-inset-bottom, 0px));
   color: #20343a;
 }
 
@@ -1199,13 +1293,9 @@ onBeforeUnmount(() => {
   background-size: 38px 38px;
 }
 
-.page-main,
-.status-band {
+.page-main {
   position: relative;
   z-index: 1;
-}
-
-.page-main {
   max-width: 1880px;
   margin: 0 auto;
 }
@@ -1589,6 +1679,7 @@ onBeforeUnmount(() => {
 
 .trend-section {
   margin-top: 22px;
+  margin-bottom: 8px;
   border-radius: 30px;
   padding: 18px 18px 16px;
 }
@@ -1623,15 +1714,21 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: none;
   transform: none;
-  border-radius: 20px 20px 0 0;
-  min-height: 58px;
-  padding: 10px 20px calc(10px + env(safe-area-inset-bottom, 0px));
+  border-radius: 18px 18px 0 0;
+  min-height: 56px;
+  padding: 8px 20px calc(10px + env(safe-area-inset-bottom, 0px));
   display: grid;
   grid-template-columns: minmax(160px, 200px) 1fr minmax(120px, 150px);
   gap: 12px;
   align-items: center;
-  z-index: 24;
+  z-index: 40;
   box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(247, 252, 252, 0.42));
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-bottom: none;
+  box-shadow: 0 -8px 32px rgba(28, 88, 96, 0.07);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 .status-indicator,
 .band-meta {
