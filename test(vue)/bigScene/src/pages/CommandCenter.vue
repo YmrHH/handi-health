@@ -60,7 +60,12 @@
                   <span class="doctor-dot" :class="item.percent >= 90 ? 'is-hot' : item.percent >= 70 ? 'is-warn' : 'is-ok'"></span>
                 </div>
               </div>
-              <div v-if="rankingsPending || doctorRankPending" class="loading-tip">正在统计...</div>
+              <div
+                v-if="!directDoctorLoads.length && !profileDoctorLoads.length && (rankingsPending || doctorRankPending)"
+                class="loading-tip"
+              >
+                正在统计...
+              </div>
               <div v-else-if="!finalDoctorLoads.length" class="empty-tip">暂无可展示的医生负载数据</div>
             </div>
           </section>
@@ -1173,7 +1178,12 @@ watch(
     if (!done) return
     if (direct.length) return
     if (doctorProfileFallbackStarted.value) return
-    await loadDoctorProfileFallback()
+    if (profileDoctorLoads.value.length) return
+    doctorRankPending.value = true
+    const schedule = typeof requestAnimationFrame === 'function' ? requestAnimationFrame : (cb: any) => setTimeout(cb, 0)
+    schedule(() => {
+      void loadDoctorProfileFallback()
+    })
   },
   { immediate: true }
 )
