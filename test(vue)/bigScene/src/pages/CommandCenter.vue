@@ -882,8 +882,8 @@ function mapToDoctorLoadsFromCounts(map: Map<string, number>): DoctorLoad[] {
 }
 
 async function loadRankingProfiles() {
-  const PROFILE_ENHANCE_MAX_IDS = 15
-  const PROFILE_ENHANCE_BATCH = 3
+  const PROFILE_ENHANCE_MAX_IDS = 10
+  const PROFILE_ENHANCE_BATCH = 2
 
   doctorRankPending.value = true
   try {
@@ -1078,9 +1078,9 @@ watch(
     if (profileDoctorLoads.value.length) return
     const start = () => void loadRankingProfiles()
     if (typeof (window as any).requestIdleCallback === 'function') {
-      ;(window as any).requestIdleCallback(start, { timeout: 1200 })
+      ;(window as any).requestIdleCallback(start, { timeout: 2200 })
     } else {
-      setTimeout(start, 0)
+      setTimeout(start, 380)
     }
   },
   { immediate: true }
