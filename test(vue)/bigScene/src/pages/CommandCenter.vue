@@ -882,8 +882,8 @@ function mapToDoctorLoadsFromCounts(map: Map<string, number>): DoctorLoad[] {
 }
 
 async function loadRankingProfiles() {
-  const PROFILE_ENHANCE_MAX_IDS = 25
-  const PROFILE_ENHANCE_BATCH = 5
+  const PROFILE_ENHANCE_MAX_IDS = 15
+  const PROFILE_ENHANCE_BATCH = 3
 
   doctorRankPending.value = true
   try {
@@ -1060,7 +1060,13 @@ const finalDoctorLoads = computed<DoctorLoad[]>(() => {
   return directDoctorLoads.value
 })
 
-const doctorLoadsLoading = computed(() => rankingsPending.value && !directDoctorLoads.value.length && !profileDoctorLoads.value.length)
+const doctorLoadsLoading = computed(
+  () =>
+    rankingsPending.value &&
+    !patientRowsForRank.value.length &&
+    !directDoctorLoads.value.length &&
+    !profileDoctorLoads.value.length
+)
 const doctorLoadsEnhancing = computed(() => !!directDoctorLoads.value.length && doctorRankPending.value)
 
 watch(
