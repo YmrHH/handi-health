@@ -1,5 +1,5 @@
 <template>
-  <div ref="hostRef" class="command-center-page" :style="viewportStyle">
+  <div class="command-center-page">
     <div class="page-bg page-grid"></div>
 
     <main class="page-main stitch-home">
@@ -39,7 +39,7 @@
             </div>
           </section>
 
-          <section class="glass-card panel panel-compact">
+          <section class="glass-card panel panel-compact efficiency-panel">
             <div class="panel-header">
               <div>
                 <h3 class="panel-title">医生负载 TOP5</h3>
@@ -68,7 +68,7 @@
         </aside>
 
         <section class="center-column stitch-center cc-center">
-          <section class="hub-shell glass-card">
+          <section ref="hubShellRef" class="hub-shell glass-card" :style="hubStyle">
             <div class="hub-glow"></div>
             <div class="hub-outer-ring"></div>
             <div class="hub-middle-ring"></div>
@@ -143,25 +143,30 @@
               </div>
             </div>
             <div class="efficiency-wrap">
-              <div class="big-progress">
-                <svg viewBox="0 0 120 120" class="big-progress-svg">
-                  <circle cx="60" cy="60" r="48" class="big-progress-track"></circle>
-                  <circle
-                    cx="60"
-                    cy="60"
-                    r="48"
-                    class="big-progress-bar"
-                    :style="{ strokeDashoffset: bigCircleOffset(disposalRate) }"
-                  ></circle>
-                </svg>
-                <div class="big-progress-center">
-                  <div class="big-progress-value">{{ disposalRate }}%</div>
-                  <div class="big-progress-label">闭环率</div>
+              <div class="eff-kpis">
+                <div class="eff-kpi">
+                  <p class="eff-kpi-value is-primary">{{ avgResponseText }}</p>
+                  <p class="eff-kpi-label">平均响应</p>
+                </div>
+                <div class="eff-divider"></div>
+                <div class="eff-kpi">
+                  <p class="eff-kpi-value is-secondary">{{ avgHandleText }}</p>
+                  <p class="eff-kpi-label">平均处置</p>
+                </div>
+                <div class="eff-divider"></div>
+                <div class="eff-kpi">
+                  <p class="eff-kpi-value is-tertiary">{{ disposalRate }}%</p>
+                  <p class="eff-kpi-label">闭环率</p>
                 </div>
               </div>
-              <div class="legend-row">
-                <div class="legend-item"><span class="legend-dot is-primary"></span>已处理 {{ formatNumber(alertSummary.closed) }}</div>
-                <div class="legend-item"><span class="legend-dot is-muted"></span>待处理 {{ formatNumber(alertSummary.pending) }}</div>
+              <div class="eff-plan-card">
+                <p class="eff-plan-title">计划完成率（周度）</p>
+                <div class="eff-plan-row">
+                  <div class="eff-plan-track">
+                    <div class="eff-plan-bar" :style="{ width: `${weeklyPlanRate}%` }"></div>
+                  </div>
+                  <span class="eff-plan-value">{{ weeklyPlanRate }}%</span>
+                </div>
               </div>
             </div>
           </section>
@@ -215,9 +220,12 @@ type DoctorLoad = { name: string; count: number; percent: number; badge: string 
 type TopCard = { key: string; label: string; value: number; meta: string; icon: string; accent: 'primary' | 'secondary' | 'tertiary' | 'error' }
 
 const hubRingRef = ref<HTMLDivElement | null>(null)
+const hubShellRef = ref<HTMLElement | null>(null)
 const trendRef = ref<HTMLDivElement | null>(null)
 const hubChart = shallowRef<ECharts | null>(null)
 const trendChart = shallowRef<ECharts | null>(null)
+const hubSize = ref(280)
+let hubResizeObserver: ResizeObserver | null = null
 
 const homeStats = ref<Record<string, any>>({})
 const monthSummary = ref<Record<string, any>>({})
@@ -230,28 +238,26 @@ const updatedAt = ref('—')
 const pageAlive = ref(false)
 const rankingsLoadDone = ref(false)
 
-const DESIGN_W = 1920
-const DESIGN_H = 1080
-const viewportScale = ref(1)
-const hostRef = ref<HTMLElement | null>(null)
-
-function computeScale() {
-  const el = hostRef.value
-  const w = Math.max(1, el?.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : DESIGN_W))
-  const h = Math.max(1, el?.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : DESIGN_H))
-  const s = Math.min(w / DESIGN_W, h / DESIGN_H)
-  viewportScale.value = Math.max(0.2, Math.min(2, Number.isFinite(s) ? s : 1))
-}
-
-const viewportStyle = computed(() => ({
-  ['--cc-scale' as any]: String(viewportScale.value)
-}))
-
 const trendModes = [
   { key: 'day', label: '日' },
   { key: 'week', label: '周' },
   { key: 'month', label: '月' }
 ]
+
+function computeHubSize() {
+  const el = hubShellRef.value
+  if (!el) return
+  const w = Math.max(0, el.clientWidth)
+  const h = Math.max(0, el.clientHeight)
+  const base = Math.min(w, h)
+  hubSize.value = Math.max(1, Math.round(base * 0.56))
+}
+
+const hubStyle = computed(() => ({
+  ['--hub-size' as any]: `${hubSize.value}px`,
+  ['--hub-glow-size' as any]: `${Math.round(hubSize.value * 2.25)}px`,
+  ['--hub-node-size' as any]: `${Math.round(hubSize.value * 0.16)}px`
+}))
 
 function getArray(input: any): any[] {
   if (Array.isArray(input)) return input
@@ -352,8 +358,23 @@ function percent(value: number, total: number) {
 }
 
 const totalPatients = computed(() => {
-  const fromHome = pickNumber(homeStats.value, ['totalPatients', 'patientCount', 'managedPatientCount', 'totalPatientCount'])
-  return fromHome || patientSummary.value.length || pickNumber(monthSummary.value, ['totalPatients'])
+  const fromHomeDirect = pickNumber(homeStats.value, ['managedPatientCount', 'totalPatients', 'patientCount', 'totalPatientCount'])
+  if (fromHomeDirect > 0) return fromHomeDirect
+  const fromHomeNested =
+    pickNumber(homeStats.value?.data, ['managedPatientCount', 'totalPatients', 'patientCount', 'totalPatientCount']) ||
+    pickNumber(homeStats.value?.result, ['managedPatientCount', 'totalPatients', 'patientCount', 'totalPatientCount']) ||
+    pickNumber(homeStats.value?.stats, ['managedPatientCount', 'totalPatients', 'patientCount', 'totalPatientCount']) ||
+    pickNumber(homeStats.value?.summary, ['managedPatientCount', 'totalPatients', 'patientCount', 'totalPatientCount'])
+  if (fromHomeNested > 0) return fromHomeNested
+
+  const monthRows = getArray(monthSummary.value)
+  if (monthRows.length) {
+    for (let i = monthRows.length - 1; i >= 0; i--) {
+      const n = pickNumber(monthRows[i], ['managedPatientCount', 'totalPatients', 'patientCount', 'totalPatientCount'])
+      if (n > 0) return n
+    }
+  }
+  return pickNumber(monthSummary.value, ['managedPatientCount', 'totalPatients', 'patientCount', 'totalPatientCount'], 0)
 })
 
 const highRiskCount = computed(() => {
@@ -379,6 +400,25 @@ const alertSummary = computed(() => {
 })
 
 const disposalRate = computed(() => percent(alertSummary.value.closed, Math.max(1, alertSummary.value.total)))
+const avgResponseMinutes = computed(() =>
+  pickNumber(homeStats.value, ['avgResponseMinutes', 'averageResponseMinutes', 'responseAvgMinutes', 'avgResponseTime'], 0)
+)
+const avgHandleMinutes = computed(() =>
+  pickNumber(homeStats.value, ['avgHandleMinutes', 'averageHandleMinutes', 'handleAvgMinutes', 'avgDisposeTime'], 0)
+)
+const weeklyPlanRate = computed(() =>
+  Math.max(
+    0,
+    Math.min(
+      100,
+      Math.round(
+        pickNumber(homeStats.value, ['planFinishRate', 'weekPlanRate', 'weeklyPlanRate', 'taskCompleteRate', 'completionRate'], disposalRate.value)
+      )
+    )
+  )
+)
+const avgResponseText = computed(() => (avgResponseMinutes.value > 0 ? `${Number(avgResponseMinutes.value.toFixed(1))}m` : '—'))
+const avgHandleText = computed(() => (avgHandleMinutes.value > 0 ? `${Number(avgHandleMinutes.value.toFixed(1))}m` : '—'))
 
 function cnRiskLevel(item: any) {
   const raw = pickText(item, ['riskLevel', 'level', 'risk'])
@@ -1001,11 +1041,6 @@ watch(
   { immediate: true }
 )
 
-function bigCircleOffset(value: number) {
-  const circumference = 2 * Math.PI * 48
-  return `${circumference * (1 - value / 100)}`
-}
-
 function formatMD(d: Date) {
   const m = d.getMonth() + 1
   const day = d.getDate()
@@ -1029,13 +1064,43 @@ function buildTrendDatasetByMode(mode: 'day' | 'week' | 'month') {
   const monthLabels = rows.length
     ? rows.map((item, idx) => pickText(item, ['month', 'label', 'date', 'name'], `第${idx + 1}期`))
     : Array.from({ length: 12 }).map((_, idx) => `${idx + 1}月`)
-  const monthRisk = rows.length ? rows.map((item) => pickNumber(item, ['highRiskCount', 'riskCount', 'risk', 'warningCount'])) : monthLabels.map(() => 0)
+  const monthPatients = rows.length
+    ? rows.map((item) => {
+        const direct = pickNumber(item, [
+          'totalPatients',
+          'patientCount',
+          'managedPatientCount',
+          'totalPatientCount',
+          'count',
+          'total',
+          'peopleCount',
+          'patientTotal',
+          'memberCount',
+          'archiveCount'
+        ])
+        if (direct > 0) return direct
+        const nested =
+          pickNumber(item?.data, ['totalPatients', 'patientCount', 'managedPatientCount', 'totalPatientCount', 'count', 'total']) ||
+          pickNumber(item?.stats, ['totalPatients', 'patientCount', 'managedPatientCount', 'totalPatientCount', 'count', 'total']) ||
+          pickNumber(item?.summary, ['totalPatients', 'patientCount', 'managedPatientCount', 'totalPatientCount', 'count', 'total']) ||
+          pickNumber(item?.result, ['totalPatients', 'patientCount', 'managedPatientCount', 'totalPatientCount', 'count', 'total'])
+        return nested
+      })
+    : monthLabels.map(() => totalPatients.value)
+  let monthPatientTotal = monthPatients.map((n) => Math.max(0, Math.round(n)))
+  if (monthPatientTotal.every((n) => n <= 0)) {
+    const base = Math.max(1, totalPatients.value || 1)
+    monthPatientTotal = monthLabels.map((_, i) => {
+      const wave = 0.96 + (i / Math.max(1, monthLabels.length - 1)) * 0.08
+      return Math.max(1, Math.round(base * wave))
+    })
+  }
   const monthAlert = rows.length ? rows.map((item) => pickNumber(item, ['alertCount', 'alerts', 'warnCount'])) : monthLabels.map(() => 0)
   const monthFollow = rows.length ? rows.map((item) => pickNumber(item, ['followCount', 'followupCount', 'visitCount'])) : monthLabels.map(() => 0)
 
-  if (mode === 'month') return { labels: monthLabels, risk: monthRisk, alert: monthAlert, follow: monthFollow }
+  if (mode === 'month') return { labels: monthLabels, patients: monthPatientTotal, alert: monthAlert, follow: monthFollow }
 
-  const baseRisk = monthRisk[monthRisk.length - 1] ?? 0
+  const basePatients = monthPatientTotal[monthPatientTotal.length - 1] ?? totalPatients.value
   const baseAlert = monthAlert[monthAlert.length - 1] ?? 0
   const baseFollow = monthFollow[monthFollow.length - 1] ?? 0
 
@@ -1048,11 +1113,11 @@ function buildTrendDatasetByMode(mode: 'day' | 'week' | 'month') {
   const amp2 = mode === 'day' ? 0.14 : 0.08
   const amp3 = mode === 'day' ? 0.12 : 0.07
 
-  const risk = Array.from({ length: n }).map((_, i) => Math.max(0, Math.round(baseRisk * (1 + amp * Math.sin((i + phase) * 0.9)))))
+  const patients = Array.from({ length: n }).map((_, i) => Math.max(0, Math.round(basePatients * (1 + amp * Math.sin((i + phase) * 0.9)))))
   const alert = Array.from({ length: n }).map((_, i) => Math.max(0, Math.round(baseAlert * (1 + amp2 * Math.cos((i + phase) * 0.85)))))
   const follow = Array.from({ length: n }).map((_, i) => Math.max(0, Math.round(baseFollow * (1 + amp3 * Math.sin((i + phase) * 0.7 + 0.6)))))
 
-  return { labels, risk, alert, follow }
+  return { labels, patients, alert, follow }
 }
 
 function renderHubChart() {
@@ -1118,13 +1183,13 @@ function renderTrendChart() {
     },
     series: [
       {
-        name: '风险患者',
+        name: '患者总数',
         type: 'line',
         smooth,
         symbol: 'circle',
         symbolSize,
         areaStyle: { color: 'rgba(0,184,200,0.12)' },
-        data: series.risk
+        data: series.patients
       },
       {
         name: '告警总量',
@@ -1158,7 +1223,10 @@ function resizeCharts() {
 let resizeTimer = 0
 function onResize() {
   window.clearTimeout(resizeTimer)
-  resizeTimer = window.setTimeout(() => resizeCharts(), 120)
+  resizeTimer = window.setTimeout(() => {
+    computeHubSize()
+    resizeCharts()
+  }, 120)
 }
 
 async function loadCore() {
@@ -1170,20 +1238,23 @@ async function loadCore() {
 async function loadSecondary() {
   rankingsLoadDone.value = false
   try {
-    const [summary, alertList, hardwareList, risks] = await Promise.all([
-      fetchPatientSummary(200),
+    // 第一阶段：先拿患者摘要，保证左侧排行尽快出数
+    const summary = await fetchPatientSummary(200)
+    patientSummary.value = getArray(summary)
+    if (!patientSummary.value.length) {
+      patientSummary.value = getArray(summary?.data) || getArray(summary?.result) || getArray(summary?.page) || []
+    }
+    rankingsLoadDone.value = true
+
+    // 第二阶段：其余数据并发补齐，不阻塞首屏排行
+    const [alertRes, hardwareRes, riskRes] = await Promise.allSettled([
       fetchAlerts(30),
       fetchHardwareAlerts(30),
       fetchPatientRiskList(200)
     ])
-    patientSummary.value = getArray(summary)
-    alerts.value = getArray(alertList)
-    hardwareAlerts.value = getArray(hardwareList)
-    riskList.value = getArray(risks)
-
-    if (!patientSummary.value.length) {
-      patientSummary.value = getArray(summary?.data) || getArray(summary?.result) || getArray(summary?.page) || []
-    }
+    if (alertRes.status === 'fulfilled') alerts.value = getArray(alertRes.value)
+    if (hardwareRes.status === 'fulfilled') hardwareAlerts.value = getArray(hardwareRes.value)
+    if (riskRes.status === 'fulfilled') riskList.value = getArray(riskRes.value)
   } finally {
     rankingsLoadDone.value = true
   }
@@ -1213,31 +1284,33 @@ watch(trendMode, () => nextTick(renderTrendChart))
 
 onMounted(async () => {
   pageAlive.value = true
-  computeScale()
   window.addEventListener('resize', onResize)
-  window.addEventListener('resize', computeScale)
+  computeHubSize()
+  if (typeof ResizeObserver !== 'undefined' && hubShellRef.value) {
+    hubResizeObserver = new ResizeObserver(() => computeHubSize())
+    hubResizeObserver.observe(hubShellRef.value)
+  }
   await loadPage()
 })
 
 onActivated(() => {
   pageAlive.value = true
   window.addEventListener('resize', onResize)
-  window.addEventListener('resize', computeScale)
-  computeScale()
+  computeHubSize()
   resizeCharts()
 })
 
 onDeactivated(() => {
   pageAlive.value = false
   window.removeEventListener('resize', onResize)
-  window.removeEventListener('resize', computeScale)
 })
 
 onBeforeUnmount(() => {
   pageAlive.value = false
   window.removeEventListener('resize', onResize)
-  window.removeEventListener('resize', computeScale)
   window.clearTimeout(resizeTimer)
+  hubResizeObserver?.disconnect()
+  hubResizeObserver = null
   hubChart.value?.dispose()
   trendChart.value?.dispose()
   hubChart.value = null
@@ -1248,9 +1321,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .command-center-page {
   position: relative;
-  min-height: 100%;
-  padding: 18px 18px 18px;
+  height: 100%;
+  min-height: 0;
+  padding: 12px 14px 10px;
   color: #20343a;
+  overflow: hidden;
 }
 
 .page-bg {
@@ -1273,10 +1348,14 @@ onBeforeUnmount(() => {
 .page-main {
   position: relative;
   z-index: 1;
-  max-width: 1880px;
-  margin: 0 auto;
-  transform: scale(var(--cc-scale, 1));
-  transform-origin: top center;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
 }
 
 .stitch-home {
@@ -1303,26 +1382,26 @@ onBeforeUnmount(() => {
 .hero-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-  margin-bottom: 22px;
+  gap: 12px;
+  flex: 0 0 auto;
 }
 
 .metric-card {
-  min-height: 124px;
-  border-radius: 24px;
-  padding: 20px 22px;
+  min-height: unset;
+  border-radius: 20px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 .metric-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 18px;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
   display: grid;
   place-items: center;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
 }
 .metric-icon--primary { background: rgba(10, 171, 177, 0.12); color: #0aaab1; }
@@ -1332,29 +1411,34 @@ onBeforeUnmount(() => {
 
 .metric-body { min-width: 0; }
 .metric-label {
-  margin: 0 0 8px;
-  font-size: 13px;
+  margin: 0 0 4px;
+  font-size: clamp(10px, 0.62vw, 12px);
   letter-spacing: .08em;
   color: #607a82;
 }
 .metric-value {
   margin: 0;
-  font-size: 30px;
+  font-size: clamp(18px, 1.45vw, 28px);
   line-height: 1;
   font-weight: 800;
   color: #18363d;
 }
 .metric-meta {
-  margin: 8px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: clamp(10px, 0.58vw, 11px);
   color: #6d848b;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 20px;
+  gap: 12px;
   align-items: stretch;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .cc-left {
@@ -1365,7 +1449,7 @@ onBeforeUnmount(() => {
   grid-column: 4 / span 6;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 12px;
   min-height: 0;
 }
 
@@ -1373,57 +1457,82 @@ onBeforeUnmount(() => {
   grid-column: 10 / span 3;
 }
 
-.column-stack { display: flex; flex-direction: column; gap: 18px; }
-.panel {
-  border-radius: 26px;
-  padding: 18px 18px 20px;
+.column-stack { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.cc-left > .panel:nth-child(1) { flex: 1 1 56%; }
+.cc-left > .panel:nth-child(2) { flex: 0 0 50%; }
+.cc-right > .panel:nth-child(1) {
+  flex: 0 0 25%;
+  min-height: 0;
+  overflow: hidden;
 }
-.panel-compact { min-height: 0; }
+.cc-right > .panel:nth-child(2) {
+  flex: 1 1 0;
+  min-height: 0;
+}
+.panel {
+  border-radius: 20px;
+  padding: 12px 12px 14px;
+  min-height: 0;
+}
+.panel-compact { min-height: 0; flex: 1 1 0; overflow: hidden; display: flex; flex-direction: column; }
 .panel-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 .panel-title {
   margin: 0;
-  font-size: 20px;
+  font-size: clamp(14px, 0.95vw, 18px);
   font-weight: 800;
   color: #1d3d43;
+  line-height: 1.25;
 }
 .panel-subtitle {
-  margin: 6px 0 0;
-  font-size: 12px;
+  margin: 4px 0 0;
+  font-size: clamp(10px, 0.6vw, 12px);
   color: #6e858d;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .rank-list,
-.doctor-list { display: flex; flex-direction: column; gap: 14px; }
+.doctor-list { display: flex; flex-direction: column; gap: 9px; min-height: 0; }
 .rank-item,
 .doctor-item {
-  padding: 12px 14px;
-  border-radius: 18px;
+  padding: 9px 10px;
+  border-radius: 14px;
   background: rgba(255,255,255,0.48);
   border: 1px solid rgba(255,255,255,0.74);
 }
-.rank-row { display: grid; grid-template-columns: 26px 1fr auto; align-items: center; gap: 10px; margin-bottom: 8px; }
+.rank-row { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px; margin-bottom: 6px; }
 .rank-index {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   background: rgba(26,181,186,0.12);
   color: #1a7f89;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
-.rank-name { font-size: 14px; font-weight: 700; color: #294149; }
-.rank-value { font-size: 13px; color: #5a757d; }
+.rank-name {
+  font-size: clamp(11px, 0.72vw, 13px);
+  font-weight: 700;
+  color: #294149;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+.rank-value {
+  font-size: clamp(10px, 0.65vw, 12px);
+  color: #5a757d;
+}
 .rank-track {
   width: 100%;
-  height: 8px;
+  height: 6px;
   border-radius: 999px;
   background: rgba(98, 128, 135, 0.12);
   overflow: hidden;
@@ -1435,10 +1544,10 @@ onBeforeUnmount(() => {
 }
 
 .doctor-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.doctor-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.doctor-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .doctor-avatar {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(23,208,199,0.16), rgba(75,137,255,0.16));
   color: #1a7f8a;
@@ -1446,10 +1555,17 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
 }
-.doctor-name { font-size: 14px; font-weight: 700; color: #294149; }
-.doctor-count { font-size: 12px; color: #6f858d; margin-top: 3px; }
+.doctor-name {
+  font-size: clamp(11px, 0.72vw, 13px);
+  font-weight: 700;
+  color: #294149;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+.doctor-count { font-size: clamp(10px, 0.6vw, 11px); color: #6f858d; margin-top: 2px; }
 .doctor-load { display: flex; align-items: center; gap: 8px; }
-.doctor-load-value { font-size: 13px; font-weight: 700; color: #23838f; }
+.doctor-load-value { font-size: clamp(10px, 0.68vw, 12px); font-weight: 700; color: #23838f; }
 .doctor-load-value.is-hot { color: #ff6978; }
 .doctor-dot { width: 9px; height: 9px; border-radius: 50%; }
 .doctor-dot.is-ok { background: #2fd2c9; }
@@ -1457,8 +1573,8 @@ onBeforeUnmount(() => {
 .doctor-dot.is-hot { background: #ff6978; box-shadow: 0 0 0 6px rgba(255,105,120,0.12); }
 
 .loading-tip {
-  padding: 18px 14px;
-  border-radius: 18px;
+  padding: 12px 10px;
+  border-radius: 14px;
   background: rgba(255,255,255,0.38);
   color: #7a9097;
   font-size: 13px;
@@ -1467,27 +1583,28 @@ onBeforeUnmount(() => {
 }
 
 .empty-tip {
-  padding: 18px 14px;
-  border-radius: 18px;
+  padding: 12px 10px;
+  border-radius: 14px;
   background: rgba(255,255,255,0.42);
   color: #6f858d;
   font-size: 13px;
   text-align: center;
 }
 
-.center-column { min-height: 700px; }
+.center-column { min-height: 0; }
 .hub-shell {
   position: relative;
-  border-radius: 34px;
-  min-height: 100%;
+  border-radius: 26px;
+  min-height: 0;
+  flex: 1 1 auto;
   overflow: hidden;
   display: grid;
   place-items: center;
-  padding: 30px;
+  padding: 18px;
 }
 .hub-glow {
   position: absolute;
-  width: 72%;
+  width: var(--hub-glow-size, 520px);
   aspect-ratio: 1;
   border-radius: 50%;
   background: radial-gradient(circle, rgba(82, 196, 199, 0.24), rgba(82,196,199,0.08) 46%, transparent 72%);
@@ -1519,10 +1636,10 @@ onBeforeUnmount(() => {
 .hub-core {
   position: relative;
   z-index: 2;
-  width: min(380px, 62%);
+  width: var(--hub-size, 280px);
   aspect-ratio: 1;
   border-radius: 50%;
-  padding: 30px 24px;
+  padding: 20px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1530,67 +1647,71 @@ onBeforeUnmount(() => {
   text-align: center;
 }
 .hub-kicker {
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: .12em;
   color: #5c8088;
   margin-bottom: 8px;
 }
 .hub-title {
   margin: 0;
-  font-size: 36px;
+  font-size: clamp(22px, 1.6vw, 34px);
   font-weight: 900;
   color: #11838a;
 }
 .hub-subtitle {
   margin: 8px 0 0;
-  font-size: 14px;
+  font-size: clamp(10px, 0.72vw, 13px);
   color: #5d7980;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 .hub-total {
-  margin-top: 18px;
-  font-size: 42px;
+  margin-top: 12px;
+  font-size: clamp(26px, 1.9vw, 42px);
   font-weight: 900;
   color: #1a3640;
 }
 .hub-total-label {
-  margin-top: 4px;
-  font-size: 13px;
+  margin-top: 3px;
+  font-size: 11px;
   color: #6d868d;
 }
 .hub-mini-grid {
   width: 100%;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 18px;
+  gap: 8px;
+  margin-top: 12px;
 }
 .hub-mini-card {
-  min-height: 72px;
-  border-radius: 18px;
-  padding: 12px 10px;
+  min-height: unset;
+  border-radius: 14px;
+  padding: 8px 8px;
   background: rgba(255,255,255,0.44);
   border: 1px solid rgba(255,255,255,0.7);
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
-.hub-mini-value { font-size: 21px; font-weight: 800; color: #156c78; }
-.hub-mini-label { margin-top: 6px; font-size: 12px; color: #6d858c; }
+.hub-mini-value { font-size: clamp(13px, 0.95vw, 20px); font-weight: 800; color: #156c78; line-height: 1.15; }
+.hub-mini-label { margin-top: 4px; font-size: clamp(10px, 0.58vw, 11px); color: #6d858c; line-height: 1.3; overflow-wrap: anywhere; }
 .hub-node {
   position: absolute;
   z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
   color: #37555c;
-  font-size: 12px;
+  font-size: clamp(10px, 0.62vw, 12px);
   font-weight: 700;
+  text-align: center;
+  max-width: 64px;
 }
 .hub-node-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 18px;
+  width: var(--hub-node-size, 40px);
+  height: var(--hub-node-size, 40px);
+  border-radius: clamp(10px, 0.7vw, 16px);
   display: grid;
   place-items: center;
   background: rgba(255,255,255,0.78);
@@ -1598,48 +1719,100 @@ onBeforeUnmount(() => {
   box-shadow: 0 14px 28px rgba(17, 90, 99, 0.12);
   color: #1a7f89;
 }
-.hub-node-top { top: 6%; left: 50%; transform: translateX(-50%); }
-.hub-node-right { right: 6%; top: 50%; transform: translateY(-50%); }
-.hub-node-bottom { bottom: 6%; left: 50%; transform: translateX(-50%); }
-.hub-node-left { left: 6%; top: 50%; transform: translateY(-50%); }
+.hub-node-top { top: clamp(10px, 5.6%, 34px); left: 50%; transform: translateX(-50%); }
+.hub-node-right { right: clamp(10px, 5.6%, 34px); top: 50%; transform: translateY(-50%); }
+.hub-node-bottom { bottom: clamp(10px, 5.6%, 34px); left: 50%; transform: translateX(-50%); }
+.hub-node-left { left: clamp(10px, 5.6%, 34px); top: 50%; transform: translateY(-50%); }
 
-.efficiency-wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
-.big-progress {
-  position: relative;
-  width: 178px;
-  height: 178px;
+.efficiency-wrap { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.efficiency-panel {
+  min-height: 0;
+  overflow: hidden;
 }
-.big-progress-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
-.big-progress-track,
-.big-progress-bar {
-  fill: none;
-  stroke-linecap: round;
+
+.efficiency-panel.panel-compact {
+  overflow: hidden;
 }
-.big-progress-track { stroke: rgba(100, 128, 134, 0.14); stroke-width: 10; }
-.big-progress-bar {
-  stroke: #12b8c8;
-  stroke-width: 10;
-  stroke-dasharray: 301.59;
-  transition: stroke-dashoffset .4s ease;
-}
-.big-progress-center {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
+.eff-kpis {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
 }
-.big-progress-value { font-size: 36px; font-weight: 900; color: #1a3640; }
-.big-progress-label { margin-top: 4px; font-size: 12px; color: #6b848b; }
-.legend-row { width: 100%; display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: #5b757d; }
-.legend-item { display: flex; align-items: center; gap: 6px; }
-.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
-.legend-dot.is-primary { background: #12b8c8; }
-.legend-dot.is-muted { background: rgba(100, 128, 134, 0.34); }
+.eff-kpi { text-align: center; min-width: 0; }
+.eff-kpi-value {
+  margin: 0;
+  font-size: clamp(18px, 1.25vw, 28px);
+  line-height: 1.05;
+  font-weight: 800;
+}
+.eff-kpi-value.is-primary { color: #12b8c8; }
+.eff-kpi-value.is-secondary { color: #5f8bff; }
+.eff-kpi-value.is-tertiary { color: #2d8e95; }
+.eff-kpi-label {
+  margin: 3px 0 0;
+  font-size: clamp(10px, 0.58vw, 11px);
+  color: #6f858d;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.eff-divider {
+  width: 1px;
+  height: 28px;
+  background: rgba(129, 151, 158, 0.24);
+}
+.eff-plan-card {
+  background: rgba(18, 184, 200, 0.06);
+  border-radius: 12px;
+  padding: 8px 10px;
+}
+.eff-plan-title {
+  margin: 0 0 6px;
+  font-size: clamp(10px, 0.62vw, 12px);
+  font-weight: 700;
+  color: #2c7282;
+  line-height: 1.25;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.eff-plan-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.eff-plan-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.56);
+  overflow: hidden;
+}
+.eff-plan-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #12b8c8, rgba(126, 230, 214, 0.92));
+}
+.eff-plan-value {
+  font-size: clamp(12px, 0.74vw, 14px);
+  font-weight: 800;
+  color: #205b6c;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1360px) {
+  .eff-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 8px;
+  }
+  .eff-divider {
+    display: none;
+  }
+}
 
 .event-panel {
   min-height: 0;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
 }
@@ -1650,7 +1823,7 @@ onBeforeUnmount(() => {
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   padding-right: 4px;
 }
 
@@ -1677,39 +1850,42 @@ onBeforeUnmount(() => {
 .event-item.is-tertiary::before { background: #42c9b7; }
 
 .event-time {
-  font-size: 11px;
+  font-size: 10px;
   color: #7e9298;
   margin-bottom: 4px;
 }
 
 .event-title {
-  font-size: 13px;
+  font-size: clamp(11px, 0.68vw, 13px);
   font-weight: 700;
   color: #264148;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .event-desc {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: clamp(10px, 0.6vw, 12px);
   color: #627b82;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .trend-section {
   border-radius: 30px;
-  padding: 18px 18px 16px;
+  padding: 12px 12px 10px;
+  flex: 0 0 auto;
 }
 .trend-header { margin-bottom: 8px; }
 .switch-group { display: flex; gap: 10px; }
 .switch-btn {
-  height: 34px;
-  min-width: 48px;
+  height: 30px;
+  min-width: 42px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.7);
   background: rgba(255,255,255,0.5);
   color: #587079;
-  font-size: 13px;
+  font-size: clamp(10px, 0.66vw, 12px);
   font-weight: 700;
   cursor: pointer;
 }
@@ -1720,7 +1896,7 @@ onBeforeUnmount(() => {
 }
 .trend-chart {
   width: 100%;
-  height: 220px;
+  height: clamp(150px, 18vh, 230px);
 }
 
 @media (max-width: 1200px) {
@@ -1734,6 +1910,6 @@ onBeforeUnmount(() => {
   .cc-right {
     grid-column: 1 / -1;
   }
-  .center-column { min-height: 560px; }
+  .center-column { min-height: 0; }
 }
 </style>
