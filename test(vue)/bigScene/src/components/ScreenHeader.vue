@@ -1,19 +1,18 @@
 <template>
-  <div class="screen-header">
+  <header class="screen-header">
     <div class="header-bar">
-      <div class="header-title">
-        <div class="header-main">
-          <h1>{{ title }}</h1>
-          <span class="header-pill">{{ timeText }}</span>
+      <div class="header-left">
+        <h1 class="brand">{{ title }}</h1>
+        <div class="nav-slot">
+          <slot />
         </div>
-        <div class="header-sub">{{ subTitle }}</div>
       </div>
       <div class="header-right">
-        <slot />
+        <span class="sub">{{ subTitle }}</span>
+        <span class="time">{{ timeText }}</span>
       </div>
     </div>
-    <div class="hud-line"></div>
-  </div>
+  </header>
 </template>
 
 <script setup lang="ts">
@@ -47,33 +46,44 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.screen-header .header-bar {
-  min-height: 0;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
 }
 
-.screen-header .header-main h1 {
-  font-size: 16px;
-  font-weight: 650;
-  letter-spacing: 0.02em;
+.brand {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
   background: linear-gradient(90deg, rgba(32, 82, 110, 0.98), rgba(46, 113, 140, 0.96), rgba(95, 199, 216, 0.92));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  text-shadow: none;
+  white-space: nowrap;
 }
 
-.screen-header .header-sub {
-  font-size: 9px;
-  opacity: 0.66;
-  letter-spacing: 0.04em;
+.nav-slot {
+  min-width: 0;
 }
 
-.screen-header .header-pill {
-  padding: 3px 7px;
-  font-size: 10px;
-  font-weight: 520;
-  border-color: rgba(114, 180, 205, 0.14);
-  background: rgba(255, 255, 255, 0.34);
-  color: rgba(92, 130, 156, 0.92);
+.header-right {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(92, 130, 156, 0.82);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.sub {
+  color: rgba(92, 130, 156, 0.78);
+}
+
+.time {
+  color: rgba(92, 130, 156, 0.72);
+  font-variant-numeric: tabular-nums;
 }
 </style>

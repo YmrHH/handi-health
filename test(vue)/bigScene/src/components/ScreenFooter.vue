@@ -90,12 +90,12 @@ const tickerStyle = computed(() => ({
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 18px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.40);
-  backdrop-filter: blur(var(--blur));
-  -webkit-backdrop-filter: blur(var(--blur));
-  border-top: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 -10px 26px rgba(79, 209, 197, 0.06);
+  padding: 10px var(--canvas-pad-x) calc(10px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(var(--blur-strong));
+  -webkit-backdrop-filter: blur(var(--blur-strong));
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 -10px 26px rgba(79, 209, 197, 0.08);
   color: rgba(39, 85, 113, 0.92);
   font-size: 12px;
   letter-spacing: 0.02em;

@@ -49,11 +49,11 @@
   --r-sm: 10px;
 
   /* Layout */
-  --header-h: 52px;
+  --header-h: 64px;
   --footer-h: 44px;
-  --frame-pad-x: 16px;
-  --frame-pad-top: 8px;
-  --frame-pad-bottom: 12px;
+  --canvas-pad-x: 32px;
+  --canvas-pad-top: 84px;
+  --canvas-pad-bottom: 16px;
 }
 
 html,
