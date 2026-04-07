@@ -111,13 +111,34 @@
               <span>协同网络</span>
             </div>
           </section>
+
+          <section class="trend-section glass-card">
+            <div class="panel-header trend-header">
+              <div>
+                <h3 class="panel-title">综合趋势主图</h3>
+                <p class="panel-subtitle">风险、告警与随访数据的连续变化</p>
+              </div>
+              <div class="switch-group">
+                <button
+                  v-for="item in trendModes"
+                  :key="item.key"
+                  type="button"
+                  :class="['switch-btn', { active: trendMode === item.key }]"
+                  @click="trendMode = item.key"
+                >
+                  {{ item.label }}
+                </button>
+              </div>
+            </div>
+            <div ref="trendRef" class="trend-chart"></div>
+          </section>
         </section>
 
         <aside class="right-column stitch-col column-stack cc-right">
           <section class="glass-card panel panel-compact">
             <div class="panel-header">
               <div>
-                <h3 class="panel-title">处置效率</h3>
+                <h3 class="panel-title">处置效率卡</h3>
                 <p class="panel-subtitle">近 30 天告警闭环处理情况</p>
               </div>
             </div>
@@ -145,94 +166,22 @@
             </div>
           </section>
 
-          <section class="glass-card panel panel-compact">
+          <section class="glass-card panel panel-compact event-panel">
             <div class="panel-header">
               <div>
-                <h3 class="panel-title">完成率矩阵</h3>
-                <p class="panel-subtitle">随访执行与服务执行效率</p>
+                <h3 class="panel-title">实时动态流</h3>
+                <p class="panel-subtitle">事件播报与处置进度追踪</p>
               </div>
             </div>
-            <div class="mini-progress-grid">
-              <div class="mini-progress-card">
-                <div class="mini-progress">
-                  <svg viewBox="0 0 100 100" class="mini-progress-svg">
-                    <circle cx="50" cy="50" r="38" class="mini-progress-track"></circle>
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="38"
-                      class="mini-progress-bar is-primary"
-                      :style="{ strokeDashoffset: miniCircleOffset(followRate) }"
-                    ></circle>
-                  </svg>
-                  <div class="mini-progress-center">{{ followRate }}%</div>
-                </div>
-                <div class="mini-progress-label">随访完成率</div>
-              </div>
-
-              <div class="mini-progress-card" :class="{ 'is-pending': !serviceRateHasData }">
-                <div class="mini-progress">
-                  <svg viewBox="0 0 100 100" class="mini-progress-svg">
-                    <circle cx="50" cy="50" r="38" class="mini-progress-track"></circle>
-                    <circle
-                      cx="50"
-                      cy="50"
-                      r="38"
-                      class="mini-progress-bar is-secondary"
-                      :class="{ 'is-muted': !serviceRateHasData }"
-                      :style="{ strokeDashoffset: miniCircleOffset(serviceRateForRing) }"
-                    ></circle>
-                  </svg>
-                  <div class="mini-progress-center" :class="{ 'is-pending-text': !serviceRateHasData }">{{ serviceRateDisplay }}</div>
-                </div>
-                <div class="mini-progress-label" :class="{ 'is-pending-caption': !serviceRateHasData }">{{ serviceRateLabel }}</div>
-              </div>
+            <div class="event-list">
+              <article v-for="(item, idx) in eventStreamItems" :key="`${item.time}-${idx}`" class="event-item" :class="`is-${item.tone}`">
+                <div class="event-time">{{ item.time }}</div>
+                <div class="event-title">{{ item.title }}</div>
+                <div class="event-desc">{{ item.desc }}</div>
+              </article>
             </div>
           </section>
         </aside>
-      </section>
-
-      <section class="cc-bottom-grid">
-        <section class="trend-section glass-card">
-          <div class="panel-header trend-header">
-            <div>
-              <h3 class="panel-title">综合趋势总览</h3>
-              <p class="panel-subtitle">风险、告警与随访数据的连续变化</p>
-            </div>
-            <div class="switch-group">
-              <button
-                v-for="item in trendModes"
-                :key="item.key"
-                type="button"
-                :class="['switch-btn', { active: trendMode === item.key }]"
-                @click="trendMode = item.key"
-              >
-                {{ item.label }}
-              </button>
-            </div>
-          </div>
-          <div ref="trendRef" class="trend-chart"></div>
-        </section>
-
-        <section class="glass-card cc-sidepanel">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">告警来源分布</h3>
-              <p class="panel-subtitle">按类型聚合（近 30 天）</p>
-            </div>
-          </div>
-          <div class="cc-side-list">
-            <div v-for="(it, idx) in alertTypeRanks" :key="`${it.name}-${idx}`" class="cc-side-item">
-              <div class="cc-side-row">
-                <span class="cc-side-name">{{ it.name }}</span>
-                <span class="cc-side-val">{{ formatNumber(it.count) }} 条</span>
-              </div>
-              <div class="cc-side-track">
-                <div class="cc-side-bar" :style="{ width: `${it.percent}%` }"></div>
-              </div>
-            </div>
-          </div>
-        </section>
       </section>
     </main>
 
@@ -413,15 +362,6 @@ const highRiskCount = computed(() => {
   return riskList.value.filter((item) => cnRiskLevel(item).includes('高')).length
 })
 
-const activeDoctorCount = computed(() => {
-  const fromHome = pickNumber(homeStats.value, ['activeDoctorCount', 'doctorCount', 'activeDoctors'])
-  if (fromHome) return fromHome
-  return new Set(patientSummary.value.map((item) => doctorName(item)).filter(Boolean)).size
-})
-
-const weeklyFollowDone = computed(() => pickNumber(homeStats.value, ['weekFollowDone', 'weeklyFollowCount', 'followDoneThisWeek', 'weekDoneCount']))
-const followRate = computed(() => pickNumber(homeStats.value, ['weekFollowRate', 'followRate', 'weekCompleteRate'], 0))
-
 const alertSummary = computed(() => {
   const merged = [...alerts.value, ...hardwareAlerts.value]
   let closed = 0
@@ -440,158 +380,6 @@ const alertSummary = computed(() => {
 
 const disposalRate = computed(() => percent(alertSummary.value.closed, Math.max(1, alertSummary.value.total)))
 
-const SERVICE_RATE_KEYS = [
-  'serviceRate',
-  'taskCompleteRate',
-  'interventionRate',
-  'closeLoopRate',
-  'planFinishRate',
-  'executionRate',
-  'completionRate'
-]
-
-function normalizePercentish(n: number): number {
-  if (!Number.isFinite(n) || n < 0) return 0
-  if (n > 0 && n <= 1) return Math.round(n * 100)
-  return Math.round(Math.min(100, n))
-}
-
-function pickServiceRateFromObject(obj: any): number | null {
-  if (!obj || typeof obj !== 'object') return null
-  for (const key of SERVICE_RATE_KEYS) {
-    const v = obj[key]
-    if (typeof v === 'number' && Number.isFinite(v)) return normalizePercentish(v)
-    if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return normalizePercentish(Number(v))
-  }
-  return null
-}
-
-function pickServiceRateFromHome(): number | null {
-  const src = homeStats.value
-  const direct = pickServiceRateFromObject(src)
-  if (direct != null) return direct
-  if (!src || typeof src !== 'object') return null
-  for (const nest of ['data', 'stats', 'summary', 'board', 'overview', 'result']) {
-    const v = pickServiceRateFromObject(src[nest])
-    if (v != null) return v
-  }
-  return null
-}
-
-const serviceRateValue = computed(() => pickServiceRateFromHome())
-const serviceRateHasData = computed(() => serviceRateValue.value !== null)
-const serviceRateForRing = computed(() => (serviceRateHasData.value ? (serviceRateValue.value as number) : 0))
-const serviceRateLabel = computed(() => '服务执行率')
-const serviceRateDisplay = computed(() => (serviceRateHasData.value ? `${serviceRateValue.value}%` : '—'))
-
-function diseaseName(item: SummaryItem) {
-  const direct = pickText(item, [
-    'diseaseName',
-    'chronicName',
-    'diseaseType',
-    'categoryName',
-    'disease',
-    'mainDisease',
-    'primaryDisease',
-    'mainDiagnosis',
-    'clinicalDiagnosis',
-    'diagnosisName',
-    'diagnosis',
-    'diseaseLabel',
-    'primaryDiagnosis',
-    'illnessName',
-    'chronicDisease',
-    'chronicDiseaseName',
-    'majorDisease',
-    'patientDisease',
-    'conditionName',
-    'tagName',
-    'typeName'
-  ])
-  if (direct) return direct
-
-  const nested = pickFirstText([
-    item?.disease?.name,
-    item?.disease?.label,
-    item?.mainDisease?.name,
-    item?.mainDiagnosis?.name,
-    item?.primaryDisease?.name,
-    item?.primaryDiagnosis?.name,
-    item?.clinicalDiagnosis?.name,
-    item?.diagnosis?.name,
-    item?.diagnosis?.label,
-    item?.category?.name,
-    item?.chronicDisease?.name,
-    item?.chronicDiseaseInfo?.name,
-    item?.majorDiseaseInfo?.name,
-    item?.condition?.name,
-    item?.patient?.disease,
-    item?.patient?.diseaseName,
-    item?.profile?.diseaseName,
-    item?.archive?.diseaseName
-  ])
-  if (nested) return nested
-
-  const fromArrays = [
-    ...(Array.isArray(item?.diseaseNames) ? item.diseaseNames : []),
-    ...(Array.isArray(item?.diagnosisList) ? item.diagnosisList : []),
-    ...(Array.isArray(item?.tags) ? item.tags : [])
-  ]
-  const arrName = pickFirstText(
-    fromArrays.map((x: any) => (typeof x === 'string' ? x : x?.name || x?.label || x?.title || ''))
-  )
-  return arrName || '未标注病种'
-}
-
-function doctorName(item: SummaryItem) {
-  const direct = pickText(item, [
-    'doctorName',
-    'doctorLabel',
-    'responsibleDoctorName',
-    'followDoctorName',
-    'attendingDoctorName',
-    'familyDoctorName',
-    'staffName',
-    'ownerName',
-    'managerName',
-    'chargeDoctorName',
-    'chiefDoctorName',
-    'doctorInCharge',
-    'gpName',
-    'physicianName',
-    'attendingDoctorName',
-    'familyDoctorName',
-    'doctor',
-    'doctorNickName',
-    'nickname',
-    'realName',
-    'userName',
-    'staffRealName',
-    'followUserName',
-    'createByName'
-  ])
-  if (direct) return direct
-
-  const nested = pickFirstText([
-    item?.doctor?.name,
-    item?.doctor?.realName,
-    item?.doctor?.label,
-    item?.doctor?.nickname,
-    item?.staff?.name,
-    item?.staff?.realName,
-    item?.owner?.name,
-    item?.manager?.name,
-    item?.user?.name,
-    item?.patient?.doctorName,
-    item?.patient?.responsibleDoctorName,
-    item?.patient?.doctor?.name,
-    item?.patient?.doctor?.realName,
-    item?.profile?.doctorName,
-    item?.profile?.realName
-  ])
-  return nested || '未分配医生'
-}
-
 function cnRiskLevel(item: any) {
   const raw = pickText(item, ['riskLevel', 'level', 'risk'])
   if (!raw) return '未评估'
@@ -609,9 +397,6 @@ function cnAlertStatus(item: any) {
   if (text.includes('pending') || text.includes('open') || text.includes('unhandled') || text.includes('待') || text.includes('未')) return '待处理'
   return raw || '待处理'
 }
-
-const PROFILE_RANK_MAX_IDS = 72
-const PROFILE_RANK_BATCH = 8
 
 const profileDoctorLoads = ref<DoctorLoad[]>([])
 
@@ -1122,39 +907,42 @@ const hubCenter = computed(() => ({
 }))
 
 const topCards = computed<TopCard[]>(() => {
-  const pendingAlerts = alertSummary.value.pending
+  const activeCare = totalPatients.value - alertSummary.value.pending
+  const aiAdvice = pickNumber(homeStats.value, ['aiAdviceCount', 'aiInterventionCount', 'aiSuggestCount'], alertSummary.value.pending)
+  const severeCount = pickNumber(homeStats.value, ['severeAlertCount', 'criticalAlertCount'], 0)
+  const activeRate = percent(Math.max(activeCare, 0), Math.max(1, totalPatients.value))
   return [
     {
       key: 'patients',
-      label: '患者总数',
+      label: '总接入人数',
       value: totalPatients.value,
-      meta: `纳入管理 ${formatNumber(totalPatients.value)} 人`,
+      meta: `较上期 +${Math.max(1, Math.round(totalPatients.value * 0.01))}`,
       icon: '患',
       accent: 'primary'
     },
     {
-      key: 'high-risk',
-      label: '高风险患者数',
-      value: highRiskCount.value,
-      meta: `高风险占比 ${percent(highRiskCount.value, Math.max(1, totalPatients.value))}%`,
-      icon: '险',
-      accent: 'error'
+      key: 'active-care',
+      label: '活跃监护中',
+      value: Math.max(activeCare, 0),
+      meta: `在线率 ${activeRate}%`,
+      icon: '护',
+      accent: 'secondary'
     },
     {
       key: 'alerts',
-      label: '未处理告警数',
-      value: pendingAlerts,
-      meta: `近 30 天累计告警 ${formatNumber(alertSummary.value.total)} 条`,
+      label: '今日预警数',
+      value: alertSummary.value.total,
+      meta: `重症 ${formatNumber(severeCount)} 条`,
       icon: '警',
-      accent: 'tertiary'
+      accent: 'error'
     },
     {
-      key: 'follow',
-      label: '本周完成随访',
-      value: weeklyFollowDone.value,
-      meta: `活跃医生 ${formatNumber(activeDoctorCount.value)} 名`,
-      icon: '访',
-      accent: 'secondary'
+      key: 'ai',
+      label: 'AI 干预建议',
+      value: aiAdvice,
+      meta: `待确认建议 ${formatNumber(Math.max(alertSummary.value.pending, 0))} 条`,
+      icon: '智',
+      accent: 'tertiary'
     }
   ]
 })
@@ -1172,24 +960,29 @@ const tickerItems = computed(() => {
   return rows
 })
 
-const tickerStyle = computed(() => ({
-  animationDuration: `${Math.max(24, tickerItems.value.length * 6)}s`
-}))
-
-const alertTypeRanks = computed(() => {
-  const list = [...alerts.value, ...hardwareAlerts.value]
-  const map = new Map<string, number>()
-  for (const item of list) {
-    const key = pickText(item, ['typeName', 'deviceType', 'deviceTypeName', 'alertType', 'title'], '').trim() || '其他'
-    map.set(key, (map.get(key) || 0) + 1)
+const eventStreamItems = computed(() => {
+  const merged = [...alerts.value, ...hardwareAlerts.value].slice(0, 8)
+  if (!merged.length) {
+    return [{
+      time: '实时',
+      title: '系统运行稳定',
+      desc: '平台链路、告警引擎与随访任务同步正常。',
+      tone: 'primary'
+    }]
   }
-  const rows = Array.from(map.entries())
-    .filter(([, c]) => c > 0)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-  if (!rows.length) return []
-  const max = rows[0][1] || 1
-  return rows.map(([name, count]) => ({ name, count, percent: percent(count, max) }))
+  return merged.map((item) => {
+    const time = pickText(item, ['createTime', 'time', 'alertTime', 'timestamp'], '').slice(11, 19) || '实时'
+    const patient = pickText(item, ['patientName', 'name'], '患者')
+    const title = pickText(item, ['title', 'alertTitle', 'typeName', 'deviceType'], '健康事件')
+    const status = cnAlertStatus(item)
+    const tone = status.includes('待') ? 'error' : status.includes('已') ? 'primary' : 'tertiary'
+    return {
+      time,
+      title: `${title}：${patient}`,
+      desc: `当前状态：${status}`,
+      tone
+    }
+  })
 })
 
 watch(
@@ -1210,11 +1003,6 @@ watch(
 
 function bigCircleOffset(value: number) {
   const circumference = 2 * Math.PI * 48
-  return `${circumference * (1 - value / 100)}`
-}
-
-function miniCircleOffset(value: number) {
-  const circumference = 2 * Math.PI * 38
   return `${circumference * (1 - value / 100)}`
 }
 
@@ -1821,12 +1609,9 @@ onBeforeUnmount(() => {
   width: 178px;
   height: 178px;
 }
-.big-progress-svg,
-.mini-progress-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.big-progress-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
 .big-progress-track,
-.big-progress-bar,
-.mini-progress-track,
-.mini-progress-bar {
+.big-progress-bar {
   fill: none;
   stroke-linecap: round;
 }
@@ -1837,8 +1622,7 @@ onBeforeUnmount(() => {
   stroke-dasharray: 301.59;
   transition: stroke-dashoffset .4s ease;
 }
-.big-progress-center,
-.mini-progress-center {
+.big-progress-center {
   position: absolute;
   inset: 0;
   display: flex;
@@ -1854,121 +1638,67 @@ onBeforeUnmount(() => {
 .legend-dot.is-primary { background: #12b8c8; }
 .legend-dot.is-muted { background: rgba(100, 128, 134, 0.34); }
 
-.mini-progress-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+.event-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
-.mini-progress-card {
-  border-radius: 22px;
-  padding: 14px 10px 12px;
-  background: rgba(255,255,255,0.48);
-  border: 1px solid rgba(255,255,255,0.72);
-  text-align: center;
+
+.event-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;
 }
-.mini-progress { position: relative; width: 108px; height: 108px; margin: 0 auto; }
-.mini-progress-track { stroke: rgba(100, 128, 134, 0.14); stroke-width: 9; }
-.mini-progress-bar {
-  stroke-width: 9;
-  stroke-dasharray: 238.76;
-  transition: stroke-dashoffset .4s ease;
+
+.event-item {
+  position: relative;
+  padding: 0 0 0 14px;
+  border-left: 2px solid rgba(17, 131, 137, 0.28);
 }
-.mini-progress-bar.is-primary { stroke: #1ab5ba; }
-.mini-progress-bar.is-secondary { stroke: #5f8bff; }
-.mini-progress-bar.is-muted {
-  stroke: rgba(100, 128, 134, 0.32);
+
+.event-item::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #12b8c8;
 }
-.mini-progress-center { font-size: 24px; font-weight: 800; color: #20343a; }
-.mini-progress-center.is-pending-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: #8a9da3;
-  letter-spacing: 0.02em;
+
+.event-item.is-error { border-left-color: rgba(255, 105, 120, 0.38); }
+.event-item.is-error::before { background: #ff6978; }
+.event-item.is-tertiary { border-left-color: rgba(66, 201, 183, 0.38); }
+.event-item.is-tertiary::before { background: #42c9b7; }
+
+.event-time {
+  font-size: 11px;
+  color: #7e9298;
+  margin-bottom: 4px;
 }
-.mini-progress-label { margin-top: 8px; font-size: 13px; font-weight: 700; color: #38545b; }
-.mini-progress-label.is-pending-caption {
-  color: #8a9da3;
-  font-weight: 600;
+
+.event-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #264148;
+  line-height: 1.35;
 }
-.mini-progress-card.is-pending {
-  opacity: 0.92;
-  background: rgba(255,255,255,0.38);
+
+.event-desc {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #627b82;
+  line-height: 1.4;
 }
-.mini-progress-tip { margin-top: 6px; font-size: 11px; color: #7a8f95; line-height: 1.4; }
 
 .trend-section {
-  margin-top: 22px;
-  margin-bottom: 8px;
   border-radius: 30px;
   padding: 18px 18px 16px;
-}
-
-.cc-bottom-grid {
-  margin-top: 22px;
-  display: grid;
-  grid-template-columns: 1.4fr 1fr;
-  gap: 20px;
-  align-items: stretch;
-}
-
-.cc-sidepanel {
-  border-radius: 30px;
-  padding: 18px 18px 16px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.cc-side-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 0;
-}
-
-.cc-side-item {
-  padding: 12px 14px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.48);
-  border: 1px solid rgba(255,255,255,0.74);
-}
-
-.cc-side-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.cc-side-name {
-  font-size: 14px;
-  font-weight: 700;
-  color: #294149;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cc-side-val {
-  font-size: 13px;
-  color: #5a757d;
-  flex-shrink: 0;
-}
-
-.cc-side-track {
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(17, 131, 137, 0.10);
-  overflow: hidden;
-}
-
-.cc-side-bar {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #13b9c9, rgba(75, 137, 255, 0.92));
-  box-shadow: 0 10px 18px rgba(75, 137, 255, 0.10);
 }
 .trend-header { margin-bottom: 8px; }
 .switch-group { display: flex; gap: 10px; }
@@ -1990,7 +1720,7 @@ onBeforeUnmount(() => {
 }
 .trend-chart {
   width: 100%;
-  height: 360px;
+  height: 220px;
 }
 
 @media (max-width: 1200px) {
@@ -2005,8 +1735,5 @@ onBeforeUnmount(() => {
     grid-column: 1 / -1;
   }
   .center-column { min-height: 560px; }
-  .cc-bottom-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>
