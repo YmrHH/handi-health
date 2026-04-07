@@ -1,9 +1,9 @@
 <template>
-  <div class="command-center-page" :style="viewportStyle">
+  <div ref="hostRef" class="command-center-page" :style="viewportStyle">
     <div class="page-bg page-grid"></div>
 
-    <main class="page-main">
-      <section class="hero-metrics" aria-label="首页核心指标">
+    <main class="page-main stitch-home">
+      <section class="hero-metrics stitch-stats" aria-label="首页核心指标">
         <article v-for="card in topCards" :key="card.key" class="metric-card glass-card">
           <div class="metric-icon" :class="`metric-icon--${card.accent}`">{{ card.icon }}</div>
           <div class="metric-body">
@@ -14,8 +14,8 @@
         </article>
       </section>
 
-      <section class="hero-grid">
-        <aside class="left-column column-stack">
+      <section class="hero-grid stitch-main cc-bento">
+        <aside class="left-column stitch-col column-stack cc-left">
           <section class="glass-card panel panel-compact">
             <div class="panel-header">
               <div>
@@ -67,7 +67,7 @@
           </section>
         </aside>
 
-        <section class="center-column">
+        <section class="center-column stitch-center cc-center">
           <section class="hub-shell glass-card">
             <div class="hub-glow"></div>
             <div class="hub-outer-ring"></div>
@@ -113,7 +113,7 @@
           </section>
         </section>
 
-        <aside class="right-column column-stack">
+        <aside class="right-column stitch-col column-stack cc-right">
           <section class="glass-card panel panel-compact">
             <div class="panel-header">
               <div>
@@ -192,25 +192,47 @@
         </aside>
       </section>
 
-      <section class="trend-section glass-card">
-        <div class="panel-header trend-header">
-          <div>
-            <h3 class="panel-title">综合趋势总览</h3>
-            <p class="panel-subtitle">风险、告警与随访数据的连续变化</p>
+      <section class="cc-bottom-grid">
+        <section class="trend-section glass-card">
+          <div class="panel-header trend-header">
+            <div>
+              <h3 class="panel-title">综合趋势总览</h3>
+              <p class="panel-subtitle">风险、告警与随访数据的连续变化</p>
+            </div>
+            <div class="switch-group">
+              <button
+                v-for="item in trendModes"
+                :key="item.key"
+                type="button"
+                :class="['switch-btn', { active: trendMode === item.key }]"
+                @click="trendMode = item.key"
+              >
+                {{ item.label }}
+              </button>
+            </div>
           </div>
-          <div class="switch-group">
-            <button
-              v-for="item in trendModes"
-              :key="item.key"
-              type="button"
-              :class="['switch-btn', { active: trendMode === item.key }]"
-              @click="trendMode = item.key"
-            >
-              {{ item.label }}
-            </button>
+          <div ref="trendRef" class="trend-chart"></div>
+        </section>
+
+        <section class="glass-card cc-sidepanel">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">告警来源分布</h3>
+              <p class="panel-subtitle">按类型聚合（近 30 天）</p>
+            </div>
           </div>
-        </div>
-        <div ref="trendRef" class="trend-chart"></div>
+          <div class="cc-side-list">
+            <div v-for="(it, idx) in alertTypeRanks" :key="`${it.name}-${idx}`" class="cc-side-item">
+              <div class="cc-side-row">
+                <span class="cc-side-name">{{ it.name }}</span>
+                <span class="cc-side-val">{{ formatNumber(it.count) }} 条</span>
+              </div>
+              <div class="cc-side-track">
+                <div class="cc-side-bar" :style="{ width: `${it.percent}%` }"></div>
+              </div>
+            </div>
+          </div>
+        </section>
       </section>
     </main>
 
@@ -262,10 +284,12 @@ const rankingsLoadDone = ref(false)
 const DESIGN_W = 1920
 const DESIGN_H = 1080
 const viewportScale = ref(1)
+const hostRef = ref<HTMLElement | null>(null)
 
 function computeScale() {
-  const w = Math.max(1, typeof window !== 'undefined' ? window.innerWidth : DESIGN_W)
-  const h = Math.max(1, typeof window !== 'undefined' ? window.innerHeight : DESIGN_H)
+  const el = hostRef.value
+  const w = Math.max(1, el?.clientWidth || (typeof window !== 'undefined' ? window.innerWidth : DESIGN_W))
+  const h = Math.max(1, el?.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : DESIGN_H))
   const s = Math.min(w / DESIGN_W, h / DESIGN_H)
   viewportScale.value = Math.max(0.2, Math.min(2, Number.isFinite(s) ? s : 1))
 }
@@ -1152,6 +1176,22 @@ const tickerStyle = computed(() => ({
   animationDuration: `${Math.max(24, tickerItems.value.length * 6)}s`
 }))
 
+const alertTypeRanks = computed(() => {
+  const list = [...alerts.value, ...hardwareAlerts.value]
+  const map = new Map<string, number>()
+  for (const item of list) {
+    const key = pickText(item, ['typeName', 'deviceType', 'deviceTypeName', 'alertType', 'title'], '').trim() || '其他'
+    map.set(key, (map.get(key) || 0) + 1)
+  }
+  const rows = Array.from(map.entries())
+    .filter(([, c]) => c > 0)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+  if (!rows.length) return []
+  const max = rows[0][1] || 1
+  return rows.map(([name, count]) => ({ name, count, percent: percent(count, max) }))
+})
+
 watch(
   tickerItems,
   (items) => {
@@ -1451,6 +1491,18 @@ onBeforeUnmount(() => {
   transform-origin: top center;
 }
 
+.stitch-home {
+  position: relative;
+}
+
+.stitch-stats {
+  position: relative;
+}
+
+.stitch-main {
+  position: relative;
+}
+
 .glass-card {
   background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(247,252,252,0.6));
   border: 1px solid rgba(255,255,255,0.9);
@@ -1512,9 +1564,25 @@ onBeforeUnmount(() => {
 
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(290px, 0.94fr) minmax(620px, 2.45fr) minmax(290px, 0.94fr);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 20px;
   align-items: stretch;
+}
+
+.cc-left {
+  grid-column: 1 / span 3;
+}
+
+.cc-center {
+  grid-column: 4 / span 6;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+}
+
+.cc-right {
+  grid-column: 10 / span 3;
 }
 
 .column-stack { display: flex; flex-direction: column; gap: 18px; }
@@ -1834,6 +1902,74 @@ onBeforeUnmount(() => {
   border-radius: 30px;
   padding: 18px 18px 16px;
 }
+
+.cc-bottom-grid {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.cc-sidepanel {
+  border-radius: 30px;
+  padding: 18px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.cc-side-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+}
+
+.cc-side-item {
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.48);
+  border: 1px solid rgba(255,255,255,0.74);
+}
+
+.cc-side-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.cc-side-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #294149;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cc-side-val {
+  font-size: 13px;
+  color: #5a757d;
+  flex-shrink: 0;
+}
+
+.cc-side-track {
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(17, 131, 137, 0.10);
+  overflow: hidden;
+}
+
+.cc-side-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #13b9c9, rgba(75, 137, 255, 0.92));
+  box-shadow: 0 10px 18px rgba(75, 137, 255, 0.10);
+}
 .trend-header { margin-bottom: 8px; }
 .switch-group { display: flex; gap: 10px; }
 .switch-btn {
@@ -1857,9 +1993,20 @@ onBeforeUnmount(() => {
   height: 360px;
 }
 
-@media (max-width: 1480px) {
+@media (max-width: 1200px) {
   .hero-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1100px) {
   .hero-grid { grid-template-columns: 1fr; }
+  .cc-left,
+  .cc-center,
+  .cc-right {
+    grid-column: 1 / -1;
+  }
   .center-column { min-height: 560px; }
+  .cc-bottom-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
