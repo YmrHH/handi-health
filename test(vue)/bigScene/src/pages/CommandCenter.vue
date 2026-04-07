@@ -214,23 +214,6 @@
       </section>
     </main>
 
-    <footer class="status-band glass-card">
-      <div class="status-indicator">
-        <span class="status-dot"></span>
-        <span>系统运行正常</span>
-      </div>
-      <div class="ticker-window">
-        <div class="ticker-track" :style="tickerStyle">
-          <div v-for="(item, idx) in tickerItems" :key="`ticker-a-${idx}`" class="ticker-item">
-            {{ item }}
-          </div>
-          <div v-for="(item, idx) in tickerItems" :key="`ticker-b-${idx}`" class="ticker-item">
-            {{ item }}
-          </div>
-        </div>
-      </div>
-      <div class="band-meta">更新时间 {{ updatedAt }}</div>
-    </footer>
   </div>
 </template>
 
@@ -245,6 +228,7 @@ import {
   fetchPatientRiskList,
   fetchPatientSummary
 } from '../api'
+import { footerState } from '../utils/footerState'
 import { use, init, type ECharts, type EChartsOption } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
@@ -1168,6 +1152,22 @@ const tickerStyle = computed(() => ({
   animationDuration: `${Math.max(24, tickerItems.value.length * 6)}s`
 }))
 
+watch(
+  tickerItems,
+  (items) => {
+    footerState.tickerItems = items
+  },
+  { immediate: true }
+)
+
+watch(
+  updatedAt,
+  (t) => {
+    footerState.updatedAt = t || '—'
+  },
+  { immediate: true }
+)
+
 function bigCircleOffset(value: number) {
   const circumference = 2 * Math.PI * 48
   return `${circumference * (1 - value / 100)}`
@@ -1421,7 +1421,7 @@ onBeforeUnmount(() => {
 .command-center-page {
   position: relative;
   min-height: 100%;
-  padding: 18px 18px calc(120px + env(safe-area-inset-bottom, 0px));
+  padding: 18px 18px 18px;
   color: #20343a;
 }
 
@@ -1857,84 +1857,9 @@ onBeforeUnmount(() => {
   height: 360px;
 }
 
-.status-band {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  max-width: none;
-  transform: none;
-  border-radius: 18px 18px 0 0;
-  min-height: 56px;
-  padding: 8px 20px calc(10px + env(safe-area-inset-bottom, 0px));
-  display: grid;
-  grid-template-columns: minmax(160px, 200px) 1fr minmax(120px, 150px);
-  gap: 12px;
-  align-items: center;
-  z-index: 40;
-  box-sizing: border-box;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55), rgba(247, 252, 252, 0.42));
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  border-bottom: none;
-  box-shadow: 0 -8px 32px rgba(28, 88, 96, 0.07);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-.status-indicator,
-.band-meta {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 13px;
-  color: #35535a;
-  font-weight: 700;
-}
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #20d0c9;
-  box-shadow: 0 0 0 7px rgba(32,208,201,0.12);
-}
-.ticker-window {
-  overflow: hidden;
-  border-left: 1px solid rgba(17, 131, 137, 0.08);
-  border-right: 1px solid rgba(17, 131, 137, 0.08);
-  padding: 0 12px;
-}
-.ticker-track {
-  display: inline-flex;
-  align-items: center;
-  gap: 28px;
-  white-space: nowrap;
-  min-width: max-content;
-  animation: tickerMove linear infinite;
-}
-.ticker-item {
-  font-size: 12px;
-  color: #4d6a72;
-}
-.band-meta { justify-content: flex-end; color: #72878d; }
-
-@keyframes rotate360 {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes tickerMove {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-
 @media (max-width: 1480px) {
   .hero-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero-grid { grid-template-columns: 1fr; }
   .center-column { min-height: 560px; }
-  .status-band {
-    grid-template-columns: 1fr;
-    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
-  }
-  .band-meta { justify-content: flex-start; }
 }
 </style>

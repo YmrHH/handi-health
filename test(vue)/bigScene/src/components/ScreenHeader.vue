@@ -52,22 +52,28 @@ onUnmounted(() => {
 }
 
 .screen-header .header-main h1 {
-  font-size: clamp(12px, 1.2vw, 16px);
-  font-weight: 450;
-  text-shadow: 0 0 4px rgba(95, 199, 216, 0.03);
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  background: linear-gradient(90deg, rgba(32, 82, 110, 0.98), rgba(46, 113, 140, 0.96), rgba(95, 199, 216, 0.92));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
 }
 
 .screen-header .header-sub {
-  font-size: 8px;
-  opacity: 0.65;
+  font-size: 9px;
+  opacity: 0.66;
   letter-spacing: 0.04em;
 }
 
 .screen-header .header-pill {
-  padding: 2px 6px;
-  font-size: 8px;
-  font-weight: 380;
-  border-color: rgba(114, 180, 205, 0.12);
-  background: rgba(255, 255, 255, 0.3);
+  padding: 3px 7px;
+  font-size: 10px;
+  font-weight: 520;
+  border-color: rgba(114, 180, 205, 0.14);
+  background: rgba(255, 255, 255, 0.34);
+  color: rgba(92, 130, 156, 0.92);
 }
 </style>
