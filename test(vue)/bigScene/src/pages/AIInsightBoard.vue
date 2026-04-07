@@ -1,54 +1,131 @@
 <template>
-  <div class="layout">
-    <div class="col left">
-      <ScreenPanel title="模型效果与覆盖" subtitle="AUC / F1 / 建议覆盖率（来自 Board）">
-        <div ref="kpiRef" class="chart"></div>
-      </ScreenPanel>
-      <ScreenPanel title="近三个月趋势" subtitle="告警 / 随访 / 高危（强约束：只取最近3个月）">
-        <div ref="trend3Ref" class="chart chart-tall"></div>
-      </ScreenPanel>
-      <ScreenPanel title="数据来源分布" subtitle="来自 Report Board">
-        <div v-if="sourceHasData" ref="typeRef" class="chart"></div>
-        <div v-else class="placeholder">暂无数据</div>
-      </ScreenPanel>
-    </div>
-
-    <div class="col center">
-      <ScreenPanel title="AI 趋势中枢" subtitle="中心主视觉（多层环 + 趋势锚点）">
-        <div class="center-stage">
-          <div class="hub glow-breath">
-            <div class="hub-title">AI 洞察指数</div>
-            <div class="hub-value">{{ insightIndexText }}</div>
-            <div class="hub-sub">近3个月 · 告警 · 风险 · 建议</div>
+  <main class="stitch-grid">
+    <aside class="stitch-col">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">模型效果与覆盖</div>
+            <div class="panel-subtitle">AUC / F1 / 建议覆盖率</div>
           </div>
-          <div ref="insightRef" class="hub-ring"></div>
         </div>
-      </ScreenPanel>
-      <ScreenPanel title="病种趋势" subtitle="Top 病种（来自 Report Board）">
-        <div v-if="diseaseHasData" ref="diseaseTrendRef" class="chart chart-tall"></div>
-        <div v-else class="placeholder">暂无数据</div>
-      </ScreenPanel>
-    </div>
+        <div class="panel-body">
+          <div ref="kpiRef" class="chart"></div>
+        </div>
+      </section>
 
-    <div class="col right">
-      <ScreenPanel title="洞察要点" subtitle="事件流（替代表格）">
-        <EventTicker :items="events" />
-      </ScreenPanel>
-      <ScreenPanel title="病种稳定率排行" subtitle="Top5（来自 Report Board）">
-        <div v-if="stableHasData" ref="rankRef" class="chart"></div>
-        <div v-else class="placeholder">暂无数据</div>
-      </ScreenPanel>
-      <ScreenPanel title="重点提示" subtitle="占位">
-        <div class="placeholder">可在此展示“本周风险上升人群 / 告警集中设备类型 / 随访滞后指标”等</div>
-      </ScreenPanel>
-    </div>
-  </div>
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">近三个月趋势</div>
+            <div class="panel-subtitle">告警 / 随访 / 高危</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="trend3Ref" class="chart chart-tall"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">数据来源分布</div>
+            <div class="panel-subtitle">来源结构</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="typeRef" class="chart"></div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="stitch-center">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">AI 趋势中枢</div>
+            <div class="panel-subtitle">多层环与趋势锚点</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="center-stage">
+            <div class="hub glow-breath">
+              <div class="hub-title">AI 洞察指数</div>
+              <div class="hub-value">{{ insightIndexText }}</div>
+              <div class="hub-sub">近三个月 · 告警 · 风险 · 建议</div>
+            </div>
+            <div ref="insightRef" class="hub-ring"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">病种趋势</div>
+            <div class="panel-subtitle">Top 病种走势</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="diseaseTrendRef" class="chart chart-tall"></div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="stitch-col">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">洞察要点</div>
+            <div class="panel-subtitle">动态摘要</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <EventTicker :items="events" />
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">病种稳定率排行</div>
+            <div class="panel-subtitle">Top5</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="rankRef" class="chart"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">重点提示</div>
+            <div class="panel-subtitle">关键判断</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="insight-notes">
+            <div class="note">风险波动：关注告警与随访同步变化</div>
+            <div class="note">建议优先：围绕高风险人群的干预覆盖</div>
+            <div class="note">异常聚集：定位重复触发的病种与设备类型</div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
 </template>
 
 <script setup lang="ts">
 import { onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { init, type ECharts } from '../utils/echarts'
-import ScreenPanel from '../components/ScreenPanel.vue'
 import EventTicker from '../components/EventTicker.vue'
 import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
 import { fetchReportBoard } from '../api'
@@ -365,10 +442,42 @@ onDeactivated(() => {
   inset: 0;
 }
 
-.placeholder {
-  padding: 10px 8px;
-  color: var(--t-3);
+.stitch-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+.stitch-col,
+.stitch-center {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.stitch-col .panel,
+.stitch-center .panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.insight-notes {
+  display: grid;
+  gap: 10px;
+  padding: 4px 2px;
+}
+
+.note {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(114, 180, 205, 0.22);
+  background: rgba(255, 255, 255, 0.58);
+  color: rgba(39, 85, 113, 0.92);
   font-size: 12px;
+  line-height: 1.35;
 }
 </style>
 

@@ -1,56 +1,132 @@
 <template>
-  <div class="layout">
-    <div class="col left">
-      <ScreenPanel title="干预计划总览" subtitle="未接入干预/服务相关接口">
-        <div class="stat-grid">
-          <StatCard label="今日服务任务" :value="demo.overview.followToday.total" tone="cyan" />
-          <StatCard label="已完成" :value="demo.overview.followToday.done" tone="success" />
-          <StatCard label="待执行" :value="demo.overview.followToday.pending" tone="warning" />
-          <StatCard label="超期" :value="demo.overview.followToday.overdue" tone="danger" />
-        </div>
-      </ScreenPanel>
-      <ScreenPanel title="计划类型占比" subtitle="未接入">
-        <div ref="planTypeRef" class="chart"></div>
-      </ScreenPanel>
-      <ScreenPanel title="热门方案 TOP" subtitle="未接入">
-        <div ref="hotPlanRef" class="chart"></div>
-      </ScreenPanel>
-    </div>
-
-    <div class="col center">
-      <ScreenPanel title="服务执行路径盘" subtitle="中心主视觉（触达/执行/达标）">
-        <div class="center-stage">
-          <div class="hub glow-breath">
-            <div class="hub-title">服务执行</div>
-            <div class="hub-value">{{ demo.overview.followToday.done }}</div>
-            <div class="hub-sub">今日完成 · 待办 {{ demo.overview.followToday.pending }}</div>
+  <main class="stitch-grid">
+    <aside class="stitch-col">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">服务任务总览</div>
+            <div class="panel-subtitle">今日执行与积压</div>
           </div>
-          <div ref="serviceRingRef" class="hub-ring"></div>
         </div>
-      </ScreenPanel>
-      <ScreenPanel title="时间序列趋势" subtitle="未接入">
-        <div ref="serviceTrendRef" class="chart chart-tall"></div>
-      </ScreenPanel>
-    </div>
+        <div class="panel-body">
+          <div class="stat-grid">
+            <StatCard label="今日服务任务" :value="demo.overview.followToday.total" tone="cyan" />
+            <StatCard label="已完成" :value="demo.overview.followToday.done" tone="success" />
+            <StatCard label="待执行" :value="demo.overview.followToday.pending" tone="warning" />
+            <StatCard label="超期" :value="demo.overview.followToday.overdue" tone="danger" />
+          </div>
+        </div>
+      </section>
 
-    <div class="col right">
-      <ScreenPanel title="上门服务触达" subtitle="未接入">
-        <div ref="reachGaugeRef" class="chart"></div>
-      </ScreenPanel>
-      <ScreenPanel title="地区/人员分布" subtitle="未接入">
-        <div ref="areaRef" class="chart"></div>
-      </ScreenPanel>
-      <ScreenPanel title="最新服务动态" subtitle="事件流（轻量）">
-        <EventTicker :items="events" />
-      </ScreenPanel>
-    </div>
-  </div>
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">计划类型占比</div>
+            <div class="panel-subtitle">任务结构</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="planTypeRef" class="chart"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">热门方案 TOP</div>
+            <div class="panel-subtitle">近期执行热度</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="hotPlanRef" class="chart"></div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="stitch-center">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">服务执行路径盘</div>
+            <div class="panel-subtitle">触达 · 执行 · 达标</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="center-stage">
+            <div class="hub glow-breath">
+              <div class="hub-title">服务执行</div>
+              <div class="hub-value">{{ demo.overview.followToday.done }}</div>
+              <div class="hub-sub">今日完成 · 待办 {{ demo.overview.followToday.pending }}</div>
+            </div>
+            <div ref="serviceRingRef" class="hub-ring"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">时间序列趋势</div>
+            <div class="panel-subtitle">近时段执行变化</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="serviceTrendRef" class="chart chart-tall"></div>
+        </div>
+      </section>
+    </section>
+
+    <aside class="stitch-col">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">上门服务触达</div>
+            <div class="panel-subtitle">触达与完成</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="reachGaugeRef" class="chart"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">地区 / 人员分布</div>
+            <div class="panel-subtitle">触达活跃度</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="areaRef" class="chart"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">最新服务动态</div>
+            <div class="panel-subtitle">事件流</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <EventTicker :items="events" />
+        </div>
+      </section>
+    </aside>
+  </main>
 </template>
 
 <script setup lang="ts">
 import { onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { init, type ECharts } from '../utils/echarts'
-import ScreenPanel from '../components/ScreenPanel.vue'
 import EventTicker from '../components/EventTicker.vue'
 import StatCard from '../components/StatCard.vue'
 import { axisStyle, baseGrid, tooltipStyle } from '../utils/chartTheme'
@@ -254,7 +330,7 @@ onDeactivated(() => {
 </script>
 
 <style scoped>
-.layout {
+.stitch-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
   gap: 12px;
@@ -262,14 +338,16 @@ onDeactivated(() => {
   min-height: 0;
 }
 
-.col {
+.stitch-col,
+.stitch-center {
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-height: 0;
 }
 
-.col :deep(.panel) {
+.stitch-col .panel,
+.stitch-center .panel {
   flex: 1;
   min-height: 0;
 }
@@ -326,12 +404,6 @@ onDeactivated(() => {
 .hub-ring {
   position: absolute;
   inset: 0;
-}
-
-.placeholder {
-  padding: 10px 8px;
-  color: var(--t-3);
-  font-size: 12px;
 }
 
 .muted-ring {

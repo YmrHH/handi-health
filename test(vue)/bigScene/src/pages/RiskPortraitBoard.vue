@@ -1,48 +1,121 @@
 <template>
-  <div class="layout">
-    <div class="col left">
-      <ScreenPanel title="年龄结构" subtitle="高危人群年龄段">
-        <div ref="ageRef" class="chart"></div>
-      </ScreenPanel>
-      <ScreenPanel title="性别占比" subtitle="患者档案聚合">
-        <div ref="genderRef" class="chart"></div>
-      </ScreenPanel>
-    </div>
-
-    <div class="col center">
-      <ScreenPanel title="患者风险画像中枢" subtitle="中心主视觉（画像盘）">
-        <div class="center-stage">
-          <div class="hub glow-breath">
-            <div class="hub-title">重点管理患者</div>
-            <div class="hub-value">{{ total }}</div>
-            <div class="hub-sub">高危占比 {{ highRatio }}</div>
+  <main class="stitch-grid">
+    <aside class="stitch-col">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">年龄结构</div>
+            <div class="panel-subtitle">高危人群年龄段</div>
           </div>
-          <div ref="portraitRef" class="hub-ring"></div>
         </div>
-      </ScreenPanel>
-      <ScreenPanel title="重点患者动态" subtitle="事件流（轻量）">
-        <EventTicker :items="events" />
-      </ScreenPanel>
-    </div>
+        <div class="panel-body">
+          <div ref="ageRef" class="chart"></div>
+        </div>
+      </section>
 
-    <div class="col right">
-      <ScreenPanel title="病种排行" subtitle="Top8">
-        <div ref="diseaseRef" class="chart"></div>
-      </ScreenPanel>
-      <ScreenPanel title="体质/证型分布" subtitle="占位（来自患者详情/AI 分析）">
-        <div class="placeholder">待接入体质 constitution / syndrome 等字段的聚合展示</div>
-      </ScreenPanel>
-      <ScreenPanel title="医学建议覆盖率" subtitle="占位（DoctorAdvice）">
-        <div ref="adviceRef" class="chart"></div>
-      </ScreenPanel>
-    </div>
-  </div>
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">性别占比</div>
+            <div class="panel-subtitle">患者档案聚合</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="genderRef" class="chart"></div>
+        </div>
+      </section>
+    </aside>
+
+    <section class="stitch-center">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">风险画像中枢</div>
+            <div class="panel-subtitle">分层 · 结构 · 变化</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="center-stage">
+            <div class="hub glow-breath">
+              <div class="hub-title">重点管理患者</div>
+              <div class="hub-value">{{ total }}</div>
+              <div class="hub-sub">高危占比 {{ highRatio }}</div>
+            </div>
+            <div ref="portraitRef" class="hub-ring"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">重点患者动态</div>
+            <div class="panel-subtitle">事件流</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <EventTicker :items="events" />
+        </div>
+      </section>
+    </section>
+
+    <aside class="stitch-col">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">病种排行</div>
+            <div class="panel-subtitle">Top8</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="diseaseRef" class="chart"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">体质 / 证型分布</div>
+            <div class="panel-subtitle">画像结构</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="chip-grid">
+            <div class="chip">气虚</div>
+            <div class="chip">痰湿</div>
+            <div class="chip">阴虚</div>
+            <div class="chip">湿热</div>
+            <div class="chip">血瘀</div>
+            <div class="chip">阳虚</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">医学建议覆盖率</div>
+            <div class="panel-subtitle">建议触达概览</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="adviceRef" class="chart"></div>
+        </div>
+      </section>
+    </aside>
+  </main>
 </template>
 
 <script setup lang="ts">
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { init, type ECharts } from '../utils/echarts'
-import ScreenPanel from '../components/ScreenPanel.vue'
 import EventTicker from '../components/EventTicker.vue'
 import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
 import { fetchAlerts, fetchHomeStats, fetchPatientRiskList, fetchPatientSummary, fetchReportBoard } from '../api'
@@ -403,10 +476,45 @@ onDeactivated(() => {
   inset: 0;
 }
 
-.placeholder {
-  padding: 10px 8px;
-  color: var(--t-3);
+.stitch-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+
+.stitch-col,
+.stitch-center {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.stitch-col .panel,
+.stitch-center .panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.chip {
+  padding: 10px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(114, 180, 205, 0.22);
+  background: rgba(255, 255, 255, 0.58);
+  color: rgba(39, 85, 113, 0.92);
   font-size: 12px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>
 

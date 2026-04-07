@@ -1,78 +1,152 @@
 <template>
-  <div class="layout">
-    <div class="col left">
-      <ScreenPanel title="告警等级分布" subtitle="健康+设备（近30天）">
-        <div ref="levelRef" class="chart"></div>
-      </ScreenPanel>
-      <ScreenPanel title="健康告警趋势" subtitle="近 7 天">
-        <div ref="patientTrendRef" class="chart"></div>
-      </ScreenPanel>
-      <ScreenPanel title="设备告警趋势" subtitle="近 7 天">
-        <div ref="hardwareTrendRef" class="chart"></div>
-      </ScreenPanel>
-    </div>
-
-    <div class="col center">
-      <ScreenPanel title="告警到随访的流转主视觉" subtitle="联动闭环（未接入随访联动接口）">
-        <div class="flow-stage">
-          <div class="node n1">
-            <div class="node-title">告警源头</div>
-            <div class="node-value">{{ totalAlerts }}</div>
-          </div>
-          <div class="arrow"></div>
-          <div class="node n2">
-            <div class="node-title">待处理</div>
-            <div class="node-value danger">{{ unhandled }}</div>
-          </div>
-          <div class="arrow"></div>
-          <div class="node n3">
-            <div class="node-title">分派</div>
-            <div class="node-value muted">—</div>
-          </div>
-          <div class="arrow"></div>
-          <div class="node n4">
-            <div class="node-title">随访中</div>
-            <div class="node-value muted">—</div>
-          </div>
-          <div class="arrow"></div>
-          <div class="node n5">
-            <div class="node-title">已闭环</div>
-            <div class="node-value success">{{ closed }}</div>
+  <main class="stitch-grid">
+    <aside class="stitch-col">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">告警等级分布</div>
+            <div class="panel-subtitle">健康 + 设备（近 30 天）</div>
           </div>
         </div>
-        <div class="flow-hint">当前后端未提供“告警→随访流转”接口，因此不展示分派/随访中数量。</div>
-      </ScreenPanel>
-
-      <ScreenPanel title="实时处置流" subtitle="轻量事件流">
-        <EventTicker :items="events" />
-      </ScreenPanel>
-    </div>
-
-    <div class="col right">
-      <ScreenPanel title="待处理任务" subtitle="告警（随访未接入）">
-        <div class="stat-grid">
-          <StatCard label="未处理告警" :value="unhandled" tone="danger" />
-          <StatCard label="处理中告警" :value="processing" tone="warning" />
-          <StatCard label="待随访任务" :value="pendingFollow" tone="cyan" hint="未接入接口" />
-          <StatCard label="闭环率" :value="closeRateText" tone="gold" />
+        <div class="panel-body">
+          <div ref="levelRef" class="chart"></div>
         </div>
-      </ScreenPanel>
+      </section>
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">健康告警趋势</div>
+            <div class="panel-subtitle">近 7 天</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="patientTrendRef" class="chart"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">设备告警趋势</div>
+            <div class="panel-subtitle">近 7 天</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="hardwareTrendRef" class="chart"></div>
+        </div>
+      </section>
+    </aside>
 
-      <ScreenPanel title="责任医生告警负载排行" subtitle="Top5（按活跃告警数聚合）">
-        <div ref="doctorRef" class="chart"></div>
-      </ScreenPanel>
+    <section class="stitch-center">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">告警联动中枢</div>
+            <div class="panel-subtitle">告警 · 处置 · 闭环</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="flow-stage">
+            <div class="node n1">
+              <div class="node-title">告警源头</div>
+              <div class="node-value">{{ totalAlerts }}</div>
+            </div>
+            <div class="arrow"></div>
+            <div class="node n2">
+              <div class="node-title">待处理</div>
+              <div class="node-value danger">{{ unhandled }}</div>
+            </div>
+            <div class="arrow"></div>
+            <div class="node n3">
+              <div class="node-title">分派</div>
+              <div class="node-value muted">—</div>
+            </div>
+            <div class="arrow"></div>
+            <div class="node n4">
+              <div class="node-title">随访中</div>
+              <div class="node-value muted">—</div>
+            </div>
+            <div class="arrow"></div>
+            <div class="node n5">
+              <div class="node-title">已闭环</div>
+              <div class="node-value success">{{ closed }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-      <ScreenPanel title="关闭率 / 超时率" subtitle="占位">
-        <div class="placeholder">待接入 FollowupWorkbench / StaffDetail 的响应与超时指标</div>
-      </ScreenPanel>
-    </div>
-  </div>
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">实时处置流</div>
+            <div class="panel-subtitle">动态事件</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <EventTicker :items="events" />
+        </div>
+      </section>
+    </section>
+
+    <aside class="stitch-col">
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">处置概览</div>
+            <div class="panel-subtitle">任务与闭环</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="stat-grid">
+            <StatCard label="未处理告警" :value="unhandled" tone="danger" />
+            <StatCard label="处理中告警" :value="processing" tone="warning" />
+            <StatCard label="待随访任务" :value="pendingFollow" tone="cyan" />
+            <StatCard label="闭环率" :value="closeRateText" tone="gold" />
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">责任医生告警负载</div>
+            <div class="panel-subtitle">Top5</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div ref="doctorRef" class="chart"></div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-corners"></div>
+        <div class="panel-header">
+          <div class="panel-titlebar">
+            <div class="panel-title">响应与超时</div>
+            <div class="panel-subtitle">闭环效率</div>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="kpi-mini">
+            <div class="kpi">平均响应：<b>—</b></div>
+            <div class="kpi">超时率：<b>—</b></div>
+            <div class="kpi">复发告警：<b>—</b></div>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
 </template>
 
 <script setup lang="ts">
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { init, type ECharts } from '../utils/echarts'
-import ScreenPanel from '../components/ScreenPanel.vue'
 import StatCard from '../components/StatCard.vue'
 import EventTicker from '../components/EventTicker.vue'
 import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
@@ -386,16 +460,45 @@ onDeactivated(() => {
   box-shadow: var(--glow);
 }
 
-.flow-hint {
-  margin-top: 8px;
-  font-size: 11px;
-  color: var(--t-3);
+.stitch-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
 }
 
-.placeholder {
-  padding: 10px 8px;
-  color: var(--t-3);
+.stitch-col,
+.stitch-center {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+}
+
+.stitch-col .panel,
+.stitch-center .panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.kpi-mini {
+  display: grid;
+  gap: 10px;
+}
+
+.kpi {
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(114, 180, 205, 0.22);
+  background: rgba(255, 255, 255, 0.58);
+  color: rgba(39, 85, 113, 0.92);
   font-size: 12px;
+}
+
+.kpi b {
+  color: rgba(32, 82, 110, 0.94);
+  font-weight: 800;
 }
 </style>
 

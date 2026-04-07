@@ -35,7 +35,7 @@
                 </div>
               </div>
               <div v-if="rankingsPending" class="loading-tip">正在统计...</div>
-              <div v-else-if="!finalDiseaseRanks.length" class="empty-tip">暂无可展示的病种分布数据</div>
+              <div v-else-if="!finalDiseaseRanks.length" class="empty-tip"></div>
             </div>
           </section>
 
@@ -62,7 +62,7 @@
               </div>
               <div v-if="doctorLoadsLoading" class="loading-tip">正在统计...</div>
               <div v-else-if="doctorLoadsEnhancing" class="enhance-tip">持续补充中</div>
-              <div v-else-if="!finalDoctorLoads.length" class="empty-tip">暂无可展示的医生负载数据</div>
+              <div v-else-if="!finalDoctorLoads.length" class="empty-tip"></div>
             </div>
           </section>
         </aside>
@@ -458,7 +458,7 @@ const serviceRateValue = computed(() => pickServiceRateFromHome())
 const serviceRateHasData = computed(() => serviceRateValue.value !== null)
 const serviceRateForRing = computed(() => (serviceRateHasData.value ? (serviceRateValue.value as number) : 0))
 const serviceRateLabel = computed(() => '服务执行率')
-const serviceRateDisplay = computed(() => (serviceRateHasData.value ? `${serviceRateValue.value}%` : '待接入'))
+const serviceRateDisplay = computed(() => (serviceRateHasData.value ? `${serviceRateValue.value}%` : '—'))
 
 function diseaseName(item: SummaryItem) {
   const direct = pickText(item, [
@@ -1144,7 +1144,7 @@ const tickerItems = computed(() => {
     const title = pickText(item, ['title', 'alertTitle', 'typeName', 'deviceType'], '异常提醒')
     return `【${time}】${patient}${title}，当前${status}`
   })
-  if (!rows.length) rows.push('【实时】系统运行正常，当前暂无新的异常播报')
+  if (!rows.length) rows.push('【实时】系统运行正常，当前无新的异常播报')
   return rows
 })
 
