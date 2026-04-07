@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // 仿照 frontend/src/api/request.ts 的做法：统一 axios 实例 + 头部鉴权
 export const http = axios.create({
-  baseURL: '',
+  baseURL: 'http://192.140.173.165:8081',
   timeout: 30000,
   withCredentials: true
 })
