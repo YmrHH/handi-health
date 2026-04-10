@@ -144,6 +144,28 @@ export const alertApi = {
     }
   },
 
+  // 告警中心：指派/保存随访任务（落库 follow_up_task）
+  async saveFollowupTask(payload: {
+    patientId: number
+    followupType: string
+    planDate: string
+    content?: string
+    staffId?: number | string
+    checklist?: any[]
+  }): Promise<ApiResponse<any>> {
+    try {
+      const response = await request.post<any>('/api/alert/followup/task/update', payload)
+      const data = (response as any)?.data ?? response
+      return {
+        success: (data as any)?.success !== false,
+        data: data as any,
+        message: (data as any)?.message
+      }
+    } catch (error: any) {
+      return { success: false, message: error.message || '保存失败' }
+    }
+  },
+
   // 获取患者每日测量数据
   async getPatientDailyMeasurements(patientId: number, days: number = 7): Promise<ApiResponse<any>> {
     try {

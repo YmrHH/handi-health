@@ -186,12 +186,19 @@ const router = createRouter({
 })
 
 // 路由守卫
-router.beforeEach((to, _from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
   
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title as string} - 寒岐智护·慢性病随访健康预警管理平台`
+  }
+
+  // 刷新/直达路由时，先向后端校验一次当前登录态，避免仅凭 sessionStorage 误判
+  try {
+    await authStore.ensureAuthChecked()
+  } catch {
+    // ignore
   }
 
   // 检查是否需要登录

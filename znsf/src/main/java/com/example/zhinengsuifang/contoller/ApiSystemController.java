@@ -52,9 +52,11 @@ public class ApiSystemController {
         Map<String, Object> result = new HashMap<>();
 
         List<Map<String, Object>> seasonRules = new ArrayList<>();
-        seasonRules.add(rule("寒冷季节", "显著增加心血管事件风险"));
-        seasonRules.add(rule("梅雨", "可能加重呼吸道症状"));
-        seasonRules.add(rule("高温", "可能增加脱水与心率波动风险"));
+        seasonRules.add(rule("哈尔滨冬季低温持续", "高权重：重点关注高血压、冠心病和晨间血压波动"));
+        seasonRules.add(rule("供暖期室内干燥", "中高权重：关注睡眠下降、口干和晨起不适"));
+        seasonRules.add(rule("冬春交替风干与温差", "高权重：晨晚温差大时头晕、胸闷和血压波动更集中"));
+        seasonRules.add(rule("冰雪天气活动减少", "中权重：关注糖尿病、肥胖合并慢病患者的运动依从性下降"));
+        seasonRules.add(rule("北方高盐高热量饮食特征", "中高权重：体重、血脂、血糖和问卷得分联动波动时优先解读饮食因素"));
 
         Map<String, Object> data = new HashMap<>();
         data.put("seasonRules", seasonRules);

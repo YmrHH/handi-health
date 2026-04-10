@@ -264,6 +264,30 @@ public interface DashboardMapper {
     List<RiskLevelCount> countPatientsByEffectiveRiskLevelWithDept(@Param("deptName") String deptName);
 
     @Select("select " +
+            "  ifnull(nullif(trim(pbi.ext3), ''), '未知') as disease, " +
+            "  count(distinct pbi.patient_id) as patientCount, " +
+            "  sum(case " +
+            "        when upper(trim(coalesce(rl.risk_level, u.risk_level, 'LOW'))) in ('LOW','L','1') or trim(coalesce(rl.risk_level, u.risk_level, 'LOW')) in ('低','低危') then 1 " +
+            "        else 0 end) as stableCnt, " +
+            "  sum(case " +
+            "        when upper(trim(coalesce(rl.risk_level, u.risk_level, 'LOW'))) in ('HIGH','H','HIGH_RISK','RED','3') or trim(coalesce(rl.risk_level, u.risk_level, 'LOW')) in ('高','高危') then 1 " +
+            "        else 0 end) as deteriorCnt, " +
+            "  count(distinct pbi.patient_id) as totalCnt " +
+            "from patient_basic_info pbi " +
+            "join user u on u.id = pbi.patient_id and u.role = 'PATIENT' " +
+            "left join (" +
+            "   select patient_id, substring_index(group_concat(risk_level order by assessed_at desc, id desc), ',', 1) as risk_level " +
+            "   from risk_level_history group by patient_id" +
+            ") rl on rl.patient_id = pbi.patient_id " +
+            "where pbi.ext3 is not null and trim(pbi.ext3) <> '' " +
+            "group by ifnull(nullif(trim(pbi.ext3), ''), '未知') " +
+            "order by patientCount desc " +
+            "limit #{limit}")
+    List<Map<String, Object>> diseaseAnalysisBySyndrome(@Param("startAt") LocalDateTime startAt,
+                                                        @Param("endAt") LocalDateTime endAt,
+                                                        @Param("limit") Integer limit);
+
+    @Select("select " +
             "  ifnull(s.syndrome_name, '未知') as disease, " +
             "  count(distinct s.patient_id) as patientCount, " +
             "  sum(case when s.is_stable = 1 then 1 else 0 end) as stableCnt, " +
@@ -274,9 +298,165 @@ public interface DashboardMapper {
             "group by ifnull(s.syndrome_name, '未知') " +
             "order by patientCount desc " +
             "limit #{limit}")
-    List<Map<String, Object>> diseaseAnalysisBySyndrome(@Param("startAt") LocalDateTime startAt,
+    List<Map<String, Object>> diseaseAnalysisByLegacySyndrome(@Param("startAt") LocalDateTime startAt,
+                                                              @Param("endAt") LocalDateTime endAt,
+                                                              @Param("limit") Integer limit);
+
+    @Select("select t.factorName as factorName, " +
+            "       count(distinct t.patientId) as patientCount, " +
+            "       max(t.description) as description " +
+            "from ( " +
+            "   select m.patient_id as patientId, " +
+            "          '晨间血压异常' as factorName, " +
+            "          '近30日晨间时段血压异常患者较集中' as description " +
+            "   from patient_daily_measurement m " +
+            "   where m.measured_at >= #{startAt} and m.measured_at < #{endAt} " +
+            "     and hour(m.measured_at) between 4 and 9 " +
+            "     and ( (m.sbp is not null and m.sbp >= 140) or (m.dbp is not null and m.dbp >= 90) ) " +
+            "     and ( exists (select 1 from patient_basic_info p where p.patient_id = m.patient_id and p.ext3 is not null and trim(p.ext3) = trim(#{disease})) " +
+            "        or exists (select 1 from syndrome_assessment s where s.patient_id = m.patient_id and s.syndrome_name = #{disease} and s.assessed_at >= #{startAt} and s.assessed_at < #{endAt}) ) " +
+            "   union all " +
+            "   select m.patient_id as patientId, " +
+            "          '睡眠下降' as factorName, " +
+            "          '近30日睡眠时长低于6小时的患者增多' as description " +
+            "   from patient_daily_measurement m " +
+            "   where m.measured_at >= #{startAt} and m.measured_at < #{endAt} " +
+            "     and m.sleep_hours is not null and m.sleep_hours < 6 " +
+            "     and ( exists (select 1 from patient_basic_info p where p.patient_id = m.patient_id and p.ext3 is not null and trim(p.ext3) = trim(#{disease})) " +
+            "        or exists (select 1 from syndrome_assessment s where s.patient_id = m.patient_id and s.syndrome_name = #{disease} and s.assessed_at >= #{startAt} and s.assessed_at < #{endAt}) ) " +
+            "   union all " +
+            "   select r.patient_id as patientId, " +
+            "          '用药依从性不足' as factorName, " +
+            "          '随访记录中存在未规律用药或依从性较差情况' as description " +
+            "   from patient_followup_record r " +
+            "   where r.followup_time >= #{startAt} and r.followup_time < #{endAt} " +
+            "     and (r.med_adherence like '%差%' or r.med_adherence like '%不规律%' or r.med_adherence like '%漏服%' or r.med_adherence like '%一般%') " +
+            "     and ( exists (select 1 from patient_basic_info p where p.patient_id = r.patient_id and p.ext3 is not null and trim(p.ext3) = trim(#{disease})) " +
+            "        or exists (select 1 from syndrome_assessment s where s.patient_id = r.patient_id and s.syndrome_name = #{disease} and s.assessed_at >= #{startAt} and s.assessed_at < #{endAt}) ) " +
+            "   union all " +
+            "   select ts.patient_id as patientId, " +
+            "          '症状评分上升' as factorName, " +
+            "          '问卷结果提示近期症状信号增多或风险等级升高' as description " +
+            "   from patient_tcm_survey ts " +
+            "   where ts.assessed_at >= #{startAt} and ts.assessed_at < #{endAt} " +
+            "     and (cast(ts.result_json as char) like '%\"level\":\"high\"%' or cast(ts.result_json as char) like '%\"level\":\"mid\"%' or cast(ts.result_json as char) like '%signals%') " +
+            "     and ( exists (select 1 from patient_basic_info p where p.patient_id = ts.patient_id and p.ext3 is not null and trim(p.ext3) = trim(#{disease})) " +
+            "        or exists (select 1 from syndrome_assessment s where s.patient_id = ts.patient_id and s.syndrome_name = #{disease} and s.assessed_at >= #{startAt} and s.assessed_at < #{endAt}) ) " +
+            "   union all " +
+            "   select m.patient_id as patientId, " +
+            "          '血糖波动' as factorName, " +
+            "          '近30日血糖偏高或偏低波动明显' as description " +
+            "   from patient_daily_measurement m " +
+            "   where m.measured_at >= #{startAt} and m.measured_at < #{endAt} " +
+            "     and m.glucose is not null " +
+            "     and (m.glucose >= 7.0 or m.glucose <= 3.9) " +
+            "     and ( exists (select 1 from patient_basic_info p where p.patient_id = m.patient_id and p.ext3 is not null and trim(p.ext3) = trim(#{disease})) " +
+            "        or exists (select 1 from syndrome_assessment s where s.patient_id = m.patient_id and s.syndrome_name = #{disease} and s.assessed_at >= #{startAt} and s.assessed_at < #{endAt}) ) " +
+            ") t " +
+            "group by t.factorName " +
+            "order by patientCount desc " +
+            "limit #{limit}")
+    List<Map<String, Object>> diseaseDeteriorationFactorsRaw(@Param("startAt") LocalDateTime startAt,
+                                                             @Param("endAt") LocalDateTime endAt,
+                                                             @Param("disease") String disease,
+                                                             @Param("limit") Integer limit);
+
+    @Select("select u.id as patientId, " +
+            "       ifnull(u.age, 0) as age, " +
+            "       coalesce( " +
+            "           nullif(case when p.ext5 is not null and json_valid(p.ext5) then json_unquote(json_extract(p.ext5, '$.constitution')) else '' end, ''), " +
+            "           '未标注体质' " +
+            "       ) as constitution, " +
+            "       coalesce( " +
+            "           nullif(case when p.ext5 is not null and json_valid(p.ext5) then json_unquote(json_extract(p.ext5, '$.pastHistory')) else '' end, ''), " +
+            "           '' " +
+            "       ) as pastHistory, " +
+            "       coalesce(rl.risk_level, u.risk_level, 'LOW') as riskLevel, " +
+            "       m.sbp as sbp, " +
+            "       m.dbp as dbp, " +
+            "       m.glucose as glucose, " +
+            "       m.sleep_hours as sleep, " +
+            "       m.symptoms as symptoms, " +
+            "       coalesce(r.med_adherence, '') as medAdherence, " +
+            "       coalesce(r.tcm_conclusion, '') as tcmConclusion " +
+            "from ( " +
+            "   select distinct p.patient_id as patient_id from patient_basic_info p where p.ext3 is not null and trim(p.ext3) = trim(#{disease}) " +
+            "   union " +
+            "   select distinct s.patient_id as patient_id from syndrome_assessment s where s.syndrome_name = #{disease} and s.assessed_at >= #{startAt} and s.assessed_at < #{endAt} " +
+            ") dc " +
+            "join user u on u.id = dc.patient_id and u.role = 'PATIENT' " +
+            "left join patient_basic_info p on p.patient_id = u.id " +
+            "left join risk_level_history rl on rl.id = ( " +
+            "   select rl2.id from risk_level_history rl2 where rl2.patient_id = u.id order by rl2.assessed_at desc, rl2.id desc limit 1 " +
+            ") " +
+            "left join patient_daily_measurement m on m.id = ( " +
+            "   select m2.id from patient_daily_measurement m2 where m2.patient_id = u.id and m2.measured_at >= #{startAt} and m2.measured_at < #{endAt} order by m2.measured_at desc, m2.id desc limit 1 " +
+            ") " +
+            "left join patient_followup_record r on r.id = ( " +
+            "   select r2.id from patient_followup_record r2 where r2.patient_id = u.id and r2.followup_time >= #{startAt} and r2.followup_time < #{endAt} order by r2.followup_time desc, r2.id desc limit 1 " +
+            ")")
+    List<Map<String, Object>> diseasePatientInsightRows(@Param("startAt") LocalDateTime startAt,
                                                         @Param("endAt") LocalDateTime endAt,
-                                                        @Param("limit") Integer limit);
+                                                        @Param("disease") String disease);
+
+    @Select("select x.planName as planName, " +
+            "       x.planType as planType, " +
+            "       count(distinct x.patientId) as patientCount, " +
+            "       sum(x.successFlag) as successCnt, " +
+            "       round(avg(x.improvementDays), 1) as avgImprovementDays " +
+            "from ( " +
+            "   select ir.patient_id as patientId, " +
+            "          case " +
+            "             when ir.recommendation like '%饮食%' then '饮食调养' " +
+            "             when ir.recommendation like '%运动%' or ir.recommendation like '%康复%' then '运动康复' " +
+            "             when ir.recommendation like '%用药%' or ir.recommendation like '%服药%' then '用药管理' " +
+            "             when ir.recommendation like '%中医%' or ir.recommendation like '%艾灸%' or ir.recommendation like '%泡脚%' then '中医调理' " +
+            "             else '综合康养' " +
+            "          end as planName, " +
+            "          case " +
+            "             when ir.recommendation like '%饮食%' then '饮食调养' " +
+            "             when ir.recommendation like '%运动%' or ir.recommendation like '%康复%' then '运动康复' " +
+            "             when ir.recommendation like '%用药%' or ir.recommendation like '%服药%' then '用药管理' " +
+            "             when ir.recommendation like '%中医%' or ir.recommendation like '%艾灸%' or ir.recommendation like '%泡脚%' then '中医调理' " +
+            "             else '综合康养' " +
+            "          end as planType, " +
+            "          case when exists ( " +
+            "               select 1 from syndrome_assessment s2 " +
+            "               where s2.patient_id = ir.patient_id " +
+            "                 and s2.assessed_at >= ifnull(ir.sent_time, ir.created_at) " +
+            "                 and s2.assessed_at < date_add(ifnull(ir.sent_time, ir.created_at), interval 14 day) " +
+            "                 and s2.is_stable = 1 " +
+            "          ) or exists ( " +
+            "               select 1 from risk_level_history rh2 " +
+            "               where rh2.patient_id = ir.patient_id " +
+            "                 and rh2.assessed_at >= ifnull(ir.sent_time, ir.created_at) " +
+            "                 and rh2.assessed_at < date_add(ifnull(ir.sent_time, ir.created_at), interval 14 day) " +
+            "                 and (upper(trim(rh2.risk_level)) in ('LOW','L','1') or trim(rh2.risk_level) in ('低','低危')) " +
+            "          ) then 1 else 0 end as successFlag, " +
+            "          ifnull(( " +
+            "               select least(14, timestampdiff(day, ifnull(ir.sent_time, ir.created_at), min(x.assessed_at))) from ( " +
+            "                   select s2.assessed_at as assessed_at from syndrome_assessment s2 " +
+            "                   where s2.patient_id = ir.patient_id and s2.assessed_at >= ifnull(ir.sent_time, ir.created_at) and s2.assessed_at < date_add(ifnull(ir.sent_time, ir.created_at), interval 14 day) and s2.is_stable = 1 " +
+            "                   union all " +
+            "                   select rh2.assessed_at as assessed_at from risk_level_history rh2 " +
+            "                   where rh2.patient_id = ir.patient_id and rh2.assessed_at >= ifnull(ir.sent_time, ir.created_at) and rh2.assessed_at < date_add(ifnull(ir.sent_time, ir.created_at), interval 14 day) and (upper(trim(rh2.risk_level)) in ('LOW','L','1') or trim(rh2.risk_level) in ('低','低危')) " +
+            "               ) x " +
+            "          ), 14) as improvementDays " +
+            "   from intervention_recommend ir " +
+            "   left join patient_basic_info pbi on pbi.patient_id = ir.patient_id " +
+            "   where (trim(coalesce(nullif(ir.disease, ''), pbi.ext3, #{disease})) = trim(#{disease}) " +
+            "          or exists (select 1 from syndrome_assessment s0 where s0.patient_id = ir.patient_id and s0.syndrome_name = #{disease})) " +
+            "     and upper(ifnull(ir.status, 'PENDING')) in ('SENT','PENDING') " +
+            "     and ifnull(ir.sent_time, ir.created_at) >= #{startAt} " +
+            "     and ifnull(ir.sent_time, ir.created_at) < #{endAt} " +
+            ") x " +
+            "group by x.planName, x.planType " +
+            "order by patientCount desc " +
+            "limit #{limit}")
+    List<Map<String, Object>> diseaseCarePlanEffectivenessRaw(@Param("startAt") LocalDateTime startAt,
+                                                              @Param("endAt") LocalDateTime endAt,
+                                                              @Param("disease") String disease,
+                                                              @Param("limit") Integer limit);
 
     @Select("select u.id as id, u.name as name, u.phone as phone, u.risk_level as riskLevel " +
             "from user u " +

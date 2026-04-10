@@ -1,6 +1,0 @@
-{
-  "navigationBarTitleText": "我的信息管理",
-  "usingComponents": {
-    "staff-tabbar": "../../../components/staff-tabbar/staff-tabbar"
-  }
-}

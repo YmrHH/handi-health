@@ -1,0 +1,152 @@
+/* =========================================================
+   Global Theme (Lavender / Glassy Cards)
+   ========================================================= */
+
+:root {
+  --c-primary: #5B6CFF;
+  --c-primary-2: #8A7BFF;
+
+  --c-bg: #F2F3FF;
+  --c-text: #1F2A37;
+  --c-subtext: #6B7280;
+
+  --c-border: rgba(91, 108, 255, 0.14);
+  --shadow-card: 0 16rpx 40rpx rgba(31, 42, 55, 0.08);
+  --shadow-soft: 0 10rpx 26rpx rgba(31, 42, 55, 0.06);
+
+  --r-card: 28rpx;
+  --r-pill: 999rpx;
+}
+
+page {
+  width: 100vw;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #EDEEFF 0%, #F6F7FF 40%, #FFFFFF 100%);
+  color: var(--c-text);
+  font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Segoe UI', sans-serif;
+  font-size: 30rpx;
+  line-height: 1.6;
+}
+
+view,
+image,
+text {
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* 页面容器 */
+.app-page {
+  padding: 24rpx;
+}
+
+/* 兼容旧页面容器 */
+.page { padding: 24rpx; }
+
+/* 卡片 */
+.card,
+.section,
+.app-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1rpx solid rgba(255, 255, 255, 0.9);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+}
+
+.card { padding: 24rpx; }
+.section { margin: 24rpx; padding: 24rpx; }
+
+.app-card { padding: 24rpx; }
+.app-card--glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(244, 245, 255, 0.92) 100%);
+  border: 1rpx solid rgba(255, 255, 255, 0.95);
+}
+
+/* 标题 */
+.section-title,
+.app-section-title {
+  font-size: 36rpx;
+  font-weight: 800;
+  margin-bottom: 12rpx;
+  color: var(--c-text);
+}
+
+/* 按钮 */
+.btn-primary {
+  background: linear-gradient(135deg, #5b6cff 0%, #8a7bff 100%);
+  background: linear-gradient(135deg, var(--c-primary) 0%, var(--c-primary-2) 100%);
+  color: #ffffff;
+  border-radius: var(--r-pill);
+  padding: 18rpx 28rpx;
+  text-align: center;
+  font-size: 32rpx;
+  font-weight: 700;
+  box-shadow: var(--shadow-soft);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--c-primary);
+  border-radius: var(--r-pill);
+  padding: 16rpx 26rpx;
+  text-align: center;
+  font-size: 30rpx;
+  border: 1rpx solid var(--c-border);
+}
+
+/* 风险标签 */
+.tag {
+  display: inline-block;
+  padding: 6rpx 14rpx;
+  border-radius: var(--r-pill);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+.tag-risk-high { background: rgba(255, 99, 132, 0.16); color: #B42318; }
+.tag-risk-mid  { background: rgba(245, 158, 11, 0.16); color: #92400E; }
+.tag-risk-low  { background: rgba(16, 185, 129, 0.16); color: #065F46; }
+
+/* Flex 工具类（保留原工程使用） */
+.flex-row { display: flex; flex-direction: row; }
+.flex-col { display: flex; flex-direction: column; }
+.flex-1 { flex: 1 1 0%; }
+.shrink { flex-shrink: 1; }
+.shrink-0 { flex-shrink: 0; }
+
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.items-center { align-items: center; }
+.items-baseline { align-items: baseline; }
+
+.justify-start { justify-content: flex-start; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+
+.self-start { align-self: flex-start; }
+.self-center { align-self: center; }
+.self-stretch { align-self: stretch; }
+
+.relative { position: relative; }
+
+/* 间距工具类（保留） */
+.ml-2 { margin-left: 2px; }
+.ml-4 { margin-left: 4px; }
+.ml-8 { margin-left: 8px; }
+.ml-12 { margin-left: 12px; }
+.ml-14 { margin-left: 14px; }
+.ml-16 { margin-left: 16px; }
+.ml-24 { margin-left: 24px; }
+.ml-44 { margin-left: 44px; }
+
+.mt-2 { margin-top: 2px; }
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-14 { margin-top: 14px; }
+.mt-16 { margin-top: 16px; }
+.mt-18 { margin-top: 18px; }
+.mt-22 { margin-top: 22px; }
+.mt-26 { margin-top: 26px; }
+.mt-36 { margin-top: 36px; }
+.mt-38 { margin-top: 38px; }
+.mt-46 { margin-top: 46px; }

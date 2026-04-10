@@ -2,6 +2,7 @@ import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse 
 import type { ApiResponse } from './types'
 import { useAuthStore } from '@/stores/auth'
 import { recordFrontendAuditLog } from '@/audit/frontendAudit'
+import router from '@/router'
 
 // 简单的消息提示（可以后续替换为UI组件库）
 function showMessage(message: string, type: 'success' | 'error' | 'warning' = 'error') {
@@ -11,16 +12,30 @@ function showMessage(message: string, type: 'success' | 'error' | 'warning' = 'e
 
 // 创建axios实例
 const service: AxiosInstance = axios.create({
-  baseURL: 'http://192.140.173.165:8081',
+  // baseURL: import.meta.env.VITE_API_BASE_URL || '',
+  baseURL: 'http://localhost:8081',
   timeout: 30000,
   withCredentials: true // 支持携带cookie（用于session认证）
 })
 
 // 请求拦截器
 service.interceptors.request.use(
-  (config: AxiosRequestConfig) => {
-    // 添加 token：后端按 Authorization: Bearer <userId> 识别当前用户
+  async (config: AxiosRequestConfig) => {
     const authStore = useAuthStore()
+
+    // 刷新后可能还没完成后端鉴权校验：此时先等待校验完成，再决定是否放行请求
+    // 仅对非登录/注册/登出/me 之类的鉴权相关接口进行等待，避免递归等待。
+    const url = typeof config.url === 'string' ? config.url : ''
+    const isAuthEndpoint = /\/api\/auth\/(loginByPhone|login|register|logout|me)/.test(url)
+    if (!isAuthEndpoint) {
+      try {
+        await authStore.ensureAuthChecked()
+      } catch {
+        // ignore
+      }
+    }
+
+    // 添加 token：后端按 Authorization: Bearer <userId> 识别当前用户
     const token = authStore.token || sessionStorage.getItem('token')
     if (token) {
       config.headers = (config.headers || {}) as any
@@ -99,7 +114,7 @@ service.interceptors.response.use(
     // 如果后端直接返回数据（不是统一格式）
     return { success: true, data: res }
   },
-  (error) => {
+  async (error) => {
     console.error('响应错误:', error)
 
     try {
@@ -131,8 +146,18 @@ service.interceptors.response.use(
       switch (error.response.status) {
         case 401:
           message = '未授权，请重新登录'
-          // 可以在这里跳转到登录页
-          // router.push('/login')
+          try {
+            const authStore = useAuthStore()
+            await authStore.logout()
+          } catch {
+            // ignore
+          }
+          try {
+            const redirect = typeof window !== 'undefined' ? window.location.pathname + window.location.search : undefined
+            router.push({ name: 'Login', query: redirect ? { redirect } : undefined })
+          } catch {
+            // ignore
+          }
           break
         case 403:
           message = '拒绝访问'

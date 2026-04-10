@@ -1,0 +1,86 @@
+page {
+    background-color: #f3f6fb;
+}
+.tongue-page {
+    padding: 24rpx;
+}
+.card {
+    background-color: #ffffff;
+    border-radius: 18rpx;
+    padding: 20rpx;
+    margin-bottom: 18rpx;
+    box-shadow: 0 8rpx 24rpx rgba(15, 23, 42, 0.06);
+}
+.title {
+    font-size: 30rpx;
+    font-weight: 600;
+    margin-bottom: 10rpx;
+}
+.tip-list {
+    font-size: 24rpx;
+    color: #4b5563;
+}
+.tip-item {
+    margin-top: 4rpx;
+}
+.preview-wrap {
+    margin-top: 10rpx;
+}
+.preview-placeholder,
+.preview-img {
+    width: 100%;
+    height: 360rpx;
+    border-radius: 12rpx;
+}
+.preview-placeholder {
+    background-color: #f3f4f6;
+    border: 2rpx dashed #d1d5db;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.camera-icon {
+    font-size: 60rpx;
+    margin-bottom: 8rpx;
+}
+.camera-text {
+    font-size: 26rpx;
+    color: #6b7280;
+}
+.preview-img {
+    background-color: #000;
+}
+.btn-row {
+    margin-top: 16rpx;
+    display: flex;
+    justify-content: space-between;
+}
+.btn-primary,
+.btn-secondary {
+    flex: 1;
+    padding: 18rpx 0;
+    border-radius: 999rpx;
+    font-size: 30rpx;
+}
+.btn-secondary {
+    margin-right: 10rpx;
+    background-color: #ffffff;
+    color: #2972f6;
+    border: 2rpx solid #2972f6;
+}
+.btn-primary {
+    margin-left: 10rpx;
+    background-color: #2972f6;
+    color: #ffffff;
+}
+.btn-primary[disabled] {
+    background-color: #e5e7eb;
+    color: #9ca3af;
+    border: none;
+}
+.upload-tip {
+    margin-top: 10rpx;
+    font-size: 22rpx;
+    color: #6b7280;
+}

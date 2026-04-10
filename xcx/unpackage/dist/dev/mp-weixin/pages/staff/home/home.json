@@ -1,6 +1,0 @@
-{
-  "navigationBarTitleText": "医护工作台",
-  "usingComponents": {
-    "staff-tabbar": "../../../components/staff-tabbar/staff-tabbar"
-  }
-}

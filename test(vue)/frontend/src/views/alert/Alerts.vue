@@ -1139,12 +1139,22 @@ async function handleAssignTask() {
   
   submittingTask.value = true
   try {
-    // 模拟创建随访任务
-    await new Promise(resolve => setTimeout(resolve, 800))
-    
-    const staffName = taskForm.value.staffId 
+    const staffName = taskForm.value.staffId
       ? staffList.value.find(s => s.id === taskForm.value.staffId)?.name || '未指派'
       : '未指派'
+
+    const res = await alertApi.saveFollowupTask({
+      patientId: Number(taskForm.value.patientId) || 0,
+      followupType: String(taskForm.value.followupType || ''),
+      planDate: String(taskForm.value.planDate || ''),
+      staffId: taskForm.value.staffId ? taskForm.value.staffId : undefined,
+      content: String(taskForm.value.remark || '')
+    })
+
+    if (!res || !res.success) {
+      alert(res?.message || '创建随访任务失败')
+      return
+    }
     
     closeAssignTaskDialog()
     

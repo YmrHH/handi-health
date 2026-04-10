@@ -143,6 +143,61 @@ public class ApiAlertController {
         return result;
     }
 
+    /**
+     * 更新告警状态（关闭/恢复/处理中）。
+     * 前端使用：POST /api/alert/status { source: 'HEALTH'|'DEVICE', alertId: number, status: 'NEW'|'PROCESSING'|'CLOSED' }
+     */
+    @PostMapping("/status")
+    public Map<String, Object> updateAlertStatus(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        Map<String, Object> result = new HashMap<>();
+
+        User operator = requireOperator(request);
+        if (operator == null) {
+            result.put("success", false);
+            result.put("code", ApiCode.UNAUTHORIZED.getCode());
+            result.put("message", "未授权或无权限");
+            return result;
+        }
+
+        if (body == null) {
+            result.put("success", false);
+            result.put("code", ApiCode.PARAM_ERROR.getCode());
+            result.put("message", "参数错误");
+            return result;
+        }
+
+        String source = body.get("source") == null ? null : String.valueOf(body.get("source"));
+        Long alertId = toLong(body.get("alertId"));
+        String status = body.get("status") == null ? null : String.valueOf(body.get("status"));
+
+        if (source == null || source.trim().isEmpty() || alertId == null || status == null || status.trim().isEmpty()) {
+            result.put("success", false);
+            result.put("code", ApiCode.PARAM_ERROR.getCode());
+            result.put("message", "source / alertId / status 不能为空");
+            return result;
+        }
+
+        String src = source.trim().toUpperCase();
+        String newStatus = status.trim().toUpperCase();
+
+        int updated;
+        if ("DEVICE".equals(src)) {
+            updated = deviceAlertMapper.updateStatus(alertId, newStatus);
+        } else {
+            updated = healthAlertMapper.updateStatus(alertId, newStatus);
+        }
+
+        result.put("success", updated > 0);
+        result.put("code", updated > 0 ? ApiCode.SUCCESS.getCode() : ApiCode.INTERNAL_ERROR.getCode());
+        result.put("message", updated > 0 ? "更新成功" : "更新失败");
+        Map<String, Object> data = new HashMap<>();
+        data.put("source", src);
+        data.put("alertId", alertId);
+        data.put("status", newStatus);
+        result.put("data", data);
+        return result;
+    }
+
     @GetMapping("/alerts")
     public Map<String, Object> alerts(@RequestParam(required = false) String status,
                                       @RequestParam(required = false) String type,

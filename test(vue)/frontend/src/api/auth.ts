@@ -2,6 +2,21 @@ import request from './request'
 import type { ApiResponse, LoginRequest, RegisterRequest } from './types'
 
 export const authApi = {
+  // 获取当前登录用户信息（用于刷新后重新校验登录态）
+  async me(): Promise<ApiResponse> {
+    try {
+      const response: any = await request.get('/api/auth/me')
+      const resData = response?.data ?? response
+      return {
+        success: resData?.success !== false,
+        message: resData?.message,
+        data: resData?.data
+      }
+    } catch (error: any) {
+      return { success: false, message: error.message || '获取用户信息失败' }
+    }
+  },
+
   // 登录
   async login(data: LoginRequest): Promise<ApiResponse> {
     try {

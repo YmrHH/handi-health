@@ -8,6 +8,9 @@ export const useAuthStore = defineStore('auth', () => {
   const loginUsername = ref<string | null>(null)
   const token = ref<string | null>(null)
 
+  const authChecked = ref(false)
+  const authCheckingPromise = ref<Promise<void> | null>(null)
+
   const isAuthenticated = computed(() => !!token.value)
 
   // 登录（真实访问后端）
@@ -55,6 +58,8 @@ export const useAuthStore = defineStore('auth', () => {
     username.value = null
     loginUsername.value = null
     token.value = null
+    authChecked.value = true
+    authCheckingPromise.value = null
     sessionStorage.removeItem('username')
     sessionStorage.removeItem('loginUsername')
     sessionStorage.removeItem('token')
@@ -77,6 +82,57 @@ export const useAuthStore = defineStore('auth', () => {
     if (savedToken) {
       token.value = savedToken
     }
+
+    // 刷新页面后，需要重新向后端验证一次，避免前端仅凭 sessionStorage 误判为已登录
+    authChecked.value = false
+    authCheckingPromise.value = null
+  }
+
+  async function validateSession(): Promise<void> {
+    // 无 token 时，直接认为鉴权检查已完成
+    if (!token.value) {
+      authChecked.value = true
+      return
+    }
+
+    try {
+      const res: any = await authApi.me()
+      const data = (res as any)?.data || {}
+      const displayName = (data.name as string) || (data.username as string) || username.value
+      if (displayName) {
+        username.value = displayName
+        sessionStorage.setItem('username', displayName)
+      }
+
+      const backendUsername = (data.username as string) || null
+      loginUsername.value = backendUsername
+      if (backendUsername) {
+        sessionStorage.setItem('loginUsername', backendUsername)
+      } else {
+        sessionStorage.removeItem('loginUsername')
+      }
+
+      authChecked.value = true
+    } catch {
+      // 后端校验失败（401/会话过期/用户不存在等）：清空本地登录态
+      await logout()
+    }
+  }
+
+  async function ensureAuthChecked(): Promise<void> {
+    if (authChecked.value) return
+    if (authCheckingPromise.value) return authCheckingPromise.value
+
+    authCheckingPromise.value = (async () => {
+      try {
+        await validateSession()
+      } finally {
+        authChecked.value = true
+        authCheckingPromise.value = null
+      }
+    })()
+
+    return authCheckingPromise.value
   }
 
   return {
@@ -87,7 +143,10 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     register,
     logout,
-    initAuth
+    initAuth,
+    authChecked,
+    validateSession,
+    ensureAuthChecked
   }
 })
 

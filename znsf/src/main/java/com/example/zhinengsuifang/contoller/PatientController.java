@@ -11,6 +11,8 @@ import com.example.zhinengsuifang.entity.PatientLinkedAccount;
 import com.example.zhinengsuifang.entity.PatientMessage;
 import com.example.zhinengsuifang.entity.PatientRehabTask;
 import com.example.zhinengsuifang.entity.PatientTcmSurvey;
+import com.example.zhinengsuifang.entity.RiskLevelHistory;
+import com.example.zhinengsuifang.entity.SyndromeAssessment;
 import com.example.zhinengsuifang.entity.User;
 import com.example.zhinengsuifang.entity.HealthMetric;
 import com.example.zhinengsuifang.mapper.PatientBasicInfoMapper;
@@ -23,6 +25,8 @@ import com.example.zhinengsuifang.mapper.PatientLinkedAccountMapper;
 import com.example.zhinengsuifang.mapper.PatientMessageMapper;
 import com.example.zhinengsuifang.mapper.PatientRehabTaskMapper;
 import com.example.zhinengsuifang.mapper.PatientTcmSurveyMapper;
+import com.example.zhinengsuifang.mapper.RiskLevelHistoryMapper;
+import com.example.zhinengsuifang.mapper.SyndromeAssessmentMapper;
 import com.example.zhinengsuifang.mapper.UserMapper;
 import com.example.zhinengsuifang.service.HealthMetricService;
 import com.example.zhinengsuifang.util.ApiResponseUtil;
@@ -119,6 +123,12 @@ public class PatientController {
 
     @Resource
     private PatientTcmSurveyMapper patientTcmSurveyMapper;
+
+    @Resource
+    private SyndromeAssessmentMapper syndromeAssessmentMapper;
+
+    @Resource
+    private RiskLevelHistoryMapper riskLevelHistoryMapper;
 
     @Resource
     private PatientLinkedAccountMapper patientLinkedAccountMapper;
@@ -526,10 +536,77 @@ public class PatientController {
             s.setAssessedAt(LocalDateTime.now());
 
             patientTcmSurveyMapper.insert(s);
+            syncSurveyDerivedRecords(patientId, body, s);
             return ApiResponseUtil.ok(s);
         } catch (Exception e) {
             e.printStackTrace();
             return ApiResponseUtil.fail(ApiCode.INTERNAL_ERROR, "问卷提交失败：" + e.getMessage());
+        }
+    }
+
+    private void syncSurveyDerivedRecords(Long patientId, Map<String, Object> body, PatientTcmSurvey survey) {
+        if (patientId == null || survey == null) {
+            return;
+        }
+        try {
+            PatientBasicInfo basicInfo = patientBasicInfoMapper.findByPatientId(patientId);
+            Map<String, Object> answers = readAsMap(body == null ? null : body.get("answers"));
+            Map<String, Object> result = readAsMap(body == null ? null : body.get("result"));
+            if (result.isEmpty()) {
+                result.put("risk", body == null ? null : body.get("risk"));
+                result.put("features", body == null ? null : body.get("features"));
+                result.put("date", body == null ? null : body.get("date"));
+            }
+            Map<String, Object> risk = readAsMap(body == null ? null : body.get("risk"));
+            if (risk.isEmpty()) {
+                risk = readAsMap(result.get("risk"));
+            }
+            Map<String, Object> features = readAsMap(body == null ? null : body.get("features"));
+            if (features.isEmpty()) {
+                features = readAsMap(result.get("features"));
+            }
+
+            String disease = firstNonBlank(
+                    basicInfo == null ? null : basicInfo.getExt3(),
+                    mapDiseaseCode(toStr(answers.get("chronic_disease"))),
+                    mapDiseaseCode(toStr(answers.get("diseaseType"))),
+                    mapDiseaseCode(toStr(body == null ? null : body.get("disease"))),
+                    "未标注病种");
+            String syndromeCode = firstNonBlank(
+                    toStr(answers.get("chronic_disease")),
+                    toStr(answers.get("diseaseType")),
+                    disease);
+            String riskLevel = normalizeRiskHistoryLevel(firstNonBlank(
+                    toStr(risk.get("level")),
+                    toStr(readAsMap(result.get("risk")).get("level")),
+                    inferRiskLevelFromSignals(readAsList(risk.get("signals"))),
+                    inferRiskLevelFromSignals(readAsList(readAsMap(result.get("risk")).get("signals"))),
+                    normalizeRiskLevel(userMapper.findById(patientId) == null ? null : userMapper.findById(patientId).getRiskLevel())
+            ));
+            Double score = deriveSurveyScore(riskLevel, risk, features, answers);
+            LocalDateTime assessedAt = survey.getAssessedAt() == null ? LocalDateTime.now() : survey.getAssessedAt();
+
+            SyndromeAssessment assessment = new SyndromeAssessment();
+            assessment.setPatientId(patientId);
+            assessment.setSyndromeCode(syndromeCode);
+            assessment.setSyndromeName(disease);
+            assessment.setScore(score);
+            assessment.setIsStable("LOW".equals(riskLevel) ? 1 : 0);
+            assessment.setAssessedAt(assessedAt);
+            assessment.setCreatedByUserId(patientId);
+            syndromeAssessmentMapper.insert(assessment);
+
+            if (riskLevel != null && !riskLevel.trim().isEmpty()) {
+                userMapper.updateRiskLevelById(patientId, riskLevel);
+                RiskLevelHistory history = new RiskLevelHistory();
+                history.setPatientId(patientId);
+                history.setRiskLevel(riskLevel);
+                history.setAssessedAt(assessedAt);
+                history.setSource("TCM_SURVEY");
+                riskLevelHistoryMapper.insert(history);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 
@@ -1155,6 +1232,121 @@ public class PatientController {
             return "🧘";
         }
         return "🚶";
+    }
+
+    private Map<String, Object> readAsMap(Object value) {
+        Map<String, Object> map = new HashMap<>();
+        if (value == null) {
+            return map;
+        }
+        try {
+            if (value instanceof Map<?, ?> m) {
+                for (Map.Entry<?, ?> e : m.entrySet()) {
+                    if (e.getKey() != null) {
+                        map.put(String.valueOf(e.getKey()), e.getValue());
+                    }
+                }
+                return map;
+            }
+            if (value instanceof String s && !s.trim().isEmpty()) {
+                return OBJECT_MAPPER.readValue(s, Map.class);
+            }
+            return OBJECT_MAPPER.convertValue(value, Map.class);
+        } catch (Exception e) {
+            return map;
+        }
+    }
+
+    private List<Object> readAsList(Object value) {
+        List<Object> list = new ArrayList<>();
+        if (value == null) {
+            return list;
+        }
+        try {
+            if (value instanceof List<?> l) {
+                list.addAll(l);
+                return list;
+            }
+            if (value instanceof String s && !s.trim().isEmpty()) {
+                return OBJECT_MAPPER.readValue(s, List.class);
+            }
+            return OBJECT_MAPPER.convertValue(value, List.class);
+        } catch (Exception e) {
+            return list;
+        }
+    }
+
+    private String mapDiseaseCode(String disease) {
+        if (disease == null || disease.trim().isEmpty()) {
+            return null;
+        }
+        String key = disease.trim().toUpperCase();
+        if ("HTN".equals(key) || "HYPERTENSION".equals(key)) {
+            return "高血压";
+        }
+        if ("DM".equals(key) || "DIABETES".equals(key)) {
+            return "糖尿病";
+        }
+        if ("COPD".equals(key)) {
+            return "慢阻肺";
+        }
+        if ("HF".equals(key) || "CHF".equals(key)) {
+            return "心力衰竭";
+        }
+        return disease.trim();
+    }
+
+    private String normalizeRiskHistoryLevel(String level) {
+        if (level == null || level.trim().isEmpty()) {
+            return "MID";
+        }
+        String s = level.trim().toUpperCase();
+        if (s.contains("HIGH") || s.contains("高")) {
+            return "HIGH";
+        }
+        if (s.contains("LOW") || s.contains("低")) {
+            return "LOW";
+        }
+        return "MID";
+    }
+
+    private String inferRiskLevelFromSignals(List<Object> signals) {
+        if (signals == null || signals.isEmpty()) {
+            return null;
+        }
+        if (signals.size() >= 3) {
+            return "HIGH";
+        }
+        return "MID";
+    }
+
+    private Double deriveSurveyScore(String riskLevel, Map<String, Object> risk, Map<String, Object> features, Map<String, Object> answers) {
+        Double direct = parseDouble(risk == null ? null : risk.get("score"));
+        if (direct != null) {
+            return Math.max(0.0, Math.min(100.0, direct));
+        }
+        double score = 38.0;
+        String level = normalizeRiskHistoryLevel(riskLevel);
+        if ("HIGH".equals(level)) {
+            score = 86.0;
+        } else if ("MID".equals(level)) {
+            score = 68.0;
+        } else if ("LOW".equals(level)) {
+            score = 42.0;
+        }
+        score += readAsList(risk == null ? null : risk.get("signals")).size() * 3.0;
+        score += safeDouble(features == null ? null : features.get("fatigueScore")) * 1.5;
+        score += safeDouble(features == null ? null : features.get("breathScore")) * 1.8;
+        score += safeDouble(features == null ? null : features.get("sleepRisk")) * 3.0;
+        score += safeDouble(features == null ? null : features.get("medRisk")) * 3.0;
+        score += Math.max(0.0, safeDouble(answers == null ? null : answers.get("edema")) * 2.0);
+        score += Math.max(0.0, safeDouble(answers == null ? null : answers.get("chest_tightness")) * 2.0);
+        return Math.max(0.0, Math.min(100.0, score));
+    }
+
+    private double safeDouble(Object v) {
+        Double d = parseDouble(v);
+        return d == null ? 0.0 : d;
     }
 
     private LocalDate parseLocalDate(String text, LocalDate fallback) {

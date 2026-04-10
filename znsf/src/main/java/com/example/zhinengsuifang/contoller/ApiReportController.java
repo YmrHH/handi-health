@@ -252,7 +252,6 @@ public class ApiReportController {
             long cur = latestAlerts == null ? 0L : latestAlerts;
             alertChangeRate = (cur - lastMonthAlerts) * 1.0 / lastMonthAlerts;
         }
-
         LocalDateTime endAt = LocalDate.now().plusDays(1).atStartOfDay();
         LocalDateTime startAt = endAt.minusDays(d);
 
@@ -356,20 +355,34 @@ public class ApiReportController {
 
         List<Map<String, Object>> diseaseAnalysis = new ArrayList<>();
         List<Map<String, Object>> rawDisease = dashboardMapper.diseaseAnalysisBySyndrome(startAt, endAt, 20);
+        if (rawDisease == null || rawDisease.isEmpty()) {
+            rawDisease = dashboardMapper.diseaseAnalysisByLegacySyndrome(startAt, endAt, 20);
+        }
         if (rawDisease != null) {
             for (Map<String, Object> r : rawDisease) {
                 if (r == null) {
                     continue;
                 }
-                String disease = r.get("disease") == null ? "" : String.valueOf(r.get("disease"));
-                long patientCount = r.get("patientCount") instanceof Number ? ((Number) r.get("patientCount")).longValue() : 0L;
-                long stableCnt = r.get("stableCnt") instanceof Number ? ((Number) r.get("stableCnt")).longValue() : 0L;
-                long deteriorCnt = r.get("deteriorCnt") instanceof Number ? ((Number) r.get("deteriorCnt")).longValue() : 0L;
-                long totalCnt = r.get("totalCnt") instanceof Number ? ((Number) r.get("totalCnt")).longValue() : 0L;
+                String disease = safeStr(r.get("disease"));
+                long patientCount = asLong(r.get("patientCount"));
+                long stableCnt = asLong(r.get("stableCnt"));
+                long deteriorCnt = asLong(r.get("deteriorCnt"));
+                long totalCnt = asLong(r.get("totalCnt"));
 
                 double stableRate = totalCnt <= 0 ? 0.0 : stableCnt * 1.0 / totalCnt;
                 double deteriorationRate = totalCnt <= 0 ? 0.0 : deteriorCnt * 1.0 / totalCnt;
                 double improvementRate = totalCnt <= 0 ? 0.0 : Math.max(0.0, 1.0 - stableRate - deteriorationRate);
+
+                List<Map<String, Object>> factorRows = dashboardMapper.diseaseDeteriorationFactorsRaw(startAt, endAt, disease, 6);
+                List<Map<String, Object>> deteriorationFactors = buildDeteriorationFactors(factorRows, patientCount);
+
+                List<Map<String, Object>> patientRows = dashboardMapper.diseasePatientInsightRows(startAt, endAt, disease);
+                List<Map<String, Object>> typicalProfiles = buildTypicalProfiles(patientRows);
+
+                List<Map<String, Object>> careRows = dashboardMapper.diseaseCarePlanEffectivenessRaw(startAt, endAt, disease, 4);
+                List<Map<String, Object>> carePlanEffectiveness = buildCarePlanEffectiveness(careRows);
+
+                List<String> recommendations = buildDiseaseRecommendations(disease, deteriorationFactors, typicalProfiles);
 
                 Map<String, Object> row = new HashMap<>();
                 row.put("disease", disease);
@@ -377,10 +390,10 @@ public class ApiReportController {
                 row.put("stableRate", stableRate);
                 row.put("improvementRate", improvementRate);
                 row.put("deteriorationRate", deteriorationRate);
-                row.put("carePlanEffectiveness", new ArrayList<>());
-                row.put("deteriorationFactors", new ArrayList<>());
-                row.put("typicalProfiles", new ArrayList<>());
-                row.put("recommendations", new ArrayList<>());
+                row.put("carePlanEffectiveness", carePlanEffectiveness);
+                row.put("deteriorationFactors", deteriorationFactors);
+                row.put("typicalProfiles", typicalProfiles);
+                row.put("recommendations", recommendations);
                 diseaseAnalysis.add(row);
             }
         }
@@ -396,6 +409,7 @@ public class ApiReportController {
         data.put("latestAuc", 0.0);
         data.put("latestF1", 0.0);
         data.put("alertChangeRate", alertChangeRate);
+        data.put("highRiskChangeRate", calculateChangeRate(highArr));
         data.put("months", months);
         data.put("alertsArr", alertsArr);
         data.put("followArr", followArr);
@@ -482,6 +496,299 @@ public class ApiReportController {
         String name = file.fileName == null ? "report.csv" : file.fileName;
         headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + name);
         return ResponseEntity.ok().headers(headers).body(file.bytes);
+    }
+
+    private List<Map<String, Object>> buildDeteriorationFactors(List<Map<String, Object>> factorRows, long diseasePatientCount) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (factorRows == null) {
+            return list;
+        }
+        for (Map<String, Object> row : factorRows) {
+            if (row == null) {
+                continue;
+            }
+            String factorName = safeStr(row.get("factorName"));
+            long patientCount = asLong(row.get("patientCount"));
+            String description = safeStr(row.get("description"));
+            double ratio = diseasePatientCount <= 0 ? 0.0 : patientCount * 1.0 / diseasePatientCount;
+            String impactLevel;
+            if (ratio >= 0.35) {
+                impactLevel = "high";
+            } else if (ratio >= 0.18) {
+                impactLevel = "medium";
+            } else {
+                impactLevel = "low";
+            }
+            Map<String, Object> item = new HashMap<>();
+            item.put("factorName", factorName);
+            item.put("impactLevel", impactLevel);
+            item.put("patientCount", patientCount);
+            item.put("description", description);
+            list.add(item);
+        }
+        return list;
+    }
+
+    private List<Map<String, Object>> buildTypicalProfiles(List<Map<String, Object>> rows) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (rows == null || rows.isEmpty()) {
+            return result;
+        }
+
+        Map<String, Map<String, Object>> groupMap = new LinkedHashMap<>();
+        Map<String, Map<String, Integer>> comorbidityBag = new HashMap<>();
+        Map<String, Map<String, Integer>> lifestyleBag = new HashMap<>();
+
+        for (Map<String, Object> row : rows) {
+            if (row == null) {
+                continue;
+            }
+            int age = asInt(row.get("age"));
+            String ageRange = toAgeRange(age);
+            String diseaseStage = toDiseaseStage(safeStr(row.get("riskLevel")));
+            String constitution = safeStr(row.get("constitution"));
+            if (constitution.isEmpty()) {
+                constitution = "未标注体质";
+            }
+            String key = ageRange + "|" + diseaseStage + "|" + constitution;
+
+            Map<String, Object> group = groupMap.get(key);
+            if (group == null) {
+                group = new LinkedHashMap<>();
+                group.put("ageRange", ageRange);
+                group.put("diseaseStage", diseaseStage);
+                group.put("constitution", constitution);
+                group.put("typicalCount", 0L);
+                groupMap.put(key, group);
+            }
+            group.put("typicalCount", asLong(group.get("typicalCount")) + 1);
+
+            Map<String, Integer> comBag = comorbidityBag.computeIfAbsent(key, k -> new HashMap<>());
+            for (String token : splitTokens(safeStr(row.get("pastHistory")))) {
+                if (!token.isEmpty()) {
+                    comBag.put(token, comBag.getOrDefault(token, 0) + 1);
+                }
+            }
+
+            Map<String, Integer> lifeBag = lifestyleBag.computeIfAbsent(key, k -> new HashMap<>());
+            for (String tag : deriveLifestyleTags(row)) {
+                if (!tag.isEmpty()) {
+                    lifeBag.put(tag, lifeBag.getOrDefault(tag, 0) + 1);
+                }
+            }
+        }
+
+        for (Map.Entry<String, Map<String, Object>> entry : groupMap.entrySet()) {
+            String key = entry.getKey();
+            Map<String, Object> group = entry.getValue();
+            group.put("comorbidities", topKeys(comorbidityBag.get(key), 2));
+            group.put("lifestyle", topKeys(lifestyleBag.get(key), 3));
+            result.add(group);
+        }
+
+        result.sort((a, b) -> Long.compare(asLong(b.get("typicalCount")), asLong(a.get("typicalCount"))));
+        if (result.size() > 3) {
+            return new ArrayList<>(result.subList(0, 3));
+        }
+        return result;
+    }
+
+    private List<Map<String, Object>> buildCarePlanEffectiveness(List<Map<String, Object>> careRows) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        if (careRows == null) {
+            return list;
+        }
+        for (Map<String, Object> row : careRows) {
+            if (row == null) {
+                continue;
+            }
+            String planName = safeStr(row.get("planName"));
+            String planType = safeStr(row.get("planType"));
+            long patientCount = asLong(row.get("patientCount"));
+            long successCnt = asLong(row.get("successCnt"));
+            double avgImprovementDays = asDouble(row.get("avgImprovementDays"));
+            double successRate = patientCount <= 0 ? 0.0 : successCnt * 1.0 / patientCount;
+            double stabilityImprovement = successRate * 100.0;
+            double effectiveness = 55.0 + successRate * 35.0;
+
+            Map<String, Object> item = new HashMap<>();
+            item.put("planName", planName);
+            item.put("planType", planType);
+            item.put("patientCount", patientCount);
+            item.put("effectiveness", round1(effectiveness));
+            item.put("stabilityImprovement", round1(stabilityImprovement));
+            item.put("avgImprovementDays", round1(avgImprovementDays));
+            list.add(item);
+        }
+        return list;
+    }
+
+    private List<String> buildDiseaseRecommendations(String disease,
+                                                     List<Map<String, Object>> deteriorationFactors,
+                                                     List<Map<String, Object>> typicalProfiles) {
+        List<String> list = new ArrayList<>();
+        boolean hasMorningBp = containsFactor(deteriorationFactors, "晨间血压异常");
+        boolean hasSleep = containsFactor(deteriorationFactors, "睡眠下降");
+        boolean hasMed = containsFactor(deteriorationFactors, "用药依从性不足");
+        boolean hasGlucose = containsFactor(deteriorationFactors, "血糖波动");
+
+        if (hasMorningBp) {
+            list.add("建议加强晨起监测与早间随访提醒，重点关注寒冷时段血压波动。");
+        }
+        if (hasSleep) {
+            list.add("建议关注睡眠不足与供暖期室内干燥对症状波动的影响。");
+        }
+        if (hasMed) {
+            list.add("建议结合随访加强服药提醒与依从性教育。");
+        }
+        if (hasGlucose) {
+            list.add("建议强化饮食记录及空腹/餐后分时血糖监测。");
+        }
+        if (disease.contains("高血压")) {
+            list.add("哈尔滨冬季及昼夜温差较大阶段，应重点观察晨间血压与保暖情况。");
+        } else if (disease.contains("糖")) {
+            list.add("北方冬季活动减少、饮食偏高热量时，应重点关注血糖离散度与体重变化。");
+        }
+        if (!typicalProfiles.isEmpty()) {
+            String constitution = safeStr(typicalProfiles.get(0).get("constitution"));
+            if (constitution.contains("气虚")) {
+                list.add("气虚质人群近期波动较多，建议加强作息调护与疲劳管理。");
+            } else if (constitution.contains("痰湿")) {
+                list.add("痰湿质人群需重点关注饮食调护、运动管理和体重控制。");
+            } else if (constitution.contains("阳虚")) {
+                list.add("阳虚质人群在寒地气候下更易受冷刺激影响，应加强保暖与温养调护。");
+            }
+        }
+        if (list.size() > 4) {
+            return new ArrayList<>(list.subList(0, 4));
+        }
+        return list;
+    }
+
+    private double calculateChangeRate(List<Long> values) {
+        if (values == null || values.size() < 2) {
+            return 0.0;
+        }
+        long prev = values.get(values.size() - 2) == null ? 0L : values.get(values.size() - 2);
+        long curr = values.get(values.size() - 1) == null ? 0L : values.get(values.size() - 1);
+        if (prev <= 0) {
+            return curr > 0 ? 1.0 : 0.0;
+        }
+        return (curr - prev) * 1.0 / prev;
+    }
+
+    private String safeStr(Object v) {
+        return v == null ? "" : String.valueOf(v).trim();
+    }
+
+    private long asLong(Object v) {
+        return v instanceof Number ? ((Number) v).longValue() : 0L;
+    }
+
+    private int asInt(Object v) {
+        return v instanceof Number ? ((Number) v).intValue() : 0;
+    }
+
+    private double asDouble(Object v) {
+        return v instanceof Number ? ((Number) v).doubleValue() : 0.0;
+    }
+
+    private double round1(double v) {
+        return Math.round(v * 10.0) / 10.0;
+    }
+
+    private String toAgeRange(int age) {
+        if (age <= 0) {
+            return "年龄未标注";
+        }
+        if (age < 50) {
+            return "50岁以下";
+        }
+        if (age < 60) {
+            return "50-59岁";
+        }
+        if (age < 70) {
+            return "60-69岁";
+        }
+        return "70岁及以上";
+    }
+
+    private String toDiseaseStage(String riskLevel) {
+        String s = riskLevel == null ? "" : riskLevel.trim().toUpperCase();
+        if (s.contains("HIGH") || s.contains("高")) {
+            return "波动期";
+        }
+        if (s.contains("MID") || s.contains("MEDIUM") || s.contains("中")) {
+            return "干预期";
+        }
+        return "稳定期";
+    }
+
+    private List<String> splitTokens(String text) {
+        List<String> list = new ArrayList<>();
+        if (text == null || text.trim().isEmpty()) {
+            return list;
+        }
+        String[] arr = text.split("[、，,；;\s/]+");
+        for (String s : arr) {
+            if (s == null) {
+                continue;
+            }
+            String t = s.trim();
+            if (!t.isEmpty()) {
+                list.add(t);
+            }
+        }
+        return list;
+    }
+
+    private List<String> deriveLifestyleTags(Map<String, Object> row) {
+        List<String> list = new ArrayList<>();
+        double sbp = asDouble(row.get("sbp"));
+        double dbp = asDouble(row.get("dbp"));
+        double glucose = asDouble(row.get("glucose"));
+        double sleep = asDouble(row.get("sleep"));
+        String med = safeStr(row.get("medAdherence"));
+        String symptoms = safeStr(row.get("symptoms"));
+        String tcmConclusion = safeStr(row.get("tcmConclusion"));
+
+        if (sleep > 0 && sleep < 6) list.add("睡眠不足");
+        if (sbp >= 140 || dbp >= 90) list.add("血压波动");
+        if (glucose >= 7.0 || (glucose > 0 && glucose <= 3.9)) list.add("血糖波动");
+        if (med.contains("差") || med.contains("不规律") || med.contains("漏服") || med.contains("一般")) {
+            list.add("用药依从性不足");
+        }
+        if (symptoms.contains("头晕")) list.add("头晕");
+        if (symptoms.contains("乏力")) list.add("乏力");
+        if (symptoms.contains("失眠")) list.add("失眠");
+        if (symptoms.contains("胸闷")) list.add("胸闷");
+        if (tcmConclusion.contains("畏寒")) list.add("畏寒");
+        if (list.isEmpty()) list.add("居家监测");
+        return list;
+    }
+
+    private List<String> topKeys(Map<String, Integer> map, int limit) {
+        List<String> list = new ArrayList<>();
+        if (map == null || map.isEmpty()) {
+            return list;
+        }
+        map.entrySet().stream()
+                .sorted((a, b) -> Integer.compare(b.getValue(), a.getValue()))
+                .limit(limit)
+                .forEach(e -> list.add(e.getKey()));
+        return list;
+    }
+
+    private boolean containsFactor(List<Map<String, Object>> factors, String factorName) {
+        if (factors == null) {
+            return false;
+        }
+        for (Map<String, Object> item : factors) {
+            if (factorName.equals(safeStr(item.get("factorName")))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Map<String, Object> initRow(String day) {
