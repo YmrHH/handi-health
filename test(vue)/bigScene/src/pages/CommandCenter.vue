@@ -1871,6 +1871,35 @@ onBeforeUnmount(() => {
   overflow-wrap: anywhere;
 }
 
+.panel table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.panel th,
+.panel td {
+  min-width: 0;
+  max-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.panel td > *,
+.panel th > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.panel .table-wrap,
+.panel .table-container {
+  min-height: 0;
+  overflow: auto;
+}
+
 .trend-section {
   border-radius: 30px;
   padding: 12px 12px 10px;

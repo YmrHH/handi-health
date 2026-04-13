@@ -142,3 +142,4 @@ function uploadFile(options) {
 }
 exports.request = request;
 exports.uploadFile = uploadFile;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/utils/request.js.map

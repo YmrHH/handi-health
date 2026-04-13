@@ -288,7 +288,7 @@ const _sfc_main = {
           this.scrollIntoView = "msg-" + last.id;
         }
       } catch (e) {
-        console.warn("loadDoctorThread failed", e);
+        common_vendor.index.__f__("warn", "at pages/patient/chat/chat.vue:406", "loadDoctorThread failed", e);
       }
     },
     loadAiThread(scrollToBottom) {
@@ -385,3 +385,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../../.sourcemap/mp-weixin/pages/patient/chat/chat.js.map

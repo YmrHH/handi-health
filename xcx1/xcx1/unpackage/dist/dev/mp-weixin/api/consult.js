@@ -85,3 +85,4 @@ exports.formatHM = formatHM;
 exports.getUnreadCount = getUnreadCount;
 exports.listThread = listThread;
 exports.markRead = markRead;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/consult.js.map

@@ -104,3 +104,4 @@ exports.updateBasicInfo = updateBasicInfo;
 exports.updateProfile = updateProfile;
 exports.updateRehabTaskDifficulty = updateRehabTaskDifficulty;
 exports.updateRehabTaskStatus = updateRehabTaskStatus;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/patient.js.map

@@ -9,3 +9,4 @@ function upload(filePath, formData) {
   });
 }
 exports.upload = upload;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/common.js.map

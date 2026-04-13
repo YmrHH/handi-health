@@ -5,3 +5,4 @@ function getRelationNodes(name) {
   return this.$unicom("@" + name);
 }
 exports.getRelationNodes = getRelationNodes;
+//# sourceMappingURL=../../../../.sourcemap/mp-weixin/uni_modules/zp-mixins/methods/relation.js.map

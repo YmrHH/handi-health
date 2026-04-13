@@ -890,6 +890,29 @@ async function loadStaffList(epoch: number = refreshEpoch) {
   }
 }
 
+function pickRows(payload: any): any[] {
+  const direct =
+    payload?.rows ??
+    payload?.list ??
+    payload?.records ??
+    payload?.items ??
+    payload?.data?.rows ??
+    payload?.data?.list ??
+    payload?.data?.records ??
+    payload?.result?.rows ??
+    payload?.result?.list ??
+    payload?.result?.records
+  return Array.isArray(direct) ? direct : []
+}
+
+function pickStringList(payload: any, key: string): string[] {
+  const direct = payload?.[key]
+  const nested = payload?.data?.[key] ?? payload?.result?.[key]
+  if (Array.isArray(direct)) return direct
+  if (Array.isArray(nested)) return nested
+  return []
+}
+
 async function loadData(epoch: number = refreshEpoch) {
   if (!pageAlive || !isAlertRoute.value || epoch !== refreshEpoch) return
   loading.value = true
@@ -898,7 +921,7 @@ async function loadData(epoch: number = refreshEpoch) {
     if (!pageAlive || !isAlertRoute.value || epoch !== refreshEpoch) return
     const payload = result.success ? (result.data as any) : null
 
-    const rows = (payload?.rows || []) as any[]
+    const rows = pickRows(payload) as any[]
     let mappedRows = rows.map(r => ({ ...r, selected: false }))
 
     // 读取本地标记为“已关闭”的告警ID，刷新时优先覆盖状态
@@ -915,8 +938,8 @@ async function loadData(epoch: number = refreshEpoch) {
 
     allRows.value = mappedRows
 
-    data.value.typeList = Array.isArray(payload?.typeList) ? payload.typeList : []
-    data.value.doctorList = Array.isArray(payload?.doctorList) ? payload.doctorList : []
+    data.value.typeList = pickStringList(payload, 'typeList')
+    data.value.doctorList = pickStringList(payload, 'doctorList')
     data.value.selectedAlertId = payload?.selectedAlertId ?? null
     data.value.detail = payload?.detail ?? null
 
@@ -940,9 +963,9 @@ async function loadHardwareData(epoch: number = refreshEpoch) {
     if (!pageAlive || !isAlertRoute.value || epoch !== refreshEpoch) return
     const payload = result.success ? (result.data as any) : null
 
-    const rows = (payload?.rows || []) as any[]
+    const rows = pickRows(payload) as any[]
     allHardwareRows.value = rows.map(r => ({ ...r, selected: false }))
-    hardwareData.value.deviceTypeList = Array.isArray(payload?.deviceTypeList) ? payload.deviceTypeList : []
+    hardwareData.value.deviceTypeList = pickStringList(payload, 'deviceTypeList')
     hardwareData.value.detail = payload?.detail ?? null
 
     const defaultId = payload?.selectedAlertId ?? (allHardwareRows.value.length > 0 ? allHardwareRows.value[0].id : null)

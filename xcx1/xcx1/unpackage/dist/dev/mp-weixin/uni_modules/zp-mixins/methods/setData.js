@@ -16,3 +16,4 @@ function setData(obj, callback = null) {
     this.$nextTick(callback);
 }
 exports.setData = setData;
+//# sourceMappingURL=../../../../.sourcemap/mp-weixin/uni_modules/zp-mixins/methods/setData.js.map

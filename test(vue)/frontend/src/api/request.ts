@@ -13,7 +13,7 @@ function showMessage(message: string, type: 'success' | 'error' | 'warning' = 'e
 // 创建axios实例
 const service: AxiosInstance = axios.create({
   // baseURL: import.meta.env.VITE_API_BASE_URL || '',
-  baseURL: 'http://localhost:8081',
+  baseURL: 'http://192.140.173.165:8081',
   timeout: 30000,
   withCredentials: true // 支持携带cookie（用于session认证）
 })

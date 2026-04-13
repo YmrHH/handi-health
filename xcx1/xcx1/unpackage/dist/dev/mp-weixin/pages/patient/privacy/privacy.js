@@ -66,7 +66,7 @@ const _sfc_main = {
           try {
             utils_session.clearCurrentUserBusinessCache();
           } catch (e) {
-            console.error("清除当前账号本地缓存失败", e);
+            common_vendor.index.__f__("error", "at pages/patient/privacy/privacy.vue:169", "清除当前账号本地缓存失败", e);
           }
           common_vendor.index.showToast({ title: "已清除", icon: "success" });
           this.refreshAuth();
@@ -87,3 +87,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../../.sourcemap/mp-weixin/pages/patient/privacy/privacy.js.map

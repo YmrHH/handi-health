@@ -20,3 +20,4 @@ const pageLifetimes = {
   }
 };
 exports.pageLifetimes = pageLifetimes;
+//# sourceMappingURL=../../../../.sourcemap/mp-weixin/uni_modules/zp-mixins/lifecycle/pageLifetimes.js.map

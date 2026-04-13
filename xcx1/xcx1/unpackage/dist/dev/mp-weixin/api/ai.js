@@ -8,3 +8,4 @@ function chatWithAI(data) {
   });
 }
 exports.chatWithAI = chatWithAI;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/ai.js.map

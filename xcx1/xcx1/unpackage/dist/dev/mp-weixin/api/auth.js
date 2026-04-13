@@ -45,3 +45,4 @@ function changePassword(data) {
 exports.changePassword = changePassword;
 exports.loginByPhone = loginByPhone;
 exports.logout = logout;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/auth.js.map

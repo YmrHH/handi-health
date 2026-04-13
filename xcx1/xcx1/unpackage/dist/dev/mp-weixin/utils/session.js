@@ -137,3 +137,4 @@ exports.setRole = setRole;
 exports.setScopedStorageSync = setScopedStorageSync;
 exports.setToken = setToken;
 exports.setUser = setUser;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/utils/session.js.map

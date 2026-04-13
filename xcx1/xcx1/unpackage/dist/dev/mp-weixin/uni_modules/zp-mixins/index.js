@@ -24,3 +24,4 @@ const zpMixins = {
   }
 };
 exports.zpMixins = zpMixins;
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/uni_modules/zp-mixins/index.js.map

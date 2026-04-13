@@ -1,7 +1,8 @@
 "use strict";
+const common_vendor = require("../../../common/vendor.js");
 var selectComponentWeiXin2 = function(selector) {
   var _a;
-  console.log(".$scope", this.$scope.selectComponent(selector));
+  common_vendor.index.__f__("log", "at uni_modules/zp-mixins/methods/selectComponent.js:131", ".$scope", this.$scope.selectComponent(selector));
   return ((_a = this.$scope.selectComponent(selector)) == null ? void 0 : _a.data) || void 0;
 };
 function selectComponent(args) {
@@ -17,3 +18,4 @@ function selectAllComponents(args) {
 }
 exports.selectAllComponents = selectAllComponents;
 exports.selectComponent = selectComponent;
+//# sourceMappingURL=../../../../.sourcemap/mp-weixin/uni_modules/zp-mixins/methods/selectComponent.js.map

@@ -77,7 +77,7 @@ const _sfc_main = {
           common_vendor.index.reLaunch({ url });
         }, 200);
       }).catch((err) => {
-        console.error("loginByPhone failed:", err);
+        common_vendor.index.__f__("error", "at pages/index/index.vue:189", "loginByPhone failed:", err);
         common_vendor.index.showToast({
           title: err && err.message || "手机号或密码错误",
           icon: "none"
@@ -109,3 +109,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../.sourcemap/mp-weixin/pages/index/index.js.map

@@ -22,45 +22,49 @@
         <span class="card-title">服务任务列表</span>
         <button class="btn btn-primary" @click="openGenerateDialog">生成随访任务清单</button>
       </div>
-      <div v-if="loading" class="loading">加载中...</div>
-      <table v-else class="table">
-        <thead>
-          <tr>
-            <th>患者姓名</th>
-            <th>服务地址</th>
-            <th>服务类型</th>
-            <th>计划日期</th>
-            <th>执行团队</th>
-            <th>随访人员</th>
-            <th>状态</th>
-            <th>备注</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="taskList.length === 0">
-            <td colspan="9" style="text-align: center; color: #999;">暂无数据</td>
-          </tr>
-          <tr v-for="task in taskList" :key="task.taskId">
-            <td>{{ task.patientName }}</td>
-            <td>{{ task.address }}</td>
-            <td>{{ task.serviceType }}</td>
-            <td>{{ task.planDate }}</td>
-            <td>{{ task.assignee }}</td>
-            <td>
-              <span v-if="task.staffName" class="staff-name">{{ task.staffName }}</span>
-              <span v-else class="no-staff">未指派</span>
-            </td>
-            <td>
-              <span class="status-badge">{{ task.statusText }}</span>
-            </td>
-            <td>{{ task.remark || '——' }}</td>
-            <td>
-              <button class="btn btn-sm btn-primary" @click="openAssignDialog(task)">指派随访人员</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="card-body">
+        <div v-if="loading" class="loading">加载中...</div>
+        <div v-else class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>患者姓名</th>
+                <th>服务地址</th>
+                <th>服务类型</th>
+                <th>计划日期</th>
+                <th>执行团队</th>
+                <th>随访人员</th>
+                <th>状态</th>
+                <th>备注</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="taskList.length === 0">
+                <td colspan="9" style="text-align: center; color: #999;">暂无数据</td>
+              </tr>
+              <tr v-for="task in taskList" :key="task.taskId">
+                <td>{{ task.patientName }}</td>
+                <td>{{ task.address }}</td>
+                <td>{{ task.serviceType }}</td>
+                <td>{{ task.planDate }}</td>
+                <td>{{ task.assignee }}</td>
+                <td>
+                  <span v-if="task.staffName" class="staff-name">{{ task.staffName }}</span>
+                  <span v-else class="no-staff">未指派</span>
+                </td>
+                <td>
+                  <span class="status-badge">{{ task.statusText }}</span>
+                </td>
+                <td>{{ task.remark || '——' }}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" @click="openAssignDialog(task)">指派随访人员</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- 指派随访人员弹窗 -->
@@ -507,6 +511,38 @@ button:focus-visible,
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+}
+
+.card-body {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.table-wrap {
+  max-width: 100%;
+  overflow: auto;
+  border-radius: 12px;
+}
+
+.table {
+  width: 100%;
+  max-width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.table td:nth-child(2),
+.table td:nth-child(8) {
+  white-space: nowrap;
 }
 
 .card-header .card-title {

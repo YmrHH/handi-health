@@ -473,3 +473,4 @@ exports.listPatients = listPatients;
 exports.sendPatientAdvice = sendPatientAdvice;
 exports.submitFollowup = submitFollowup;
 exports.updateStaffProfile = updateStaffProfile;
+//# sourceMappingURL=../../.sourcemap/mp-weixin/api/staff.js.map

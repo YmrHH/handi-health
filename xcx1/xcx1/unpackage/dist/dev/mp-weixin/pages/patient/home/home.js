@@ -235,10 +235,10 @@ const _sfc_main = {
       common_vendor.index.navigateTo({
         url: "/pages/patient/survey/survey",
         success() {
-          console.log("navigateTo survey success");
+          common_vendor.index.__f__("log", "at pages/patient/home/home.vue:617", "navigateTo survey success");
         },
         fail(err) {
-          console.error("navigateTo survey fail:", err);
+          common_vendor.index.__f__("error", "at pages/patient/home/home.vue:620", "navigateTo survey fail:", err);
         }
       });
     },
@@ -281,3 +281,4 @@ function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
 }
 const MiniProgramPage = /* @__PURE__ */ common_vendor._export_sfc(_sfc_main, [["render", _sfc_render]]);
 wx.createPage(MiniProgramPage);
+//# sourceMappingURL=../../../../.sourcemap/mp-weixin/pages/patient/home/home.js.map
