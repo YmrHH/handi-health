@@ -89,15 +89,15 @@ const tickerStyle = computed(() => ({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px var(--canvas-pad-x) calc(10px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.34);
-  backdrop-filter: blur(var(--blur-strong));
-  -webkit-backdrop-filter: blur(var(--blur-strong));
-  border-top: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: 0 -10px 26px rgba(79, 209, 197, 0.08);
+  gap: 10px;
+  padding: 8px var(--canvas-pad-x) calc(8px + env(safe-area-inset-bottom, 0px));
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(var(--blur-soft));
+  -webkit-backdrop-filter: blur(var(--blur-soft));
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 -6px 18px rgba(79, 209, 197, 0.06);
   color: rgba(39, 85, 113, 0.92);
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 0.02em;
 }
 
@@ -105,7 +105,7 @@ const tickerStyle = computed(() => ({
 .footer-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   flex-shrink: 0;
 }
@@ -176,12 +176,12 @@ const tickerStyle = computed(() => ({
 
 .ticker-window {
   width: 100%;
-  max-width: 820px;
+  max-width: 700px;
   overflow: hidden;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.22);
-  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.16);
+  padding: 4px 10px;
 }
 
 .ticker-track {
@@ -195,7 +195,7 @@ const tickerStyle = computed(() => ({
 }
 
 .ticker-item {
-  color: rgba(39, 85, 113, 0.88);
+  color: rgba(39, 85, 113, 0.72);
 }
 
 @keyframes tickerMove {

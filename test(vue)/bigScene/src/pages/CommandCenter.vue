@@ -1,8 +1,8 @@
 <template>
-  <div class="command-center-page">
+  <div class="command-center-page screen-page">
     <div class="page-bg page-grid"></div>
 
-    <main class="page-main stitch-home">
+    <main class="page-main stitch-home screen-main">
       <section class="hero-metrics stitch-stats" aria-label="首页核心指标">
         <article v-for="card in topCards" :key="card.key" class="metric-card glass-card">
           <div class="metric-icon" :class="`metric-icon--${card.accent}`">{{ card.icon }}</div>
@@ -15,7 +15,7 @@
       </section>
 
       <section class="hero-grid stitch-main cc-bento">
-        <aside class="left-column stitch-col column-stack cc-left">
+        <aside class="left-column stitch-col column-stack cc-left screen-col">
           <section class="glass-card panel panel-compact">
             <div class="panel-header">
               <div>
@@ -67,7 +67,7 @@
           </section>
         </aside>
 
-        <section class="center-column stitch-center cc-center">
+        <section class="center-column stitch-center cc-center screen-col">
           <section ref="hubShellRef" class="hub-shell glass-card" :style="hubStyle">
             <div class="hub-glow"></div>
             <div class="hub-outer-ring"></div>
@@ -134,7 +134,7 @@
           </section>
         </section>
 
-        <aside class="right-column stitch-col column-stack cc-right">
+        <aside class="right-column stitch-col column-stack cc-right screen-col">
           <section class="glass-card panel panel-compact">
             <div class="panel-header">
               <div>
@@ -1235,29 +1235,44 @@ async function loadCore() {
   monthSummary.value = month || {}
 }
 
-async function loadSecondary() {
+function runAfterFirstPaint(task: () => void) {
+  requestAnimationFrame(() => {
+    setTimeout(task, 0)
+  })
+}
+
+function runWhenIdle(task: () => void, timeout = 220) {
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    ;(window as any).requestIdleCallback(task, { timeout })
+    return
+  }
+  setTimeout(task, timeout)
+}
+
+async function loadSecondaryStage1() {
   rankingsLoadDone.value = false
   try {
-    // 第一阶段：先拿患者摘要，保证左侧排行尽快出数
+    // 第一阶段：仅拉取摘要，优先保障左侧榜单直出
     const summary = await fetchPatientSummary(200)
     patientSummary.value = getArray(summary)
     if (!patientSummary.value.length) {
       patientSummary.value = getArray(summary?.data) || getArray(summary?.result) || getArray(summary?.page) || []
     }
     rankingsLoadDone.value = true
-
-    // 第二阶段：其余数据并发补齐，不阻塞首屏排行
-    const [alertRes, hardwareRes, riskRes] = await Promise.allSettled([
-      fetchAlerts(30),
-      fetchHardwareAlerts(30),
-      fetchPatientRiskList(200)
-    ])
-    if (alertRes.status === 'fulfilled') alerts.value = getArray(alertRes.value)
-    if (hardwareRes.status === 'fulfilled') hardwareAlerts.value = getArray(hardwareRes.value)
-    if (riskRes.status === 'fulfilled') riskList.value = getArray(riskRes.value)
   } finally {
     rankingsLoadDone.value = true
   }
+}
+
+async function loadSecondaryStage2() {
+  const [alertRes, hardwareRes, riskRes] = await Promise.allSettled([
+    fetchAlerts(30),
+    fetchHardwareAlerts(30),
+    fetchPatientRiskList(200)
+  ])
+  if (alertRes.status === 'fulfilled') alerts.value = getArray(alertRes.value)
+  if (hardwareRes.status === 'fulfilled') hardwareAlerts.value = getArray(hardwareRes.value)
+  if (riskRes.status === 'fulfilled') riskList.value = getArray(riskRes.value)
 }
 
 async function loadPage() {
@@ -1266,11 +1281,18 @@ async function loadPage() {
   renderHubChart()
   renderTrendChart()
   updatedAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-  const idle = typeof window !== 'undefined' && 'requestIdleCallback' in window
-    ? (window as any).requestIdleCallback
-    : (cb: Function) => window.setTimeout(cb, 180)
-  idle(async () => {
-    await loadSecondary()
+
+  // 二级链路拆分：摘要先行，告警/画像后补
+  runAfterFirstPaint(async () => {
+    if (!pageAlive.value) return
+    await loadSecondaryStage1()
+    await nextTick()
+    updatedAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  })
+
+  runWhenIdle(async () => {
+    if (!pageAlive.value) return
+    await loadSecondaryStage2()
     await nextTick()
     renderHubChart()
     renderTrendChart()

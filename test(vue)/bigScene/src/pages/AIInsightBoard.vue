@@ -1,6 +1,6 @@
 <template>
-  <main class="stitch-grid">
-    <aside class="stitch-col">
+  <main class="stitch-grid screen-page screen-grid">
+    <aside class="stitch-col screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -41,7 +41,7 @@
       </section>
     </aside>
 
-    <section class="stitch-center">
+    <section class="stitch-center screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -76,7 +76,7 @@
       </section>
     </section>
 
-    <aside class="stitch-col">
+    <aside class="stitch-col screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -149,7 +149,7 @@ let activeAlive = false
 
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
 
-const insightIndexText = ref('—')
+const insightIndexText = ref('待更新')
 const sourceHasData = ref(false)
 const diseaseHasData = ref(false)
 const stableHasData = ref(false)
@@ -280,6 +280,26 @@ function buildStableRank(diseaseAnalysis: any[]) {
   })
 }
 
+function buildFallbackDiseaseTop(months: string[], values: number[]) {
+  const names = months.length ? months : ['近一月', '近二月', '近三月']
+  const vals = values.length ? values : [0, 0, 0]
+  buildDiseaseTop(
+    names.map((name, idx) => ({
+      disease: `${name}风险趋势`,
+      patientCount: Number(vals[idx] || 0)
+    }))
+  )
+}
+
+function buildFallbackStableRank(alerts: number[], followups: number[], highRisk: number[]) {
+  const rows = [
+    { disease: '随访稳定度', stableRate: followups[0] ? Math.min(1, followups[0] / Math.max(1, alerts[0] || 1)) : 0 },
+    { disease: '告警回落率', stableRate: alerts[1] ? Math.min(1, 1 - highRisk[1] / Math.max(1, alerts[1])) : 0 },
+    { disease: '风险改善率', stableRate: highRisk[2] ? Math.min(1, 1 - highRisk[2] / Math.max(1, alerts[2] || 1)) : 0 }
+  ]
+  buildStableRank(rows)
+}
+
 function resizeAll() {
   if (!activeAlive) return
   kpiChart?.resize()
@@ -290,12 +310,11 @@ function resizeAll() {
   rankChart?.resize()
 }
 
-onMounted(async () => {
-  activeAlive = true
+async function loadBoard() {
   const board = await fetchReportBoard().catch(() => ({} as any))
   const auc = Number(board?.latestAuc || 0) * 100
   const f1 = Number(board?.latestF1 || 0) * 100
-  insightIndexText.value = auc || f1 ? `${Math.round((auc + f1) / 2)}` : '—'
+  insightIndexText.value = auc || f1 ? `${Math.round((auc + f1) / 2)}` : '待更新'
 
   // v4 强约束：趋势只取最近 3 个月
   const monthsAll = (board?.months || []) as string[]
@@ -310,7 +329,11 @@ onMounted(async () => {
   const srcNames = (board?.sourceNames || []) as string[]
   const srcCounts = (board?.sourceCounts || []) as number[]
   sourceHasData.value = srcNames.length > 0 && srcCounts.length > 0
-  if (sourceHasData.value) buildSourcePie(srcNames, srcCounts)
+  if (sourceHasData.value) {
+    buildSourcePie(srcNames, srcCounts)
+  } else {
+    buildSourcePie(['告警数据', '随访数据', '画像数据'], [board?.latestAlerts || 0, board?.latestFollowups || 0, board?.latestHighRisk || 0])
+  }
 
   buildInsightCenter({
     alerts: board?.latestAlerts,
@@ -322,16 +345,29 @@ onMounted(async () => {
 
   const diseaseAnalysis = (board?.diseaseAnalysis || []) as any[]
   diseaseHasData.value = Array.isArray(diseaseAnalysis) && diseaseAnalysis.length > 0
-  if (diseaseHasData.value) buildDiseaseTop(diseaseAnalysis)
+  if (diseaseHasData.value) {
+    buildDiseaseTop(diseaseAnalysis)
+  } else {
+    buildFallbackDiseaseTop(monthsAll.slice(start), highAll.slice(start))
+  }
   stableHasData.value = Array.isArray(diseaseAnalysis) && diseaseAnalysis.some((x: any) => x && x.stableRate != null)
-  if (stableHasData.value) buildStableRank(diseaseAnalysis)
+  if (stableHasData.value) {
+    buildStableRank(diseaseAnalysis)
+  } else {
+    buildFallbackStableRank(alertsAll.slice(start), followAll.slice(start), highAll.slice(start))
+  }
 
   const latestMonth = String(board?.latestMonth || '').trim()
   events.value = [
-    { id: 'm', title: latestMonth ? `本月：${latestMonth}` : '本月：—', time: '最新' },
-    { id: 'a', title: `告警变化率：${board?.alertChangeRate != null ? Math.round(Number(board.alertChangeRate) * 100) + '%' : '—'}`, time: '最新' },
-    { id: 'h', title: `高危变化率：${board?.highRiskChangeRate != null ? Math.round(Number(board.highRiskChangeRate) * 100) + '%' : '—'}`, time: '最新' }
+    { id: 'm', title: latestMonth ? `本月：${latestMonth}` : '本月：待更新', time: '最新' },
+    { id: 'a', title: `告警变化率：${board?.alertChangeRate != null ? Math.round(Number(board.alertChangeRate) * 100) + '%' : '待更新'}`, time: '最新' },
+    { id: 'h', title: `高危变化率：${board?.highRiskChangeRate != null ? Math.round(Number(board.highRiskChangeRate) * 100) + '%' : '待更新'}`, time: '最新' }
   ]
+}
+
+onMounted(async () => {
+  activeAlive = true
+  await loadBoard()
 
   window.addEventListener('resize', onResize)
 })
@@ -358,6 +394,7 @@ const onResize = rafThrottle(() => resizeAll())
 onActivated(() => {
   activeAlive = true
   window.addEventListener('resize', onResize)
+  void loadBoard()
   onResize()
 })
 

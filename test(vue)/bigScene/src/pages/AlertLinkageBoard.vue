@@ -1,6 +1,6 @@
 <template>
-  <main class="stitch-grid">
-    <aside class="stitch-col">
+  <main class="stitch-grid screen-page screen-grid">
+    <aside class="stitch-col screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -39,7 +39,7 @@
       </section>
     </aside>
 
-    <section class="stitch-center">
+    <section class="stitch-center screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -62,12 +62,12 @@
             <div class="arrow"></div>
             <div class="node n3">
               <div class="node-title">分派</div>
-              <div class="node-value muted">—</div>
+              <div class="node-value">{{ assignedFlow }}</div>
             </div>
             <div class="arrow"></div>
             <div class="node n4">
               <div class="node-title">随访中</div>
-              <div class="node-value muted">—</div>
+              <div class="node-value">{{ inFollowFlow }}</div>
             </div>
             <div class="arrow"></div>
             <div class="node n5">
@@ -92,7 +92,7 @@
       </section>
     </section>
 
-    <aside class="stitch-col">
+    <aside class="stitch-col screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -134,9 +134,9 @@
         </div>
         <div class="panel-body">
           <div class="kpi-mini">
-            <div class="kpi">平均响应：<b>—</b></div>
-            <div class="kpi">超时率：<b>—</b></div>
-            <div class="kpi">复发告警：<b>—</b></div>
+            <div class="kpi">平均响应：<b>{{ avgResponseText }}</b></div>
+            <div class="kpi">超时率：<b>{{ overtimeRateText }}</b></div>
+            <div class="kpi">复发告警：<b>{{ recurrenceCountText }}</b></div>
           </div>
         </div>
       </section>
@@ -158,6 +158,11 @@ const unhandled = ref(0)
 const closed = ref(0)
 const processing = ref(0)
 const pendingFollow = ref(0)
+const assignedFlow = ref(0)
+const inFollowFlow = ref(0)
+const avgResponseText = ref('暂无')
+const overtimeRateText = ref('0.0%')
+const recurrenceCountText = ref('0')
 
 const closeRateText = computed(() => {
   if (!totalAlerts.value) return '—'
@@ -177,6 +182,23 @@ let hardwareTrendChart: ECharts | null = null
 let doctorChart: ECharts | null = null
 
 let activeAlive = false
+
+function pickRows(payload: any): any[] {
+  if (Array.isArray(payload)) return payload
+  if (!payload || typeof payload !== 'object') return []
+  const keys = ['rows', 'list', 'records', 'items', 'data']
+  for (const key of keys) {
+    const val = payload[key]
+    if (Array.isArray(val)) return val
+  }
+  if (payload.data && typeof payload.data === 'object') {
+    for (const key of keys) {
+      const val = payload.data[key]
+      if (Array.isArray(val)) return val
+    }
+  }
+  return []
+}
 
 function buildLevel(healthCount: number, deviceCount: number) {
   if (!levelRef.value) return
@@ -333,16 +355,43 @@ function countByDay(rows: any[], n: number, getTime: (r: any) => number) {
 
 onMounted(async () => {
   activeAlive = true
-  const [a, h, ps] = await Promise.all([fetchAlerts(30), fetchHardwareAlerts(30), fetchPatientSummary(300)])
-  const aRows = (a?.rows || []) as any[]
-  const hRows = (h?.rows || []) as any[]
+  await loadBoard()
+  window.addEventListener('resize', onResize)
+})
+
+async function loadBoard() {
+  const [a, h, ps] = await Promise.all([fetchAlerts(30), fetchHardwareAlerts(30), fetchPatientSummary(200)])
+  const aRows = pickRows(a) as any[]
+  const hRows = pickRows(h) as any[]
   const all = [...aRows, ...hRows]
   totalAlerts.value = all.length
   unhandled.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('未处理') || String(r.status || '').toUpperCase() === 'NEW').length
   closed.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('已关闭') || String(r.status || '').toUpperCase() === 'CLOSED').length
 
-  // 如果后端给了处理中状态则统计，否则为 0（不造假）
   processing.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('处理中') || String(r.status || '').toUpperCase() === 'PROCESSING').length
+  assignedFlow.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('分派') || String(r.status || '').toUpperCase() === 'ASSIGNED').length
+
+  const responseMinutes = all
+    .map((r: any) => Number(r.responseMinutes ?? r.responseTime ?? r.handleMinutes ?? r.disposeMinutes ?? 0))
+    .filter((n: number) => Number.isFinite(n) && n > 0)
+  avgResponseText.value = responseMinutes.length
+    ? `${Math.round(responseMinutes.reduce((s, n) => s + n, 0) / responseMinutes.length)} 分钟`
+    : '暂无'
+
+  const overtimeCount = all.filter((r: any) => {
+    const txt = String(r.statusText || r.status || '').toLowerCase()
+    return txt.includes('超时') || r.isOvertime === true || r.overtime === true
+  }).length
+  overtimeRateText.value = totalAlerts.value ? `${((overtimeCount / totalAlerts.value) * 100).toFixed(1)}%` : '0.0%'
+
+  const patientMap = new Map<string, number>()
+  all.forEach((r: any) => {
+    const key = String(r.patientId || r.patientName || r.name || '').trim()
+    if (!key) return
+    patientMap.set(key, (patientMap.get(key) || 0) + 1)
+  })
+  const recurrence = Array.from(patientMap.values()).reduce((sum, n) => sum + (n > 1 ? n - 1 : 0), 0)
+  recurrenceCountText.value = String(recurrence)
 
   events.value = all.slice(0, 8).map((r: any, idx: number) => ({
     id: String(r.id || idx),
@@ -356,13 +405,17 @@ onMounted(async () => {
   const hByDay = countByDay(hRows, 7, (r) => parseTs(r.alertTime || r.firstTime || r.createdAt))
   patientTrendChart = buildTrend(patientTrendRef.value, patientTrendChart, 'rgb(95,199,216)', labels, aByDay)
   hardwareTrendChart = buildTrend(hardwareTrendRef.value, hardwareTrendChart, 'rgb(158,169,230)', labels, hByDay)
-  // 性能优化：2000 属于重请求；仅用于“医生负载 Top5”摘要时先降载。
-  // TODO(后端): 建议新增聚合接口：按 responsibleDoctor 聚合 activeAlertCount 与随访任务量，避免大屏拉全量患者列表。
-  const pRows = (ps?.rows || []) as any[]
+  const pRows = pickRows(ps) as any[]
+  pendingFollow.value = pRows.filter((r: any) => {
+    const txt = String(r.followStatus || r.taskStatus || r.status || '')
+    return txt.includes('待随访') || txt.includes('待执行') || txt.includes('未完成')
+  }).length
+  inFollowFlow.value = pRows.filter((r: any) => {
+    const txt = String(r.followStatus || r.taskStatus || r.status || '')
+    return txt.includes('随访中') || txt.includes('执行中') || txt.toUpperCase() === 'PROCESSING'
+  }).length
   buildDoctor(pRows)
-
-  window.addEventListener('resize', onResize)
-})
+}
 
 onUnmounted(() => {
   activeAlive = false
@@ -380,6 +433,7 @@ onUnmounted(() => {
 onActivated(() => {
   activeAlive = true
   window.addEventListener('resize', onResize)
+  void loadBoard()
   onResize()
 })
 

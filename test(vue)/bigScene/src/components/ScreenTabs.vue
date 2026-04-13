@@ -23,26 +23,26 @@ defineEmits<{ (e: 'update:modelValue', v: string): void }>()
 
 <style scoped>
 .tabs {
-  gap: 4px;
-  padding: 3px;
+  gap: 3px;
+  padding: 2px;
   border-radius: 999px;
-  border-color: rgba(114, 180, 205, 0.16);
-  background: rgba(255, 255, 255, 0.32);
-  backdrop-filter: blur(var(--blur-soft));
-  -webkit-backdrop-filter: blur(var(--blur-soft));
+  border: 1px solid rgba(114, 180, 205, 0.14);
+  background: rgba(255, 255, 255, 0.24);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .tab-btn {
-  padding: 5px 12px;
-  font-size: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.1;
 }
 
 .tab-btn.active {
-  background: linear-gradient(180deg, rgba(95, 199, 216, 0.16), rgba(255, 255, 255, 0.58));
-  border-color: rgba(95, 199, 216, 0.26);
+  background: linear-gradient(180deg, rgba(95, 199, 216, 0.12), rgba(255, 255, 255, 0.52));
+  border-color: rgba(95, 199, 216, 0.2);
   color: rgba(33, 75, 103, 0.96);
 }
 </style>

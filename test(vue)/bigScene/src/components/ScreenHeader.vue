@@ -49,14 +49,14 @@ onUnmounted(() => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 14px;
   min-width: 0;
 }
 
 .brand {
   margin: 0;
-  font-size: 18px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 700;
   letter-spacing: 0.01em;
   background: linear-gradient(90deg, rgba(32, 82, 110, 0.98), rgba(46, 113, 140, 0.96), rgba(95, 199, 216, 0.92));
   -webkit-background-clip: text;
@@ -72,18 +72,18 @@ onUnmounted(() => {
 .header-right {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  color: rgba(92, 130, 156, 0.82);
-  font-size: 12px;
+  gap: 8px;
+  color: rgba(92, 130, 156, 0.72);
+  font-size: 11px;
   white-space: nowrap;
 }
 
 .sub {
-  color: rgba(92, 130, 156, 0.78);
+  color: rgba(92, 130, 156, 0.62);
 }
 
 .time {
-  color: rgba(92, 130, 156, 0.72);
+  color: rgba(92, 130, 156, 0.66);
   font-variant-numeric: tabular-nums;
 }
 </style>

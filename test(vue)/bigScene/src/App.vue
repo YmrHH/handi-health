@@ -8,7 +8,7 @@
     </template>
 
     <template v-else>
-      <ScreenHeader title="寒岐智护·慢性病随访健康预警管理平台" sub-title="医疗运营监控数据大屏">
+      <ScreenHeader title="寒岐智护·慢性病随访健康预警管理平台" sub-title="医疗运营监测大屏">
         <ScreenTabs v-model="active" :tabs="tabs" />
       </ScreenHeader>
       <div class="content">

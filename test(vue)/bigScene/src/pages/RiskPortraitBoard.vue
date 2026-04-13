@@ -1,6 +1,6 @@
 <template>
-  <main class="stitch-grid">
-    <aside class="stitch-col">
+  <main class="stitch-grid screen-page screen-grid">
+    <aside class="stitch-col screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -28,7 +28,7 @@
       </section>
     </aside>
 
-    <section class="stitch-center">
+    <section class="stitch-center screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -63,7 +63,7 @@
       </section>
     </section>
 
-    <aside class="stitch-col">
+    <aside class="stitch-col screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
         <div class="panel-header">
@@ -149,6 +149,46 @@ let portraitChart: ECharts | null = null
 let adviceChart: ECharts | null = null
 
 let activeAlive = false
+
+function pickRows(payload: any): any[] {
+  if (Array.isArray(payload)) return payload
+  if (!payload || typeof payload !== 'object') return []
+  const keys = ['rows', 'list', 'records', 'items', 'data']
+  for (const key of keys) {
+    const val = payload[key]
+    if (Array.isArray(val)) return val
+  }
+  if (payload.data && typeof payload.data === 'object') {
+    for (const key of keys) {
+      const val = payload.data[key]
+      if (Array.isArray(val)) return val
+    }
+  }
+  return []
+}
+
+function pickDiseaseName(row: any) {
+  const direct = [
+    row?.disease,
+    row?.mainDisease,
+    row?.primaryDisease,
+    row?.diseaseName,
+    row?.diagnosisName,
+    row?.chronicDiseaseName,
+    row?.diagnosis,
+    row?.diseaseType
+  ]
+  for (const v of direct) {
+    const t = String(v ?? '').trim()
+    if (t && t !== '未知' && t !== '暂无') return t
+  }
+  const nested = [row?.disease?.name, row?.diagnosis?.name, row?.mainDisease?.name, row?.category?.name]
+  for (const v of nested) {
+    const t = String(v ?? '').trim()
+    if (t && t !== '未知' && t !== '暂无') return t
+  }
+  return '未填写'
+}
 
 function buildAge(list: any[]) {
   if (!ageRef.value) return
@@ -245,7 +285,7 @@ function buildDisease(list: any[]) {
   if (!diseaseChart) diseaseChart = init(diseaseRef.value)
   const by: Record<string, number> = {}
   list.forEach((r: any) => {
-    const d = (r.disease || '未填写').toString()
+    const d = pickDiseaseName(r)
     by[d] = (by[d] || 0) + 1
   })
   const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 8)
@@ -339,8 +379,7 @@ function resizeAll() {
 
 const onResize = rafThrottle(() => resizeAll())
 
-onMounted(async () => {
-  activeAlive = true
+async function loadBoard() {
   const [homeStats, riskRes, patientRes, alertRes, board] = await Promise.all([
     fetchHomeStats().catch(() => ({} as any)),
     fetchPatientRiskList(200),
@@ -348,10 +387,12 @@ onMounted(async () => {
     fetchAlerts(30),
     fetchReportBoard().catch(() => ({} as any))
   ])
-  const list = (patientRes?.rows || []) as any[]
+  const list = pickRows(patientRes) as any[]
+  const riskRows = pickRows(riskRes) as any[]
+  const alertRows = pickRows(alertRes) as any[]
   patientList.value = list
-  total.value = Number(homeStats?.totalPatients || patientRes?.total || list.length || riskRes?.total || 0)
-  const listForRisk = list.length ? list : ((riskRes?.rows || []) as any[])
+  total.value = Number(homeStats?.totalPatients || patientRes?.total || list.length || riskRes?.total || riskRows.length || 0)
+  const listForRisk = list.length ? list : riskRows
   high.value = listForRisk.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('HIGH')).length
   mid.value = listForRisk.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('MID')).length
   low.value = listForRisk.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('LOW')).length
@@ -362,8 +403,7 @@ onMounted(async () => {
     if (homeStats.midRiskCount != null) mid.value = Number(homeStats.midRiskCount) || 0
     if (homeStats.lowRiskCount != null) low.value = Number(homeStats.lowRiskCount) || 0
   }
-  const aRows = (alertRes?.rows || []) as any[]
-  events.value = aRows.slice(0, 8).map((r: any, idx: number) => ({
+  events.value = alertRows.slice(0, 8).map((r: any, idx: number) => ({
     id: String(r.id || idx),
     title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`,
     time: (r.alertTime || '').toString().replace('T', ' ')
@@ -374,6 +414,11 @@ onMounted(async () => {
   buildDisease(list)
   buildPortrait()
   buildAdvice(board)
+}
+
+onMounted(async () => {
+  activeAlive = true
+  await loadBoard()
 
   window.addEventListener('resize', onResize)
 })
@@ -396,6 +441,7 @@ onUnmounted(() => {
 onActivated(() => {
   activeAlive = true
   window.addEventListener('resize', onResize)
+  void loadBoard()
   onResize()
 })
 

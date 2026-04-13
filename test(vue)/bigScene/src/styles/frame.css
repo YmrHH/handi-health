@@ -21,11 +21,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  backdrop-filter: blur(var(--blur-strong));
-  -webkit-backdrop-filter: blur(var(--blur-strong));
-  background: rgba(247, 252, 255, 0.36);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
-  box-shadow: 0 8px 32px rgba(79, 209, 197, 0.10);
+  backdrop-filter: blur(var(--blur-soft));
+  -webkit-backdrop-filter: blur(var(--blur-soft));
+  background: rgba(248, 253, 255, 0.28);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 18px rgba(79, 209, 197, 0.06);
 }
 
 .header-title {
@@ -92,7 +92,7 @@
 
 .content {
   height: 100%;
-  padding: var(--canvas-pad-top) var(--canvas-pad-x) calc(var(--footer-h) + 12px + env(safe-area-inset-bottom, 0px));
+  padding: var(--canvas-pad-top) var(--canvas-pad-x) calc(var(--footer-h) + 10px + env(safe-area-inset-bottom, 0px));
   overflow: hidden;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -105,6 +105,39 @@
 
 .content {
   scrollbar-width: none; /* Firefox */
+}
+
+.screen-page {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen-main {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen-grid {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen-col {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.screen-col > .panel,
+.screen-main > .panel {
+  min-height: 0;
 }
 
 
