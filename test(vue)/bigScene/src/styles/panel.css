@@ -4,11 +4,11 @@
   flex-direction: column;
   min-height: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(244, 251, 255, 0.42));
-  border: 1px solid rgba(114, 180, 205, 0.26);
+  border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: var(--r-lg);
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
-  box-shadow: var(--shadow-soft), var(--shadow-frost);
+  box-shadow: var(--shadow-soft), var(--shadow-frost), inset 0 1px 0 rgba(255, 255, 255, 0.30);
   overflow: hidden;
 }
 
@@ -56,19 +56,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px 9px;
+  min-height: 42px;
+  padding: 10px 14px 8px;
 }
 
 .panel-titlebar {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
 }
 
 .panel-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 0.6px;
+  line-height: 1.2;
   color: rgba(33, 75, 103, 0.96);
   white-space: nowrap;
   overflow: hidden;
@@ -77,7 +80,11 @@
 
 .panel-subtitle {
   font-size: 11px;
+  line-height: 1.2;
   color: var(--t-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .panel-header::after {
@@ -87,15 +94,20 @@
   right: 12px;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(95, 199, 216, 0.24), transparent);
-  opacity: 0.9;
+  background: linear-gradient(90deg, transparent, rgba(95, 199, 216, 0.16), transparent);
+  opacity: 0.66;
 }
 
 .panel-body {
   position: relative;
-  padding: 10px 12px 12px;
+  padding: 9px 12px 10px;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+.panel-body > .chart {
+  height: 100%;
+  min-height: 0;
 }
 

@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>寒岐智护·干预服务舱</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#c9d7d8",
+                        "error": "#b31b25",
+                        "on-primary-fixed": "#00443f",
+                        "error-dim": "#9f0519",
+                        "inverse-primary": "#7cfaed",
+                        "surface-container-low": "#e8f3f3",
+                        "on-tertiary-fixed": "#004642",
+                        "surface-tint": "#006760",
+                        "surface-container-highest": "#d2dfe0",
+                        "secondary-fixed-dim": "#a2deeb",
+                        "on-primary": "#bffff6",
+                        "surface-container": "#dfeaeb",
+                        "secondary-fixed": "#b0ecfa",
+                        "on-error": "#ffefee",
+                        "surface-bright": "#eff8f8",
+                        "primary-container": "#73f1e4",
+                        "error-container": "#fb5151",
+                        "on-surface": "#283031",
+                        "tertiary-dim": "#005a55",
+                        "on-primary-container": "#005852",
+                        "background": "#eff8f8",
+                        "primary": "#006760",
+                        "on-secondary-fixed": "#004650",
+                        "primary-fixed": "#73f1e4",
+                        "on-surface-variant": "#545d5d",
+                        "outline-variant": "#a6afaf",
+                        "secondary-dim": "#135763",
+                        "secondary": "#24646f",
+                        "on-secondary-container": "#165a65",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#6f7879",
+                        "surface-variant": "#d2dfe0",
+                        "on-tertiary-container": "#005a56",
+                        "primary-dim": "#005a54",
+                        "inverse-surface": "#071010",
+                        "on-tertiary-fixed-variant": "#006560",
+                        "surface-container-high": "#d9e5e5",
+                        "on-secondary-fixed-variant": "#24646f",
+                        "tertiary-container": "#93f0e8",
+                        "surface": "#eff8f8",
+                        "on-tertiary": "#bdfff9",
+                        "tertiary-fixed-dim": "#85e1da",
+                        "on-error-container": "#570008",
+                        "primary-fixed-dim": "#63e2d6",
+                        "on-primary-fixed-variant": "#00635c",
+                        "on-secondary": "#daf8ff",
+                        "inverse-on-surface": "#969f9f",
+                        "secondary-container": "#b0ecfa",
+                        "on-background": "#283031",
+                        "tertiary": "#006762",
+                        "tertiary-fixed": "#93f0e8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; background-color: #eff8f8; overflow: hidden; height: 100vh; }
+        .glass-panel { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .circular-path-ring { border: 2px dashed rgba(0, 103, 96, 0.2); }
+    </style>
+</head>
+<body class="flex flex-col">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-cyan-50/40 backdrop-blur-xl border-b border-white/20 shadow-[0_8px_32px_0_rgba(79,209,197,0.1)]">
+<div class="flex justify-between items-center px-8 h-16 w-full">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold bg-gradient-to-r from-cyan-700 to-teal-600 bg-clip-text text-transparent font-['Space_Grotesk'] tracking-tight">寒岐智护</span>
+<nav class="flex gap-8">
+<a class="text-slate-600 font-medium hover:text-cyan-600 transition-colors" href="#">总指挥舱</a>
+<a class="text-slate-600 font-medium hover:text-cyan-600 transition-colors" href="#">风险画像舱</a>
+<a class="text-slate-600 font-medium hover:text-cyan-600 transition-colors" href="#">告警联动舱</a>
+<a class="text-cyan-800 font-bold border-b-2 border-cyan-600 pb-1" href="#">干预服务舱</a>
+<a class="text-slate-600 font-medium hover:text-cyan-600 transition-colors" href="#">AI 洞察舱</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 rounded-full hover:bg-white/30 transition-all text-cyan-700">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-white/30 transition-all text-cyan-700">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</div>
+</header>
+<!-- Main Content Grid -->
+<main class="flex-1 mt-16 p-6 grid grid-cols-12 grid-rows-6 gap-6 h-[calc(100vh-64px-48px)]">
+<!-- Left Column: Metrics & Types -->
+<section class="col-span-3 row-span-6 flex flex-col gap-6">
+<!-- 干预计划总览指标 -->
+<div class="glass-panel rounded-xl p-6 flex-1 flex flex-col justify-between">
+<h3 class="text-on-surface font-headline font-bold text-lg mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">analytics</span> 干预计划总览
+                </h3>
+<div class="space-y-6">
+<div class="bg-surface-container-lowest p-4 rounded-lg shadow-sm">
+<p class="text-on-surface-variant text-sm">今日新增任务</p>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-3xl font-headline font-bold text-primary">1,284</span>
+<span class="text-xs text-error font-bold">+12% ↑</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg shadow-sm">
+<p class="text-on-surface-variant text-sm">正在执行方案</p>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-3xl font-headline font-bold text-primary">5,692</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-lg shadow-sm">
+<p class="text-on-surface-variant text-sm">平均干预响应时效</p>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="text-3xl font-headline font-bold text-primary">18.5m</span>
+<span class="text-xs text-on-tertiary-fixed-variant font-bold">-4.2% ↓</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 计划类型占比 -->
+<div class="glass-panel rounded-xl p-6 flex-1">
+<h3 class="text-on-surface font-headline font-bold text-lg mb-4">计划类型分布</h3>
+<div class="relative h-48 flex items-center justify-center">
+<!-- Symbolic Donut Chart -->
+<div class="w-32 h-32 rounded-full border-[16px] border-primary/20 flex items-center justify-center relative">
+<div class="absolute inset-0 rounded-full border-[16px] border-primary border-t-transparent border-r-transparent transform -rotate-45"></div>
+<div class="text-center">
+<span class="block text-2xl font-bold text-primary">68%</span>
+<span class="text-[10px] text-on-surface-variant">远程随访</span>
+</div>
+</div>
+</div>
+<div class="mt-4 space-y-2">
+<div class="flex justify-between items-center text-sm">
+<span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-primary"></span> 远程随访</span>
+<span class="font-medium">2,481</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-secondary"></span> 门诊干预</span>
+<span class="font-medium">842</span>
+</div>
+<div class="flex justify-between items-center text-sm">
+<span class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-tertiary"></span> 紧急送诊</span>
+<span class="font-medium">124</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Center: Visual Center - Service Path Ring -->
+<section class="col-span-6 row-span-4 relative flex items-center justify-center overflow-hidden glass-panel rounded-xl">
+<div class="absolute inset-0 opacity-10 bg-no-repeat bg-center bg-cover" data-alt="abstract architectural glass structures with soft light and geometric depth in shades of teal and cyan" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBWwvpeJyvOEMpi2YWwWTrYkue79htvjQH9YaVrH2whG3S9auRr2GgZkH68NC7Rf1QvkswcTOJcfScoqYN72KrZh3bb6tstjITY9ZbfXle89KDIdnhBCwT7yQij6ZUN7TRPe4Wsl0faCisQM-BTml7K-zYWx8gyskkOJgeEmD5Osk4dEI6RIcNgZ9JJeoxkCAcR-ZU_tSnZBTuoJf1GCClcErQ0QVqkd55PNK2fyznELqh_6sdSooNDXmAJfjpFJ-VYJCsedkGC6A')"></div>
+<div class="relative z-10 w-full h-full flex flex-col items-center justify-center p-8">
+<h2 class="absolute top-8 left-8 text-2xl font-headline font-bold text-primary">服务执行全生命周期</h2>
+<div class="relative w-[500px] h-[500px] flex items-center justify-center">
+<!-- Path Connector Rings -->
+<div class="absolute w-[400px] h-[400px] rounded-full circular-path-ring animate-spin-slow" style="animation: spin 60s linear infinite;"></div>
+<div class="absolute w-[300px] h-[300px] rounded-full border border-primary/10"></div>
+<!-- Nodes -->
+<!-- Node 1: AI Analysis -->
+<div class="absolute -top-12 left-1/2 -translate-x-1/2 flex flex-col items-center group">
+<div class="w-20 h-20 bg-primary shadow-lg shadow-primary/30 rounded-2xl flex items-center justify-center mb-2 group-hover:scale-110 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-on-primary text-3xl">psychology</span>
+</div>
+<span class="text-primary font-bold">AI 方案生成</span>
+<span class="text-[10px] text-on-surface-variant">策略匹配度 98.4%</span>
+</div>
+<!-- Node 2: Dispatch -->
+<div class="absolute top-1/4 -right-12 flex flex-col items-center group">
+<div class="w-16 h-16 bg-white/80 backdrop-blur-md border-2 border-primary shadow-xl rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-primary text-2xl">send</span>
+</div>
+<span class="text-on-surface font-bold">任务分派</span>
+</div>
+<!-- Node 3: Execution -->
+<div class="absolute bottom-1/4 -right-12 flex flex-col items-center group">
+<div class="w-16 h-16 bg-white/80 backdrop-blur-md border-2 border-primary shadow-xl rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-primary text-2xl">pending_actions</span>
+</div>
+<span class="text-on-surface font-bold">服务执行</span>
+</div>
+<!-- Node 4: Feedback -->
+<div class="absolute -bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center group">
+<div class="w-16 h-16 bg-white/80 backdrop-blur-md border-2 border-primary shadow-xl rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-primary text-2xl">check_circle</span>
+</div>
+<span class="text-on-surface font-bold">闭环反馈</span>
+</div>
+<!-- Node 5: Monitor -->
+<div class="absolute bottom-1/4 -left-12 flex flex-col items-center group">
+<div class="w-16 h-16 bg-white/80 backdrop-blur-md border-2 border-primary shadow-xl rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-primary text-2xl">visibility</span>
+</div>
+<span class="text-on-surface font-bold">实时监管</span>
+</div>
+<!-- Node 6: Risk -->
+<div class="absolute top-1/4 -left-12 flex flex-col items-center group">
+<div class="w-16 h-16 bg-white/80 backdrop-blur-md border-2 border-primary shadow-xl rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform cursor-pointer">
+<span class="material-symbols-outlined text-primary text-2xl">priority_high</span>
+</div>
+<span class="text-on-surface font-bold">再评估</span>
+</div>
+<!-- Central Core -->
+<div class="w-32 h-32 bg-primary/10 rounded-full flex flex-col items-center justify-center border-4 border-white">
+<span class="text-3xl font-headline font-extrabold text-primary">82</span>
+<span class="text-[10px] text-primary uppercase tracking-widest font-bold">Total Flow</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Programs & Dynamics -->
+<section class="col-span-3 row-span-6 flex flex-col gap-6">
+<!-- 热门方案 TOP -->
+<div class="glass-panel rounded-xl p-6 flex-[2]">
+<h3 class="text-on-surface font-headline font-bold text-lg mb-4">热门干预方案 TOP</h3>
+<div class="space-y-4">
+<div class="flex items-center gap-4 bg-surface-container-low p-3 rounded-lg border-l-4 border-primary">
+<div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">1</div>
+<div class="flex-1">
+<p class="text-sm font-bold">高血压分级动态管理方案</p>
+<p class="text-[10px] text-on-surface-variant">执行 1,429 次 | 有效率 94%</p>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-3 rounded-lg border-l-4 border-secondary">
+<div class="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-bold">2</div>
+<div class="flex-1">
+<p class="text-sm font-bold">糖尿病患者数字化生活干预</p>
+<p class="text-[10px] text-on-surface-variant">执行 982 次 | 有效率 89%</p>
+</div>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-low p-3 rounded-lg border-l-4 border-tertiary">
+<div class="w-8 h-8 rounded-full bg-tertiary/20 flex items-center justify-center text-tertiary font-bold">3</div>
+<div class="flex-1">
+<p class="text-sm font-bold">慢阻肺居家康复路径</p>
+<p class="text-[10px] text-on-surface-variant">执行 756 次 | 有效率 91%</p>
+</div>
+</div>
+</div>
+</div>
+<!-- 最新服务动态列表 -->
+<div class="glass-panel rounded-xl p-6 flex-[3] overflow-hidden flex flex-col">
+<h3 class="text-on-surface font-headline font-bold text-lg mb-4">最新服务动态</h3>
+<div class="flex-1 overflow-y-auto space-y-4 pr-2">
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-primary mt-2"></div>
+<div class="w-px h-full bg-outline-variant/30"></div>
+</div>
+<div class="pb-2">
+<span class="text-[10px] text-on-surface-variant">14:28:15</span>
+<p class="text-sm">李*平(ID:024) 完成远程视频随访</p>
+<p class="text-xs text-on-tertiary-fixed-variant">随访结果：状态稳定</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-error mt-2"></div>
+<div class="w-px h-full bg-outline-variant/30"></div>
+</div>
+<div class="pb-2">
+<span class="text-[10px] text-on-surface-variant">14:15:02</span>
+<p class="text-sm font-bold text-error">触发紧急医疗介入：王*英</p>
+<p class="text-xs">调度中心已分派救护车服务</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-primary mt-2"></div>
+<div class="w-px h-full bg-outline-variant/30"></div>
+</div>
+<div class="pb-2">
+<span class="text-[10px] text-on-surface-variant">13:58:44</span>
+<p class="text-sm">陈*强 激活健康管家 AI 对话</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-secondary mt-2"></div>
+<div class="w-px h-full bg-outline-variant/30"></div>
+</div>
+<div class="pb-2">
+<span class="text-[10px] text-on-surface-variant">13:45:10</span>
+<p class="text-sm">系统生成高血压专项干预计划 (48份)</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom: Time Series & Geo Distribution -->
+<section class="col-span-6 row-span-2 grid grid-cols-2 gap-6">
+<!-- 时间序列趋势图 -->
+<div class="glass-panel rounded-xl p-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-on-surface font-headline font-bold">24h 服务频次趋势</h3>
+<div class="flex gap-2">
+<span class="text-[10px] flex items-center gap-1"><span class="w-2 h-0.5 bg-primary"></span> 任务量</span>
+<span class="text-[10px] flex items-center gap-1"><span class="w-2 h-0.5 bg-secondary"></span> 完结率</span>
+</div>
+</div>
+<div class="h-24 w-full flex items-end justify-between px-2 gap-2">
+<!-- Symbolic Bar Chart -->
+<div class="w-4 bg-primary/20 h-1/4 rounded-t-sm"></div>
+<div class="w-4 bg-primary/40 h-2/4 rounded-t-sm"></div>
+<div class="w-4 bg-primary/30 h-1/3 rounded-t-sm"></div>
+<div class="w-4 bg-primary/60 h-3/4 rounded-t-sm"></div>
+<div class="w-4 bg-primary/50 h-2/3 rounded-t-sm"></div>
+<div class="w-4 bg-primary h-full rounded-t-sm"></div>
+<div class="w-4 bg-primary/80 h-4/5 rounded-t-sm"></div>
+<div class="w-4 bg-primary/40 h-2/4 rounded-t-sm"></div>
+<div class="w-4 bg-primary/60 h-3/4 rounded-t-sm"></div>
+<div class="w-4 bg-primary/90 h-5/6 rounded-t-sm"></div>
+<div class="w-4 bg-primary/50 h-2/3 rounded-t-sm"></div>
+<div class="w-4 bg-primary/30 h-1/3 rounded-t-sm"></div>
+</div>
+<div class="flex justify-between mt-2 text-[8px] text-on-surface-variant">
+<span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>23:59</span>
+</div>
+</div>
+<!-- 地区/人员服务触达分布 -->
+<div class="glass-panel rounded-xl p-6">
+<h3 class="text-on-surface font-headline font-bold mb-4">地区触达活跃度</h3>
+<div class="space-y-3">
+<div class="space-y-1">
+<div class="flex justify-between text-xs">
+<span>上海 (浦东新区)</span>
+<span class="font-bold">1,492</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[85%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-xs">
+<span>杭州 (西湖区)</span>
+<span class="font-bold">1,208</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[70%]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-xs">
+<span>北京 (朝阳区)</span>
+<span class="font-bold">986</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[55%]"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 w-full bg-white/40 backdrop-blur-md border-t border-white/10 z-50">
+<div class="flex justify-between items-center px-12 py-3 w-full font-['Manrope'] text-xs tracking-wide text-cyan-800">
+<div class="flex items-center gap-6">
+<span>© 2024 寒岐智护·慢性病随访健康预警管理平台</span>
+<div class="flex items-center gap-1 text-on-tertiary-fixed-variant">
+<span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                    运行状态：正常
+                </div>
+</div>
+<div class="flex gap-8">
+<span class="text-slate-500">网络延迟：24ms</span>
+<span class="text-slate-500">安全等级：高</span>
+<span class="text-cyan-600 font-bold">V 2.1.4 AI Engine</span>
+</div>
+</div>
+</footer>
+<!-- CSS Animation for spin -->
+<style>
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin-slow {
+            animation: spin 60s linear infinite;
+        }
+    </style>
+</body></html>

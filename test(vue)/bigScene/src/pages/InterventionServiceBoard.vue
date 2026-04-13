@@ -14,7 +14,7 @@
             <StatCard label="今日服务任务" :value="board.overview.total" tone="cyan" />
             <StatCard label="已完成" :value="board.overview.done" tone="success" />
             <StatCard label="待执行" :value="board.overview.pending" tone="warning" />
-            <StatCard label="超期" :value="board.overview.overdue" tone="danger" />
+            <StatCard label="活跃服务人员" :value="board.staffCount" tone="tertiary" />
           </div>
         </div>
       </section>
@@ -36,12 +36,12 @@
         <div class="panel-corners"></div>
         <div class="panel-header">
           <div class="panel-titlebar">
-            <div class="panel-title">热门方案 TOP</div>
-            <div class="panel-subtitle">近期执行热度</div>
+            <div class="panel-title">服务人员地区分布</div>
+            <div class="panel-subtitle">区域覆盖活跃度</div>
           </div>
         </div>
         <div class="panel-body">
-          <div ref="hotPlanRef" class="chart"></div>
+          <div ref="leftAreaRef" class="chart"></div>
         </div>
       </section>
     </aside>
@@ -60,7 +60,7 @@
             <div class="hub glow-breath">
               <div class="hub-title">服务执行</div>
                 <div class="hub-value">{{ board.overview.done }}</div>
-                <div class="hub-sub">今日完成 · 待办 {{ board.overview.pending }}</div>
+                <div class="hub-sub">今日完成 · 待办 {{ board.overview.pending }} · 触达率 {{ board.reachRate }}%</div>
             </div>
             <div ref="serviceRingRef" class="hub-ring"></div>
           </div>
@@ -71,12 +71,19 @@
         <div class="panel-corners"></div>
         <div class="panel-header">
           <div class="panel-titlebar">
-            <div class="panel-title">时间序列趋势</div>
-            <div class="panel-subtitle">近时段执行变化</div>
+            <div class="panel-title">服务频次与触达分布</div>
+            <div class="panel-subtitle">近时段执行变化与地区活跃度</div>
           </div>
         </div>
-        <div class="panel-body">
-          <div ref="serviceTrendRef" class="chart chart-tall"></div>
+        <div class="panel-body center-bottom">
+          <div class="center-bottom-item">
+            <div class="mini-title">24h 服务频次趋势</div>
+            <div ref="serviceTrendRef" class="chart chart-tall"></div>
+          </div>
+          <div class="center-bottom-item">
+            <div class="mini-title">地区触达活跃度</div>
+            <div ref="areaRef" class="chart chart-tall"></div>
+          </div>
         </div>
       </section>
     </section>
@@ -99,12 +106,12 @@
         <div class="panel-corners"></div>
         <div class="panel-header">
           <div class="panel-titlebar">
-            <div class="panel-title">地区 / 人员分布</div>
-            <div class="panel-subtitle">触达活跃度</div>
+            <div class="panel-title">最新服务动态</div>
+            <div class="panel-subtitle">任务执行流</div>
           </div>
         </div>
         <div class="panel-body">
-          <div ref="areaRef" class="chart"></div>
+          <EventTicker :items="events" />
         </div>
       </section>
 
@@ -112,12 +119,12 @@
         <div class="panel-corners"></div>
         <div class="panel-header">
           <div class="panel-titlebar">
-            <div class="panel-title">最新服务动态</div>
-            <div class="panel-subtitle">事件流</div>
+            <div class="panel-title">热门干预方案前五</div>
+            <div class="panel-subtitle">执行热度与有效性</div>
           </div>
         </div>
         <div class="panel-body">
-          <EventTicker :items="events" />
+          <div ref="hotPlanRef" class="chart"></div>
         </div>
       </section>
     </aside>
@@ -157,6 +164,7 @@ const board = ref<BoardData>({
 const events = ref<Array<{ id: string | number; title: string; time: string }>>([])
 
 const planTypeRef = ref<HTMLElement | null>(null)
+const leftAreaRef = ref<HTMLElement | null>(null)
 const hotPlanRef = ref<HTMLElement | null>(null)
 const serviceRingRef = ref<HTMLElement | null>(null)
 const serviceTrendRef = ref<HTMLElement | null>(null)
@@ -164,6 +172,7 @@ const reachGaugeRef = ref<HTMLElement | null>(null)
 const areaRef = ref<HTMLElement | null>(null)
 
 let planTypeChart: ECharts | null = null
+let leftAreaChart: ECharts | null = null
 let hotPlanChart: ECharts | null = null
 let serviceRingChart: ECharts | null = null
 let serviceTrendChart: ECharts | null = null
@@ -204,6 +213,22 @@ function buildHotPlan() {
     xAxis: { type: 'value', ...axis },
     yAxis: { type: 'category', data: names, axisLabel: { color: 'rgba(39,85,113,0.92)' }, axisLine: axis.axisLine },
     series: [{ type: 'bar', data: vals, barWidth: 14, itemStyle: { color: '#7fd6e3', borderRadius: [0, 8, 8, 0] } }]
+  })
+}
+
+function buildLeftArea() {
+  if (!leftAreaRef.value) return
+  if (!leftAreaChart) leftAreaChart = init(leftAreaRef.value)
+  const rows = board.value.areaDist.length ? board.value.areaDist : [{ name: '未知区域', value: 0 }]
+  const names = rows.map((x) => x.name)
+  const vals = rows.map((x) => x.value)
+  const axis = axisStyle()
+  leftAreaChart.setOption({
+    tooltip: tooltipStyle(),
+    grid: { left: 80, right: 18, top: 18, bottom: 10 },
+    xAxis: { type: 'value', ...axis },
+    yAxis: { type: 'category', data: names, axisLabel: { color: 'rgba(39,85,113,0.92)' }, axisLine: axis.axisLine },
+    series: [{ type: 'bar', data: vals, barWidth: 14, itemStyle: { color: '#9ea9e6', borderRadius: [0, 8, 8, 0] } }]
   })
 }
 
@@ -298,6 +323,7 @@ function buildArea() {
 function resizeAll() {
   if (!activeAlive) return
   planTypeChart?.resize()
+  leftAreaChart?.resize()
   hotPlanChart?.resize()
   serviceRingChart?.resize()
   serviceTrendChart?.resize()
@@ -325,6 +351,7 @@ onMounted(async () => {
   activeAlive = true
   await loadBoard()
   buildPlanType()
+  buildLeftArea()
   buildHotPlan()
   buildServiceRing()
   buildServiceTrend()
@@ -337,12 +364,14 @@ onUnmounted(() => {
   activeAlive = false
   window.removeEventListener('resize', onResize)
   planTypeChart?.dispose()
+  leftAreaChart?.dispose()
   hotPlanChart?.dispose()
   serviceRingChart?.dispose()
   serviceTrendChart?.dispose()
   reachGaugeChart?.dispose()
   areaChart?.dispose()
   planTypeChart = null
+  leftAreaChart = null
   hotPlanChart = null
   serviceRingChart = null
   serviceTrendChart = null
@@ -355,6 +384,7 @@ onActivated(() => {
   window.addEventListener('resize', onResize)
   void loadBoard().then(() => {
     buildPlanType()
+    buildLeftArea()
     buildHotPlan()
     buildServiceRing()
     buildServiceTrend()
@@ -375,7 +405,7 @@ onDeactivated(() => {
 .stitch-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
-  gap: 12px;
+  gap: 10px;
   height: 100%;
   min-height: 0;
 }
@@ -384,7 +414,7 @@ onDeactivated(() => {
 .stitch-center {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
 }
 
@@ -394,25 +424,59 @@ onDeactivated(() => {
   min-height: 0;
 }
 
+.stitch-col:first-child > .panel:nth-child(1) { flex: 0.96 1 0; }
+.stitch-col:first-child > .panel:nth-child(2) { flex: 1.02 1 0; }
+.stitch-col:first-child > .panel:nth-child(3) { flex: 1.02 1 0; }
+.stitch-center > .panel:nth-child(1) { flex: 1.24 1 0; }
+.stitch-center > .panel:nth-child(2) { flex: 0.76 1 0; }
+.stitch-col:last-child > .panel:nth-child(1) { flex: 1 1 0; }
+.stitch-col:last-child > .panel:nth-child(2) { flex: 1.26 1 0; }
+.stitch-col:last-child > .panel:nth-child(3) { flex: 0.94 1 0; }
+
 .chart {
-  height: 210px;
+  height: 100%;
+  min-height: 0;
 }
 
 .chart-tall {
-  height: 340px;
+  height: 100%;
+  min-height: 0;
+}
+
+.center-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.center-bottom-item {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mini-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(39, 85, 113, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .center-stage {
   position: relative;
-  height: 300px;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: center;
 }
 
 .hub {
   position: absolute;
-  width: 250px;
-  height: 250px;
+  width: 230px;
+  height: 230px;
   border-radius: 999px;
   background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.76) 58%, rgba(140, 188, 227, 0.25));
   border: 1px solid rgba(114, 180, 205, 0.34);
@@ -425,27 +489,35 @@ onDeactivated(() => {
 }
 
 .hub-title {
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 2px;
   color: var(--t-2);
 }
 
 .hub-value {
   margin-top: 8px;
-  font-size: 44px;
+  font-size: 38px;
   font-weight: 900;
   color: var(--c-gold);
 }
 
 .hub-sub {
   margin-top: 10px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--t-3);
 }
 
 .hub-ring {
   position: absolute;
   inset: 0;
+}
+
+@media (max-width: 1600px) {
+  .hub {
+    width: 210px;
+    height: 210px;
+  }
+  .hub-value { font-size: 33px; }
 }
 
 .muted-ring {

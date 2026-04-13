@@ -82,12 +82,28 @@
         <div class="panel-corners"></div>
         <div class="panel-header">
           <div class="panel-titlebar">
-            <div class="panel-title">实时处置流</div>
-            <div class="panel-subtitle">动态事件</div>
+            <div class="panel-title">责任医生负载与闭环效率</div>
+            <div class="panel-subtitle">医生负载 · 关闭率 · 超时率</div>
           </div>
         </div>
-        <div class="panel-body">
-          <EventTicker :items="events" />
+        <div class="panel-body center-bottom">
+          <div class="center-bottom-left">
+            <div ref="doctorRef" class="chart"></div>
+          </div>
+          <div class="center-bottom-right">
+            <div class="eff-item">
+              <span class="eff-label">今日关闭率</span>
+              <span class="eff-value is-success">{{ closeRateText }}</span>
+            </div>
+            <div class="eff-item">
+              <span class="eff-label">超时率</span>
+              <span class="eff-value is-danger">{{ overtimeRateText }}</span>
+            </div>
+            <div class="eff-item">
+              <span class="eff-label">复发告警</span>
+              <span class="eff-value">{{ recurrenceCountText }}</span>
+            </div>
+          </div>
         </div>
       </section>
     </section>
@@ -97,17 +113,12 @@
         <div class="panel-corners"></div>
         <div class="panel-header">
           <div class="panel-titlebar">
-            <div class="panel-title">处置概览</div>
-            <div class="panel-subtitle">任务与闭环</div>
+            <div class="panel-title">实时处置流</div>
+            <div class="panel-subtitle">动态事件追踪</div>
           </div>
         </div>
         <div class="panel-body">
-          <div class="stat-grid">
-            <StatCard label="未处理告警" :value="unhandled" tone="danger" />
-            <StatCard label="处理中告警" :value="processing" tone="warning" />
-            <StatCard label="待随访任务" :value="pendingFollow" tone="cyan" />
-            <StatCard label="闭环率" :value="closeRateText" tone="gold" />
-          </div>
+          <EventTicker :items="events" />
         </div>
       </section>
 
@@ -115,12 +126,20 @@
         <div class="panel-corners"></div>
         <div class="panel-header">
           <div class="panel-titlebar">
-            <div class="panel-title">责任医生告警负载</div>
-            <div class="panel-subtitle">Top5</div>
+            <div class="panel-title">待处理任务</div>
+            <div class="panel-subtitle">优先处置清单</div>
           </div>
         </div>
         <div class="panel-body">
-          <div ref="doctorRef" class="chart"></div>
+          <div class="task-list">
+            <article v-for="(item, idx) in taskItems" :key="`${item.id}-${idx}`" class="task-item" :class="`is-${item.tone}`">
+              <div class="task-main">
+                <div class="task-title">{{ item.title }}</div>
+                <div class="task-time">{{ item.time }}</div>
+              </div>
+              <div class="task-desc">{{ item.desc }}</div>
+            </article>
+          </div>
         </div>
       </section>
 
@@ -133,10 +152,8 @@
           </div>
         </div>
         <div class="panel-body">
-          <div class="kpi-mini">
-            <div class="kpi">平均响应：<b>{{ avgResponseText }}</b></div>
-            <div class="kpi">超时率：<b>{{ overtimeRateText }}</b></div>
-            <div class="kpi">复发告警：<b>{{ recurrenceCountText }}</b></div>
+          <div class="dispatch-btn-wrap">
+            <button type="button" class="dispatch-btn">进入调度台</button>
           </div>
         </div>
       </section>
@@ -147,29 +164,38 @@
 <script setup lang="ts">
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { init, type ECharts } from '../utils/echarts'
-import StatCard from '../components/StatCard.vue'
 import EventTicker from '../components/EventTicker.vue'
-import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
+import { axisStyle, baseGrid, tooltipStyle } from '../utils/chartTheme'
 import { fetchAlerts, fetchHardwareAlerts, fetchPatientSummary } from '../api'
 import { rafThrottle } from '../utils/perf'
 
 const totalAlerts = ref(0)
 const unhandled = ref(0)
 const closed = ref(0)
-const processing = ref(0)
-const pendingFollow = ref(0)
 const assignedFlow = ref(0)
 const inFollowFlow = ref(0)
-const avgResponseText = ref('暂无')
 const overtimeRateText = ref('0.0%')
 const recurrenceCountText = ref('0')
 
 const closeRateText = computed(() => {
-  if (!totalAlerts.value) return '—'
+  if (!totalAlerts.value) return '0.0%'
   return `${((closed.value / totalAlerts.value) * 100).toFixed(1)}%`
 })
 
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
+const taskItems = computed(() => {
+  const rows = events.value.slice(0, 3)
+  if (!rows.length) {
+    return [{ id: 'task-default', title: '当前暂无高优先任务', time: '实时', desc: '系统持续监控中', tone: 'primary' }]
+  }
+  return rows.map((item, idx) => ({
+    id: item.id,
+    title: idx === 0 ? `高危：${item.title}` : `提醒：${item.title}`,
+    time: item.time,
+    desc: idx === 0 ? '建议优先进行闭环处置' : '请尽快安排后续跟进',
+    tone: idx === 0 ? 'danger' : idx === 1 ? 'warning' : 'primary'
+  }))
+})
 
 const levelRef = ref<HTMLElement | null>(null)
 const patientTrendRef = ref<HTMLElement | null>(null)
@@ -368,15 +394,7 @@ async function loadBoard() {
   unhandled.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('未处理') || String(r.status || '').toUpperCase() === 'NEW').length
   closed.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('已关闭') || String(r.status || '').toUpperCase() === 'CLOSED').length
 
-  processing.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('处理中') || String(r.status || '').toUpperCase() === 'PROCESSING').length
   assignedFlow.value = all.filter((r: any) => String(r.statusText || r.status || '').includes('分派') || String(r.status || '').toUpperCase() === 'ASSIGNED').length
-
-  const responseMinutes = all
-    .map((r: any) => Number(r.responseMinutes ?? r.responseTime ?? r.handleMinutes ?? r.disposeMinutes ?? 0))
-    .filter((n: number) => Number.isFinite(n) && n > 0)
-  avgResponseText.value = responseMinutes.length
-    ? `${Math.round(responseMinutes.reduce((s, n) => s + n, 0) / responseMinutes.length)} 分钟`
-    : '暂无'
 
   const overtimeCount = all.filter((r: any) => {
     const txt = String(r.statusText || r.status || '').toLowerCase()
@@ -398,6 +416,9 @@ async function loadBoard() {
     title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`,
     time: (r.alertTime || r.firstTime || '').toString().replace('T', ' ')
   }))
+  if (!events.value.length) {
+    events.value = [{ id: 'evt-default', title: '联动链路运行稳定', time: '实时' }]
+  }
 
   buildLevel(aRows.length, hRows.length)
   const labels = lastNDaysLabels(7)
@@ -406,10 +427,6 @@ async function loadBoard() {
   patientTrendChart = buildTrend(patientTrendRef.value, patientTrendChart, 'rgb(95,199,216)', labels, aByDay)
   hardwareTrendChart = buildTrend(hardwareTrendRef.value, hardwareTrendChart, 'rgb(158,169,230)', labels, hByDay)
   const pRows = pickRows(ps) as any[]
-  pendingFollow.value = pRows.filter((r: any) => {
-    const txt = String(r.followStatus || r.taskStatus || r.status || '')
-    return txt.includes('待随访') || txt.includes('待执行') || txt.includes('未完成')
-  }).length
   inFollowFlow.value = pRows.filter((r: any) => {
     const txt = String(r.followStatus || r.taskStatus || r.status || '')
     return txt.includes('随访中') || txt.includes('执行中') || txt.toUpperCase() === 'PROCESSING'
@@ -473,7 +490,7 @@ onDeactivated(() => {
   grid-template-columns: 1fr 36px 1fr 36px 1fr 36px 1fr 36px 1fr;
   align-items: center;
   gap: 6px;
-  padding: 12px 4px 6px;
+  padding: 10px 2px 4px;
 }
 
 .node {
@@ -485,13 +502,13 @@ onDeactivated(() => {
 }
 
 .node-title {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--t-2);
 }
 
 .node-value {
   margin-top: 6px;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   color: var(--c-cyan);
 }
@@ -517,7 +534,7 @@ onDeactivated(() => {
 .stitch-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
-  gap: 12px;
+  gap: 10px;
   height: 100%;
   min-height: 0;
 }
@@ -526,7 +543,7 @@ onDeactivated(() => {
 .stitch-center {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
 }
 
@@ -536,23 +553,127 @@ onDeactivated(() => {
   min-height: 0;
 }
 
-.kpi-mini {
+.stitch-col:first-child > .panel:nth-child(1) { flex: 1.02 1 0; }
+.stitch-col:first-child > .panel:nth-child(2) { flex: 0.98 1 0; }
+.stitch-col:first-child > .panel:nth-child(3) { flex: 1 1 0; }
+.stitch-center > .panel:nth-child(1) { flex: 1.2 1 0; }
+.stitch-center > .panel:nth-child(2) { flex: 0.8 1 0; }
+.stitch-col:last-child > .panel:nth-child(1) { flex: 1.2 1 0; }
+.stitch-col:last-child > .panel:nth-child(2) { flex: 1.08 1 0; }
+.stitch-col:last-child > .panel:nth-child(3) { flex: 0.72 1 0; }
+
+.center-bottom {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  gap: 10px;
+  min-height: 0;
+}
+
+.center-bottom-left,
+.center-bottom-right {
+  min-height: 0;
+}
+
+.center-bottom-right {
+  display: grid;
+  gap: 8px;
+  align-content: center;
+}
+
+.eff-item {
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(114, 180, 205, 0.18);
+  background: rgba(255, 255, 255, 0.52);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.eff-label {
+  font-size: 11px;
+  color: rgba(92, 130, 156, 0.9);
+}
+
+.eff-value {
+  font-size: 20px;
+  font-weight: 900;
+  color: rgba(22, 97, 107, 0.98);
+}
+
+.eff-value.is-success { color: #0f8e85; }
+.eff-value.is-danger { color: #cf3948; }
+
+.task-list {
+  display: grid;
+  gap: 8px;
+}
+
+.task-item {
+  border-radius: var(--r-md);
+  padding: 8px 10px;
+  border-left: 3px solid rgba(15, 142, 133, 0.9);
+  background: rgba(255, 255, 255, 0.52);
+}
+
+.task-item.is-danger { border-left-color: #cf3948; }
+.task-item.is-warning { border-left-color: #d7922f; }
+
+.task-main {
+  display: flex;
+  justify-content: space-between;
   gap: 10px;
 }
 
-.kpi {
-  padding: 10px 12px;
-  border-radius: var(--r-md);
-  border: 1px solid rgba(114, 180, 205, 0.22);
-  background: rgba(255, 255, 255, 0.58);
-  color: rgba(39, 85, 113, 0.92);
-  font-size: 12px;
+.task-title {
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(33, 75, 103, 0.96);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.kpi b {
-  color: rgba(32, 82, 110, 0.94);
+.task-time {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: rgba(92, 130, 156, 0.82);
+}
+
+.task-desc {
+  margin-top: 4px;
+  font-size: 10px;
+  color: rgba(92, 130, 156, 0.88);
+}
+
+.dispatch-btn-wrap {
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.dispatch-btn {
+  width: 100%;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-size: 12px;
   font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(135deg, #0f8e85, #0b7a72);
+  box-shadow: 0 12px 24px rgba(0, 103, 96, 0.16);
+}
+
+.chart {
+  height: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 1600px) {
+  .node-value { font-size: 18px; }
+  .eff-value { font-size: 18px; }
 }
 </style>
 

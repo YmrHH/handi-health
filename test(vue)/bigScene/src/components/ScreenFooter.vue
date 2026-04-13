@@ -11,25 +11,9 @@
       </span>
     </div>
 
-    <div v-if="tickerItems.length" class="footer-center">
-      <div class="ticker-window">
-        <div class="ticker-track" :style="tickerStyle">
-          <div v-for="(item, idx) in tickerItems" :key="`ticker-a-${idx}`" class="ticker-item">
-            {{ item }}
-          </div>
-          <div v-for="(item, idx) in tickerItems" :key="`ticker-b-${idx}`" class="ticker-item">
-            {{ item }}
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="footer-right">
       <span class="footer-meta">网络延迟：{{ latencyText }}</span>
       <span class="footer-meta">安全等级：{{ securityText }}</span>
-      <span class="footer-version">{{ versionText }}</span>
-      <span class="footer-divider"></span>
-      <span class="footer-updated">更新时间 {{ updatedAt }}</span>
     </div>
   </footer>
 </template>
@@ -45,17 +29,12 @@ const props = withDefaults(
     statusTone?: 'success' | 'warning' | 'danger'
     latencyMs?: number | null
     securityText?: string
-    versionText?: string
-    updatedAt: string
-    tickerItems?: string[]
   }>(),
   {
     statusText: '运行状态：正常',
     statusTone: 'success',
     latencyMs: null,
-    securityText: '高',
-    versionText: '大屏端',
-    tickerItems: () => []
+    securityText: '高'
   }
 )
 
@@ -73,9 +52,6 @@ const statusToneClass = computed(() => {
   return 'is-success'
 })
 
-const tickerStyle = computed(() => ({
-  animationDuration: `${Math.max(24, props.tickerItems.length * 6)}s`
-}))
 </script>
 
 <style scoped>
@@ -110,13 +86,6 @@ const tickerStyle = computed(() => ({
   flex-shrink: 0;
 }
 
-.footer-center {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  justify-content: center;
-}
-
 .footer-brand {
   white-space: nowrap;
   font-weight: 600;
@@ -126,17 +95,6 @@ const tickerStyle = computed(() => ({
 .footer-page {
   white-space: nowrap;
   color: rgba(92, 130, 156, 0.90);
-}
-
-.footer-version {
-  white-space: nowrap;
-  color: rgba(46, 113, 140, 0.92);
-  font-weight: 700;
-}
-
-.footer-updated {
-  white-space: nowrap;
-  color: rgba(92, 130, 156, 0.82);
 }
 
 .footer-meta {
@@ -174,37 +132,5 @@ const tickerStyle = computed(() => ({
   background: rgba(114, 180, 205, 0.18);
 }
 
-.ticker-window {
-  width: 100%;
-  max-width: 700px;
-  overflow: hidden;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.16);
-  padding: 4px 10px;
-}
-
-.ticker-track {
-  display: inline-flex;
-  align-items: center;
-  gap: 24px;
-  white-space: nowrap;
-  animation-name: tickerMove;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-}
-
-.ticker-item {
-  color: rgba(39, 85, 113, 0.72);
-}
-
-@keyframes tickerMove {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
 </style>
 

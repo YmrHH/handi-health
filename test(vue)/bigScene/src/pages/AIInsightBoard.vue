@@ -67,11 +67,21 @@
         <div class="panel-header">
           <div class="panel-titlebar">
             <div class="panel-title">病种趋势</div>
-            <div class="panel-subtitle">Top 病种走势</div>
+            <div class="panel-subtitle">重点病种走势</div>
           </div>
         </div>
-        <div class="panel-body">
-          <div ref="diseaseTrendRef" class="chart chart-tall"></div>
+        <div class="panel-body insight-center-body">
+          <div ref="diseaseTrendRef" class="chart chart-tall chart-slim"></div>
+          <div class="insight-summary">
+            <div class="insight-summary-title">AI 智能洞察中枢</div>
+            <div class="insight-summary-text">
+              当前系统通过神经网络多维聚合，持续识别风险波动趋势与干预机会，支持临床与运营联动决策。
+            </div>
+            <div class="insight-actions">
+              <button type="button" class="action-btn action-btn-primary">生成详细报告</button>
+              <button type="button" class="action-btn action-btn-muted">全量模型回溯</button>
+            </div>
+          </div>
         </div>
       </section>
     </section>
@@ -95,7 +105,7 @@
         <div class="panel-header">
           <div class="panel-titlebar">
             <div class="panel-title">病种稳定率排行</div>
-            <div class="panel-subtitle">Top5</div>
+            <div class="panel-subtitle">前五病种</div>
           </div>
         </div>
         <div class="panel-body">
@@ -113,9 +123,18 @@
         </div>
         <div class="panel-body">
           <div class="insight-notes">
-            <div class="note">风险波动：关注告警与随访同步变化</div>
-            <div class="note">建议优先：围绕高风险人群的干预覆盖</div>
-            <div class="note">异常聚集：定位重复触发的病种与设备类型</div>
+            <div v-for="item in insightNotes" :key="item" class="note">{{ item }}</div>
+          </div>
+          <div class="source-metrics">
+            <div v-for="item in sourceMetrics" :key="item.name" class="source-item">
+              <div class="source-head">
+                <span class="source-name">{{ item.name }}</span>
+                <span class="source-val">{{ item.value }}%</span>
+              </div>
+              <div class="source-track">
+                <div class="source-bar" :style="{ width: `${item.value}%` }"></div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -128,7 +147,7 @@ import { onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { init, type ECharts } from '../utils/echarts'
 import EventTicker from '../components/EventTicker.vue'
 import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
-import { fetchReportBoard } from '../api'
+import { fetchAlerts, fetchHomeStats, fetchPatientSummary, fetchReportBoard } from '../api'
 import { rafThrottle } from '../utils/perf'
 
 const kpiRef = ref<HTMLElement | null>(null)
@@ -149,10 +168,12 @@ let activeAlive = false
 
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
 
-const insightIndexText = ref('待更新')
+const insightIndexText = ref('0')
 const sourceHasData = ref(false)
 const diseaseHasData = ref(false)
 const stableHasData = ref(false)
+const sourceMetrics = ref<Array<{ name: string; value: number }>>([])
+const insightNotes = ref<string[]>([])
 
 function buildKpi(auc: number, f1: number) {
   if (!kpiRef.value) return
@@ -311,10 +332,15 @@ function resizeAll() {
 }
 
 async function loadBoard() {
-  const board = await fetchReportBoard().catch(() => ({} as any))
+  const [board, homeStats, alertsRes, summaryRes] = await Promise.all([
+    fetchReportBoard().catch(() => ({} as any)),
+    fetchHomeStats().catch(() => ({} as any)),
+    fetchAlerts(30).catch(() => ({} as any)),
+    fetchPatientSummary(200).catch(() => ({} as any))
+  ])
   const auc = Number(board?.latestAuc || 0) * 100
   const f1 = Number(board?.latestF1 || 0) * 100
-  insightIndexText.value = auc || f1 ? `${Math.round((auc + f1) / 2)}` : '待更新'
+  insightIndexText.value = auc || f1 ? `${Math.round((auc + f1) / 2)}` : '0'
 
   // v4 强约束：趋势只取最近 3 个月
   const monthsAll = (board?.months || []) as string[]
@@ -334,6 +360,17 @@ async function loadBoard() {
   } else {
     buildSourcePie(['告警数据', '随访数据', '画像数据'], [board?.latestAlerts || 0, board?.latestFollowups || 0, board?.latestHighRisk || 0])
   }
+  const sourceRows = sourceHasData.value
+    ? srcNames.map((name, i) => ({ name, count: Number(srcCounts[i] || 0) }))
+    : [
+        { name: '告警数据', count: Number(board?.latestAlerts || 0) },
+        { name: '随访数据', count: Number(board?.latestFollowups || 0) },
+        { name: '画像数据', count: Number(board?.latestHighRisk || 0) }
+      ]
+  const sourceTotal = sourceRows.reduce((s, x) => s + x.count, 0) || 1
+  sourceMetrics.value = sourceRows
+    .map((x) => ({ name: x.name, value: Math.min(100, Math.max(0, Math.round((x.count / sourceTotal) * 100))) }))
+    .slice(0, 3)
 
   buildInsightCenter({
     alerts: board?.latestAlerts,
@@ -359,9 +396,19 @@ async function loadBoard() {
 
   const latestMonth = String(board?.latestMonth || '').trim()
   events.value = [
-    { id: 'm', title: latestMonth ? `本月：${latestMonth}` : '本月：待更新', time: '最新' },
-    { id: 'a', title: `告警变化率：${board?.alertChangeRate != null ? Math.round(Number(board.alertChangeRate) * 100) + '%' : '待更新'}`, time: '最新' },
-    { id: 'h', title: `高危变化率：${board?.highRiskChangeRate != null ? Math.round(Number(board.highRiskChangeRate) * 100) + '%' : '待更新'}`, time: '最新' }
+    { id: 'm', title: latestMonth ? `本月：${latestMonth}` : '本月：当前周期', time: '最新' },
+    { id: 'a', title: `告警变化率：${board?.alertChangeRate != null ? Math.round(Number(board.alertChangeRate) * 100) + '%' : '0%'}`, time: '最新' },
+    { id: 'h', title: `高危变化率：${board?.highRiskChangeRate != null ? Math.round(Number(board.highRiskChangeRate) * 100) + '%' : '0%'}`, time: '最新' }
+  ]
+  const alertRows = (alertsRes?.rows || alertsRes?.list || []) as any[]
+  const summaryRows = (summaryRes?.rows || summaryRes?.list || []) as any[]
+  const managedCount = Number(homeStats?.totalPatients || homeStats?.patientCount || summaryRows.length || 0)
+  const activeAlertCount = alertRows.length
+  const highRiskCount = Number(board?.latestHighRisk || 0)
+  insightNotes.value = [
+    `风险波动：当前高风险患者 ${highRiskCount} 人，建议优先复核波动人群。`,
+    `联动压力：近 30 天告警 ${activeAlertCount} 条，建议按等级优化闭环时效。`,
+    `运营覆盖：受管患者 ${managedCount} 人，建议强化高风险随访连续性。`
   ]
 }
 
@@ -426,24 +473,31 @@ onDeactivated(() => {
 }
 
 .chart {
-  height: 210px;
+  height: 100%;
+  min-height: 0;
 }
 
 .chart-tall {
-  height: 340px;
+  height: 100%;
+  min-height: 0;
+}
+
+.chart-slim {
+  flex: 1.08 1 0;
 }
 
 .center-stage {
   position: relative;
-  height: 300px;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: center;
 }
 
 .hub {
   position: absolute;
-  width: 250px;
-  height: 250px;
+  width: 230px;
+  height: 230px;
   border-radius: 999px;
   background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.76) 58%, rgba(140, 188, 227, 0.25));
   border: 1px solid rgba(114, 180, 205, 0.34);
@@ -456,21 +510,21 @@ onDeactivated(() => {
 }
 
 .hub-title {
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 2px;
   color: var(--t-2);
 }
 
 .hub-value {
   margin-top: 8px;
-  font-size: 44px;
+  font-size: 38px;
   font-weight: 900;
   color: var(--c-gold);
 }
 
 .hub-sub {
   margin-top: 10px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--t-3);
 }
 
@@ -482,7 +536,7 @@ onDeactivated(() => {
 .stitch-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
-  gap: 12px;
+  gap: 10px;
   height: 100%;
   min-height: 0;
 }
@@ -491,7 +545,7 @@ onDeactivated(() => {
 .stitch-center {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
 }
 
@@ -501,20 +555,141 @@ onDeactivated(() => {
   min-height: 0;
 }
 
+.stitch-col:first-child > .panel:nth-child(1) { flex: 0.95 1 0; }
+.stitch-col:first-child > .panel:nth-child(2) { flex: 1.15 1 0; }
+.stitch-col:first-child > .panel:nth-child(3) { flex: 0.9 1 0; }
+.stitch-center > .panel:nth-child(1) { flex: 1.18 1 0; }
+.stitch-center > .panel:nth-child(2) { flex: 0.82 1 0; }
+.stitch-col:last-child > .panel:nth-child(1) { flex: 1.05 1 0; }
+.stitch-col:last-child > .panel:nth-child(2) { flex: 0.95 1 0; }
+.stitch-col:last-child > .panel:nth-child(3) { flex: 1 1 0; }
+
+.insight-center-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.insight-summary {
+  flex: 0.92 1 0;
+  min-height: 0;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(114, 180, 205, 0.2);
+  background: rgba(255, 255, 255, 0.5);
+  padding: 10px 12px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.insight-summary-title {
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 900;
+  text-align: center;
+  color: rgba(18, 99, 109, 0.98);
+}
+
+.insight-summary-text {
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+  color: rgba(58, 91, 112, 0.9);
+}
+
+.insight-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.action-btn {
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 0 14px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action-btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, #0f8e85, #0b7a72);
+}
+
+.action-btn-muted {
+  color: rgba(39, 85, 113, 0.94);
+  background: rgba(214, 227, 233, 0.72);
+  border-color: rgba(114, 180, 205, 0.2);
+}
+
 .insight-notes {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   padding: 4px 2px;
+  margin-bottom: 10px;
 }
 
 .note {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: var(--r-md);
   border: 1px solid rgba(114, 180, 205, 0.22);
   background: rgba(255, 255, 255, 0.58);
   color: rgba(39, 85, 113, 0.92);
-  font-size: 12px;
+  font-size: 10px;
   line-height: 1.35;
+}
+
+.source-metrics {
+  display: grid;
+  gap: 8px;
+}
+
+.source-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.source-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  color: rgba(39, 85, 113, 0.92);
+}
+
+.source-val {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(32, 82, 110, 0.94);
+}
+
+.source-track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(114, 180, 205, 0.18);
+  overflow: hidden;
+}
+
+.source-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(95, 199, 216, 0.9), rgba(140, 188, 227, 0.9));
+}
+
+@media (max-width: 1600px) {
+  .hub {
+    width: 210px;
+    height: 210px;
+  }
+  .hub-value { font-size: 33px; }
+  .insight-summary-title { font-size: 18px; }
 }
 </style>
 

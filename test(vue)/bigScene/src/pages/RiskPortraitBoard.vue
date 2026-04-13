@@ -1,5 +1,5 @@
 <template>
-  <main class="stitch-grid screen-page screen-grid">
+  <main class="stitch-grid screen-page screen-grid risk-layout">
     <aside class="stitch-col screen-col">
       <section class="panel">
         <div class="panel-corners"></div>
@@ -69,7 +69,7 @@
         <div class="panel-header">
           <div class="panel-titlebar">
             <div class="panel-title">病种排行</div>
-            <div class="panel-subtitle">Top8</div>
+            <div class="panel-subtitle">前八病种</div>
           </div>
         </div>
         <div class="panel-body">
@@ -87,29 +87,35 @@
         </div>
         <div class="panel-body">
           <div class="chip-grid">
-            <div class="chip">气虚</div>
-            <div class="chip">痰湿</div>
-            <div class="chip">阴虚</div>
-            <div class="chip">湿热</div>
-            <div class="chip">血瘀</div>
-            <div class="chip">阳虚</div>
+            <div v-for="item in constitutionTags" :key="item" class="chip">{{ item }}</div>
           </div>
         </div>
       </section>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">医学建议覆盖率</div>
-            <div class="panel-subtitle">建议触达概览</div>
-          </div>
-        </div>
-        <div class="panel-body">
-          <div ref="adviceRef" class="chart"></div>
-        </div>
-      </section>
     </aside>
+
+    <section class="panel coverage-panel">
+      <div class="panel-corners"></div>
+      <div class="panel-header">
+        <div class="panel-titlebar">
+          <div class="panel-title">医学建议覆盖率</div>
+          <div class="panel-subtitle">建议触达概览</div>
+        </div>
+      </div>
+      <div class="panel-body coverage-body">
+        <div class="coverage-legend">
+          <span><i class="dot dot-a"></i>药物干预</span>
+          <span><i class="dot dot-b"></i>中医调理</span>
+          <span><i class="dot dot-c"></i>膳食指导</span>
+        </div>
+        <div class="coverage-main">
+          <div class="coverage-track">
+            <div class="coverage-bar" :style="{ width: `${adviceCoverage}%` }"></div>
+          </div>
+          <div class="coverage-value">{{ adviceCoverage }}%</div>
+        </div>
+      </div>
+    </section>
   </main>
 </template>
 
@@ -127,10 +133,39 @@ const mid = ref(0)
 const low = ref(0)
 const topDiseaseCount = ref(0)
 const activeAlertPatients = ref(0)
+const boardData = ref<any>({})
+const adviceCoverage = ref(0)
 
 const highRatio = computed(() => {
-  if (!total.value) return '—'
+  if (!total.value) return '0.0%'
   return `${((high.value / total.value) * 100).toFixed(1)}%`
+})
+
+const constitutionTags = computed(() => {
+  const map = new Map<string, number>()
+  const rows = patientList.value || []
+  rows.forEach((row: any) => {
+    const candidates = [
+      row?.constitution,
+      row?.constitutionType,
+      row?.bodyConstitution,
+      row?.physiqueType,
+      row?.syndromeType,
+      row?.tcmConstitution,
+      row?.tcmType
+    ]
+    for (const raw of candidates) {
+      const t = String(raw ?? '').trim()
+      if (!t || t === '未知' || t === '暂无') continue
+      map.set(t, (map.get(t) || 0) + 1)
+      break
+    }
+  })
+  const rowsTop = Array.from(map.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([name]) => name)
+  return rowsTop.length ? rowsTop : ['气虚', '痰湿', '阴虚', '湿热', '血瘀', '阳虚']
 })
 
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
@@ -344,8 +379,11 @@ function buildPortrait() {
 function buildAdvice(board: any) {
   if (!adviceRef.value) return
   if (!adviceChart) adviceChart = init(adviceRef.value)
+  const coverage = Number(board?.adviceCoverageRate ?? board?.adviceReachRate ?? board?.reachRate ?? 0)
   const auc = Number(board?.latestAuc || 0) * 100
   const f1 = Number(board?.latestF1 || 0) * 100
+  const value = coverage > 0 ? Math.min(100, Math.max(0, coverage)) : Math.max(0, Math.min(100, (auc + f1) / 2))
+  adviceCoverage.value = Math.round(value)
   adviceChart.setOption({
     series: [
       {
@@ -360,7 +398,7 @@ function buildAdvice(board: any) {
         pointer: { show: false },
         detail: { valueAnimation: true, formatter: '{value}%', color: 'rgba(20,52,79,0.96)', fontSize: 20, fontWeight: 900 },
         title: { color: 'rgba(39,85,113,0.92)', fontSize: 12, offsetCenter: [0, '58%'] },
-        data: [{ value: Math.max(0, Math.min(100, (auc + f1) / 2)), name: '综合指标' }]
+        data: [{ value, name: '建议覆盖' }]
       }
     ]
   })
@@ -408,12 +446,16 @@ async function loadBoard() {
     title: `告警 · ${r.patientName || '患者'} · ${r.summary || r.alertType || ''}`,
     time: (r.alertTime || '').toString().replace('T', ' ')
   }))
+  if (!events.value.length) {
+    events.value = [{ id: 'evt-default', title: '画像链路运行稳定', time: '实时' }]
+  }
 
   buildAge(list)
   buildGender(list)
   buildDisease(list)
   buildPortrait()
-  buildAdvice(board)
+  boardData.value = board || {}
+  buildAdvice(boardData.value)
 }
 
 onMounted(async () => {
@@ -478,15 +520,16 @@ onDeactivated(() => {
 
 .center-stage {
   position: relative;
-  height: 300px;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: center;
 }
 
 .hub {
   position: absolute;
-  width: 250px;
-  height: 250px;
+  width: 230px;
+  height: 230px;
   border-radius: 999px;
   background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.76) 58%, rgba(140, 188, 227, 0.25));
   border: 1px solid rgba(114, 180, 205, 0.34);
@@ -499,21 +542,21 @@ onDeactivated(() => {
 }
 
 .hub-title {
-  font-size: 12px;
+  font-size: 11px;
   letter-spacing: 2px;
   color: var(--t-2);
 }
 
 .hub-value {
   margin-top: 8px;
-  font-size: 44px;
+  font-size: 38px;
   font-weight: 900;
   color: var(--c-gold);
 }
 
 .hub-sub {
   margin-top: 10px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--t-3);
 }
 
@@ -525,16 +568,20 @@ onDeactivated(() => {
 .stitch-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
-  gap: 12px;
+  gap: 10px;
   height: 100%;
   min-height: 0;
+}
+
+.risk-layout {
+  grid-template-rows: minmax(0, 1fr) auto;
 }
 
 .stitch-col,
 .stitch-center {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
 }
 
@@ -542,6 +589,72 @@ onDeactivated(() => {
 .stitch-center .panel {
   flex: 1;
   min-height: 0;
+}
+
+.stitch-col:first-child > .panel:nth-child(1) { flex: 1.02 1 0; }
+.stitch-col:first-child > .panel:nth-child(2) { flex: 0.98 1 0; }
+.stitch-center > .panel:nth-child(1) { flex: 1.2 1 0; }
+.stitch-center > .panel:nth-child(2) { flex: 0.8 1 0; }
+.stitch-col:last-child > .panel:nth-child(1) { flex: 1.05 1 0; }
+.stitch-col:last-child > .panel:nth-child(2) { flex: 0.95 1 0; }
+
+.coverage-panel {
+  grid-column: 1 / -1;
+  min-height: 0;
+  flex: 0.62 1 0;
+}
+
+.coverage-body {
+  display: grid;
+  gap: 10px;
+  align-content: center;
+}
+
+.coverage-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 11px;
+  color: rgba(39, 85, 113, 0.88);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-right: 6px;
+}
+
+.dot-a { background: #0f8e85; }
+.dot-b { background: #5fc7d8; }
+.dot-c { background: #8cbce3; }
+
+.coverage-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.coverage-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(114, 180, 205, 0.2);
+}
+
+.coverage-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(15, 142, 133, 0.95), rgba(95, 199, 216, 0.92), rgba(140, 188, 227, 0.9));
+}
+
+.coverage-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: rgba(22, 97, 107, 0.98);
 }
 
 .chip-grid {
@@ -556,11 +669,25 @@ onDeactivated(() => {
   border: 1px solid rgba(114, 180, 205, 0.22);
   background: rgba(255, 255, 255, 0.58);
   color: rgba(39, 85, 113, 0.92);
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.chart {
+  height: 100%;
+  min-height: 0;
+}
+
+@media (max-width: 1600px) {
+  .hub {
+    width: 210px;
+    height: 210px;
+  }
+  .hub-value { font-size: 33px; }
+  .coverage-value { font-size: 20px; }
 }
 </style>
 

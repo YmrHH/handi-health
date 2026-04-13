@@ -204,7 +204,6 @@ import {
   fetchPatientRiskList,
   fetchPatientSummary
 } from '../api'
-import { footerState } from '../utils/footerState'
 import { use, init, type ECharts, type EChartsOption } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
@@ -234,7 +233,6 @@ const riskList = ref<Record<string, any>[]>([])
 const alerts = ref<AlertItem[]>([])
 const hardwareAlerts = ref<AlertItem[]>([])
 const trendMode = ref<'day' | 'week' | 'month'>('month')
-const updatedAt = ref('—')
 const pageAlive = ref(false)
 const rankingsLoadDone = ref(false)
 
@@ -987,19 +985,6 @@ const topCards = computed<TopCard[]>(() => {
   ]
 })
 
-const tickerItems = computed(() => {
-  const base = [...alerts.value, ...hardwareAlerts.value].slice(0, 10)
-  const rows = base.map((item, idx) => {
-    const time = pickText(item, ['createTime', 'time', 'alertTime', 'timestamp'], '').slice(11, 16) || '实时'
-    const patient = pickText(item, ['patientName', 'name', 'patientId'], `患者${idx + 1}`)
-    const status = cnAlertStatus(item)
-    const title = pickText(item, ['title', 'alertTitle', 'typeName', 'deviceType'], '异常提醒')
-    return `【${time}】${patient}${title}，当前${status}`
-  })
-  if (!rows.length) rows.push('【实时】系统运行正常，当前无新的异常播报')
-  return rows
-})
-
 const eventStreamItems = computed(() => {
   const merged = [...alerts.value, ...hardwareAlerts.value].slice(0, 8)
   if (!merged.length) {
@@ -1024,22 +1009,6 @@ const eventStreamItems = computed(() => {
     }
   })
 })
-
-watch(
-  tickerItems,
-  (items) => {
-    footerState.tickerItems = items
-  },
-  { immediate: true }
-)
-
-watch(
-  updatedAt,
-  (t) => {
-    footerState.updatedAt = t || '—'
-  },
-  { immediate: true }
-)
 
 function formatMD(d: Date) {
   const m = d.getMonth() + 1
@@ -1280,14 +1249,12 @@ async function loadPage() {
   await nextTick()
   renderHubChart()
   renderTrendChart()
-  updatedAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 
   // 二级链路拆分：摘要先行，告警/画像后补
   runAfterFirstPaint(async () => {
     if (!pageAlive.value) return
     await loadSecondaryStage1()
     await nextTick()
-    updatedAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
   })
 
   runWhenIdle(async () => {
@@ -1296,7 +1263,6 @@ async function loadPage() {
     await nextTick()
     renderHubChart()
     renderTrendChart()
-    updatedAt.value = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
   })
 }
 
@@ -1376,7 +1342,7 @@ onBeforeUnmount(() => {
   height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   overflow: hidden;
 }
 
@@ -1404,14 +1370,14 @@ onBeforeUnmount(() => {
 .hero-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
   flex: 0 0 auto;
 }
 
 .metric-card {
   min-height: unset;
   border-radius: 20px;
-  padding: 14px 16px;
+  padding: 12px 14px;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1434,20 +1400,20 @@ onBeforeUnmount(() => {
 .metric-body { min-width: 0; }
 .metric-label {
   margin: 0 0 4px;
-  font-size: clamp(10px, 0.62vw, 12px);
+  font-size: 11px;
   letter-spacing: .08em;
   color: #607a82;
 }
 .metric-value {
   margin: 0;
-  font-size: clamp(18px, 1.45vw, 28px);
+  font-size: 24px;
   line-height: 1;
   font-weight: 800;
   color: #18363d;
 }
 .metric-meta {
   margin: 4px 0 0;
-  font-size: clamp(10px, 0.58vw, 11px);
+  font-size: 10px;
   color: #6d848b;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -1456,7 +1422,7 @@ onBeforeUnmount(() => {
 .hero-grid {
   display: grid;
   grid-template-columns: repeat(12, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
   align-items: stretch;
   flex: 1 1 auto;
   min-height: 0;
@@ -1471,7 +1437,7 @@ onBeforeUnmount(() => {
   grid-column: 4 / span 6;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
 }
 
@@ -1479,16 +1445,16 @@ onBeforeUnmount(() => {
   grid-column: 10 / span 3;
 }
 
-.column-stack { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
-.cc-left > .panel:nth-child(1) { flex: 1 1 56%; }
-.cc-left > .panel:nth-child(2) { flex: 0 0 50%; }
+.column-stack { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.cc-left > .panel:nth-child(1) { flex: 1.02 1 0; }
+.cc-left > .panel:nth-child(2) { flex: 0.98 1 0; }
 .cc-right > .panel:nth-child(1) {
-  flex: 0 0 25%;
+  flex: 0.95 1 0;
   min-height: 0;
   overflow: hidden;
 }
 .cc-right > .panel:nth-child(2) {
-  flex: 1 1 0;
+  flex: 1.05 1 0;
   min-height: 0;
 }
 .panel {
@@ -1506,14 +1472,14 @@ onBeforeUnmount(() => {
 }
 .panel-title {
   margin: 0;
-  font-size: clamp(14px, 0.95vw, 18px);
+  font-size: 15px;
   font-weight: 800;
   color: #1d3d43;
   line-height: 1.25;
 }
 .panel-subtitle {
   margin: 4px 0 0;
-  font-size: clamp(10px, 0.6vw, 12px);
+  font-size: 11px;
   color: #6e858d;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -1541,7 +1507,7 @@ onBeforeUnmount(() => {
   font-weight: 800;
 }
 .rank-name {
-  font-size: clamp(11px, 0.72vw, 13px);
+  font-size: 12px;
   font-weight: 700;
   color: #294149;
   white-space: normal;
@@ -1549,7 +1515,7 @@ onBeforeUnmount(() => {
   line-height: 1.3;
 }
 .rank-value {
-  font-size: clamp(10px, 0.65vw, 12px);
+  font-size: 11px;
   color: #5a757d;
 }
 .rank-track {
@@ -1578,16 +1544,16 @@ onBeforeUnmount(() => {
   place-items: center;
 }
 .doctor-name {
-  font-size: clamp(11px, 0.72vw, 13px);
+  font-size: 12px;
   font-weight: 700;
   color: #294149;
   white-space: normal;
   overflow-wrap: anywhere;
   line-height: 1.3;
 }
-.doctor-count { font-size: clamp(10px, 0.6vw, 11px); color: #6f858d; margin-top: 2px; }
+.doctor-count { font-size: 11px; color: #6f858d; margin-top: 2px; }
 .doctor-load { display: flex; align-items: center; gap: 8px; }
-.doctor-load-value { font-size: clamp(10px, 0.68vw, 12px); font-weight: 700; color: #23838f; }
+.doctor-load-value { font-size: 11px; font-weight: 700; color: #23838f; }
 .doctor-load-value.is-hot { color: #ff6978; }
 .doctor-dot { width: 9px; height: 9px; border-radius: 50%; }
 .doctor-dot.is-ok { background: #2fd2c9; }
@@ -1618,11 +1584,11 @@ onBeforeUnmount(() => {
   position: relative;
   border-radius: 26px;
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 1.22 1 0;
   overflow: hidden;
   display: grid;
   place-items: center;
-  padding: 18px;
+  padding: 14px;
 }
 .hub-glow {
   position: absolute;
@@ -1676,20 +1642,20 @@ onBeforeUnmount(() => {
 }
 .hub-title {
   margin: 0;
-  font-size: clamp(22px, 1.6vw, 34px);
+  font-size: 30px;
   font-weight: 900;
   color: #11838a;
 }
 .hub-subtitle {
   margin: 8px 0 0;
-  font-size: clamp(10px, 0.72vw, 13px);
+  font-size: 12px;
   color: #5d7980;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 .hub-total {
   margin-top: 12px;
-  font-size: clamp(26px, 1.9vw, 42px);
+  font-size: 38px;
   font-weight: 900;
   color: #1a3640;
 }
@@ -1715,8 +1681,8 @@ onBeforeUnmount(() => {
   flex-direction: column;
   justify-content: center;
 }
-.hub-mini-value { font-size: clamp(13px, 0.95vw, 20px); font-weight: 800; color: #156c78; line-height: 1.15; }
-.hub-mini-label { margin-top: 4px; font-size: clamp(10px, 0.58vw, 11px); color: #6d858c; line-height: 1.3; overflow-wrap: anywhere; }
+.hub-mini-value { font-size: 18px; font-weight: 800; color: #156c78; line-height: 1.15; }
+.hub-mini-label { margin-top: 4px; font-size: 10px; color: #6d858c; line-height: 1.3; overflow-wrap: anywhere; }
 .hub-node {
   position: absolute;
   z-index: 2;
@@ -1725,7 +1691,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 5px;
   color: #37555c;
-  font-size: clamp(10px, 0.62vw, 12px);
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
   max-width: 64px;
@@ -1764,7 +1730,7 @@ onBeforeUnmount(() => {
 .eff-kpi { text-align: center; min-width: 0; }
 .eff-kpi-value {
   margin: 0;
-  font-size: clamp(18px, 1.25vw, 28px);
+  font-size: 24px;
   line-height: 1.05;
   font-weight: 800;
 }
@@ -1773,7 +1739,7 @@ onBeforeUnmount(() => {
 .eff-kpi-value.is-tertiary { color: #2d8e95; }
 .eff-kpi-label {
   margin: 3px 0 0;
-  font-size: clamp(10px, 0.58vw, 11px);
+  font-size: 10px;
   color: #6f858d;
   line-height: 1.25;
   white-space: normal;
@@ -1791,7 +1757,7 @@ onBeforeUnmount(() => {
 }
 .eff-plan-title {
   margin: 0 0 6px;
-  font-size: clamp(10px, 0.62vw, 12px);
+  font-size: 11px;
   font-weight: 700;
   color: #2c7282;
   line-height: 1.25;
@@ -1816,7 +1782,7 @@ onBeforeUnmount(() => {
   background: linear-gradient(90deg, #12b8c8, rgba(126, 230, 214, 0.92));
 }
 .eff-plan-value {
-  font-size: clamp(12px, 0.74vw, 14px);
+  font-size: 13px;
   font-weight: 800;
   color: #205b6c;
   flex-shrink: 0;
@@ -1842,7 +1808,7 @@ onBeforeUnmount(() => {
 .event-list {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1878,7 +1844,7 @@ onBeforeUnmount(() => {
 }
 
 .event-title {
-  font-size: clamp(11px, 0.68vw, 13px);
+  font-size: 12px;
   font-weight: 700;
   color: #264148;
   line-height: 1.35;
@@ -1887,7 +1853,7 @@ onBeforeUnmount(() => {
 
 .event-desc {
   margin-top: 4px;
-  font-size: clamp(10px, 0.6vw, 12px);
+  font-size: 11px;
   color: #627b82;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -1919,13 +1885,16 @@ onBeforeUnmount(() => {
 .panel .table-wrap,
 .panel .table-container {
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .trend-section {
   border-radius: 30px;
   padding: 12px 12px 10px;
-  flex: 0 0 auto;
+  flex: 0.78 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .trend-header { margin-bottom: 8px; }
 .switch-group { display: flex; gap: 10px; }
@@ -1936,7 +1905,7 @@ onBeforeUnmount(() => {
   border: 1px solid rgba(255,255,255,0.7);
   background: rgba(255,255,255,0.5);
   color: #587079;
-  font-size: clamp(10px, 0.66vw, 12px);
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -1947,7 +1916,19 @@ onBeforeUnmount(() => {
 }
 .trend-chart {
   width: 100%;
-  height: clamp(150px, 18vh, 230px);
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+@media (max-width: 1600px) {
+  .metric-value { font-size: 20px; }
+  .hub-title { font-size: 25px; }
+  .hub-total { font-size: 32px; }
+  .eff-kpi-value { font-size: 20px; }
+  .rank-name,
+  .doctor-name,
+  .event-title { font-size: 11px; }
 }
 
 @media (max-width: 1200px) {

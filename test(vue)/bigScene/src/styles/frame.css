@@ -21,11 +21,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  backdrop-filter: blur(var(--blur-soft));
-  -webkit-backdrop-filter: blur(var(--blur-soft));
-  background: rgba(248, 253, 255, 0.28);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 4px 18px rgba(79, 209, 197, 0.06);
+  backdrop-filter: blur(calc(var(--blur-soft) + 2px));
+  -webkit-backdrop-filter: blur(calc(var(--blur-soft) + 2px));
+  background: linear-gradient(180deg, rgba(250, 254, 255, 0.38), rgba(246, 252, 255, 0.20));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 6px 20px rgba(79, 209, 197, 0.06);
 }
 
 .header-title {
@@ -92,7 +92,7 @@
 
 .content {
   height: 100%;
-  padding: var(--canvas-pad-top) var(--canvas-pad-x) calc(var(--footer-h) + 10px + env(safe-area-inset-bottom, 0px));
+  padding: var(--canvas-pad-top) var(--canvas-pad-x) calc(var(--footer-h) + 12px + env(safe-area-inset-bottom, 0px));
   overflow: hidden;
   overflow-x: hidden;
   overscroll-behavior: contain;

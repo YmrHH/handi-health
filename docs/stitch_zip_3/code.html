@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI 洞察舱 (全中文单屏 1280x1024 版)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@200;300;400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#283031",
+                        "error-dim": "#9f0519",
+                        "error": "#b31b25",
+                        "on-secondary-fixed-variant": "#24646f",
+                        "secondary-dim": "#135763",
+                        "outline-variant": "#a6afaf",
+                        "surface": "#eff8f8",
+                        "surface-container-highest": "#d2dfe0",
+                        "inverse-surface": "#071010",
+                        "on-primary-fixed-variant": "#00635c",
+                        "on-error": "#ffefee",
+                        "outline": "#6f7879",
+                        "tertiary-fixed-dim": "#85e1da",
+                        "on-secondary-container": "#165a65",
+                        "on-primary-fixed": "#00443f",
+                        "tertiary-fixed": "#93f0e8",
+                        "surface-container-high": "#d9e5e5",
+                        "surface-variant": "#d2dfe0",
+                        "error-container": "#fb5151",
+                        "on-primary": "#bffff6",
+                        "on-tertiary-fixed-variant": "#006560",
+                        "tertiary-dim": "#005a55",
+                        "on-tertiary-container": "#005a56",
+                        "primary": "#006760",
+                        "secondary-fixed-dim": "#a2deeb",
+                        "on-background": "#283031",
+                        "inverse-primary": "#7cfaed",
+                        "on-error-container": "#570008",
+                        "primary-fixed-dim": "#63e2d6",
+                        "surface-container-low": "#e8f3f3",
+                        "tertiary": "#006762",
+                        "inverse-on-surface": "#969f9f",
+                        "secondary": "#24646f",
+                        "on-secondary": "#daf8ff",
+                        "background": "#eff8f8",
+                        "on-tertiary-fixed": "#004642",
+                        "on-tertiary": "#bdfff9",
+                        "secondary-container": "#b0ecfa",
+                        "surface-bright": "#eff8f8",
+                        "primary-fixed": "#73f1e4",
+                        "secondary-fixed": "#b0ecfa",
+                        "surface-tint": "#006760",
+                        "tertiary-container": "#93f0e8",
+                        "surface-dim": "#c9d7d8",
+                        "primary-container": "#73f1e4",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container": "#dfeaeb",
+                        "on-surface-variant": "#545d5d",
+                        "on-secondary-fixed": "#004650",
+                        "primary-dim": "#005a54",
+                        "on-primary-container": "#005852"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #eff8f8;
+            color: #283031;
+            font-family: 'Manrope', sans-serif;
+            width: 1280px;
+            height: 1024px;
+            overflow: hidden;
+            position: relative;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 1.5rem;
+            height: 840px;
+            padding: 0 3rem;
+        }
+    </style>
+</head>
+<body class="flex flex-col">
+<!-- Top Navigation Bar -->
+<header class="w-full h-20 z-50 bg-cyan-50/40 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,103,96,0.06)] flex justify-between items-center px-12">
+<div class="text-2xl font-black bg-gradient-to-r from-cyan-700 to-cyan-500 bg-clip-text text-transparent font-headline">
+            医疗智慧大屏
+        </div>
+<nav class="flex gap-8 items-center">
+<a class="font-headline font-bold text-lg tracking-tight text-slate-500 hover:text-cyan-600 transition-colors hover:scale-105 duration-200" href="#">总指挥舱</a>
+<a class="font-headline font-bold text-lg tracking-tight text-slate-500 hover:text-cyan-600 transition-colors hover:scale-105 duration-200" href="#">风险画像舱</a>
+<a class="font-headline font-bold text-lg tracking-tight text-slate-500 hover:text-cyan-600 transition-colors hover:scale-105 duration-200" href="#">告警联动舱</a>
+<a class="font-headline font-bold text-lg tracking-tight text-slate-500 hover:text-cyan-600 transition-colors hover:scale-105 duration-200" href="#">干预服务舱</a>
+<a class="font-headline font-bold text-lg tracking-tight text-cyan-800 border-b-2 border-cyan-500 pb-1" href="#">AI 洞察舱</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-cyan-700 hover:scale-105 transition-transform">settings</button>
+<button class="material-symbols-outlined text-cyan-700 hover:scale-105 transition-transform">account_circle</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-8 pb-4">
+<div class="bento-grid">
+<!-- Left Column: 模型评估 & 风险趋势 -->
+<section class="col-span-3 row-span-5 flex flex-col gap-6">
+<!-- 模型评估中心 (环形图) -->
+<div class="flex-1 bg-surface-container-lowest rounded-xl p-6 flex flex-col justify-between shadow-sm border border-white/40">
+<div class="flex items-center justify-between">
+<h3 class="font-headline font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">analytics</span> 模型评估中心
+                        </h3>
+<span class="text-[10px] text-outline px-2 py-0.5 rounded-full bg-surface-container-high uppercase tracking-tighter">Real-time</span>
+</div>
+<div class="relative flex items-center justify-center py-4">
+<!-- SVG Ring Simulation -->
+<svg class="w-32 h-32 transform -rotate-90">
+<circle class="text-surface-container-high" cx="64" cy="64" fill="transparent" r="54" stroke="currentColor" stroke-width="12"></circle>
+<circle class="text-primary transition-all duration-1000" cx="64" cy="64" fill="transparent" r="54" stroke="currentColor" stroke-dasharray="339.29" stroke-dashoffset="33.9" stroke-width="12"></circle>
+</svg>
+<div class="absolute inset-0 flex flex-col items-center justify-center">
+<span class="text-2xl font-black text-on-surface">90.2%</span>
+<span class="text-[10px] text-outline font-medium">综合评分</span>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">精准度 (Precision)</span>
+<span class="font-bold text-primary">0.94</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-primary w-[94%] h-full"></div>
+</div>
+<div class="flex justify-between text-xs">
+<span class="text-on-surface-variant">召回率 (Recall)</span>
+<span class="font-bold text-secondary">0.88</span>
+</div>
+<div class="w-full bg-surface-container-high h-1 rounded-full overflow-hidden">
+<div class="bg-secondary w-[88%] h-full"></div>
+</div>
+</div>
+</div>
+<!-- 风险波动趋势 (柱状图) -->
+<div class="flex-1 bg-surface-container-lowest rounded-xl p-6 flex flex-col shadow-sm border border-white/40">
+<h3 class="font-headline font-bold text-primary flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-sm">trending_up</span> 风险波动趋势
+                    </h3>
+<div class="flex-grow flex items-end justify-between gap-1 px-2">
+<div class="w-4 bg-primary-container/60 rounded-t-sm h-[30%]"></div>
+<div class="w-4 bg-primary-container/60 rounded-t-sm h-[50%]"></div>
+<div class="w-4 bg-primary rounded-t-sm h-[80%]"></div>
+<div class="w-4 bg-primary-container/60 rounded-t-sm h-[60%]"></div>
+<div class="w-4 bg-primary-container/60 rounded-t-sm h-[45%]"></div>
+<div class="w-4 bg-primary-container/60 rounded-t-sm h-[70%]"></div>
+<div class="w-4 bg-primary-container/60 rounded-t-sm h-[55%]"></div>
+<div class="w-4 bg-primary rounded-t-sm h-[90%]"></div>
+</div>
+<div class="flex justify-between mt-2 text-[10px] text-outline font-bold">
+<span>08:00</span>
+<span>12:00</span>
+<span>16:00</span>
+<span>20:00</span>
+</div>
+</div>
+</section>
+<!-- Center Column: AI 智能洞察中枢 -->
+<section class="col-span-6 row-span-10 relative">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-100/10 to-transparent rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+<div class="h-full flex flex-col items-center justify-center space-y-12">
+<!-- Central Visual Hero -->
+<div class="relative w-full aspect-square max-h-[500px] flex items-center justify-center">
+<div class="absolute w-[80%] h-[80%] border border-cyan-200/50 rounded-full animate-pulse"></div>
+<div class="absolute w-[60%] h-[60%] border border-cyan-300/30 rounded-full"></div>
+<div class="z-10 bg-white/40 backdrop-blur-2xl p-12 rounded-full shadow-[0_0_80px_rgba(0,103,96,0.1)] border border-white/60">
+<img alt="abstract representation of artificial intelligence neural network with blue light glowing connections" class="w-64 h-64 object-cover rounded-full mix-blend-multiply opacity-80" data-alt="abstract representation of artificial intelligence neural network with blue light glowing connections, medical data visualization concept, clean laboratory aesthetic" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfd9uGCuRgrye977M3y2zallJsQozg1f6AU29xgPiU4791_Z-g91SuZRXqqRM4rYyFT0tOP2nz_LcgowhBTrFujU2rHxhuPB4ChZB1HiDLF7s4GVv7wxLUlHfMpLudtt1Mx64UtE-KZ20rtFFxH-9Rk2S42H3UNW-QbtzSvYt1ColRVQVAkVOIA623cN3homdv5UF10eFW4PcVWfAO4duea2kvidY8UCfETRUTnEWMvm7vjOtgiDJEGabjRMm58FJ2FEqYkHIcuA"/>
+</div>
+<!-- Floating Data Nodes -->
+<div class="absolute top-10 left-20 bg-white/80 backdrop-blur p-4 rounded-xl shadow-lg border border-cyan-100 flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" data-weight="fill">neurology</span>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider">深度识别</p>
+<p class="text-sm font-black text-on-surface">神经路径仿真</p>
+</div>
+</div>
+<div class="absolute bottom-20 right-10 bg-white/80 backdrop-blur p-4 rounded-xl shadow-lg border border-cyan-100 flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-weight="fill">shield_with_heart</span>
+<div>
+<p class="text-[10px] text-outline font-bold uppercase tracking-wider">安全等级</p>
+<p class="text-sm font-black text-on-surface">L4 级临床保障</p>
+</div>
+</div>
+</div>
+<!-- AI Insight Central Summary -->
+<div class="w-full max-w-2xl bg-white/20 backdrop-blur-md rounded-2xl p-8 border border-white/30 text-center">
+<h2 class="text-4xl font-headline font-extrabold text-primary mb-4 tracking-tight">AI 智能洞察中枢</h2>
+<p class="text-on-surface-variant font-medium leading-relaxed px-12">
+                            当前系统通过神经网络多维聚合，检测到呼吸内科并发症风险呈周期性上升趋势。AI 建议：加强夜间血氧饱和度监测，提前预置干扰预案，预计可降低 12.4% 的突发转危率。
+                        </p>
+<div class="mt-8 flex justify-center gap-6">
+<button class="px-8 py-3 bg-gradient-to-r from-primary to-primary-dim text-on-primary font-bold rounded-xl shadow-lg transition-transform hover:scale-105 active:scale-95">生成详细报告</button>
+<button class="px-8 py-3 bg-surface-container-highest text-on-surface font-bold rounded-xl border border-white/40 transition-transform hover:scale-105 active:scale-95">全量模型回溯</button>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: 洞察要点 & 病种排行 -->
+<section class="col-span-3 row-span-10 flex flex-col gap-6">
+<!-- AI 洞察要点 (列表) -->
+<div class="flex-[3] bg-surface-container-lowest rounded-xl p-6 flex flex-col shadow-sm border border-white/40">
+<h3 class="font-headline font-bold text-primary flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-sm">list_alt</span> AI 洞察要点
+                    </h3>
+<div class="space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-primary">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-black text-on-surface">异常用药预警</span>
+<span class="text-[10px] font-bold text-primary bg-primary-container px-2 py-0.5 rounded">High</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-tight">心内科 12 号病房存在抗凝药物重叠风险，建议人工复核。</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-secondary">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-black text-on-surface">护理排班优化</span>
+<span class="text-[10px] font-bold text-secondary bg-secondary-container px-2 py-0.5 rounded">Med</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-tight">预计 2 小时后门急诊流量达到峰值，建议增调 2 名护理人员。</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-tertiary">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-black text-on-surface">设备维保提醒</span>
+<span class="text-[10px] font-bold text-tertiary bg-tertiary-container px-2 py-0.5 rounded">Low</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-tight">3 号 MRI 设备由于超负荷运转，建议在 24 小时内进行校准。</p>
+</div>
+<div class="p-4 bg-surface-container-low rounded-lg border-l-4 border-primary">
+<div class="flex justify-between items-start mb-1">
+<span class="text-xs font-black text-on-surface">康复率预测</span>
+<span class="text-[10px] font-bold text-primary bg-primary-container px-2 py-0.5 rounded">High</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-tight">术后 48 小时动态评估显示，特定疗法康复效率提升 15%。</p>
+</div>
+</div>
+</div>
+<!-- 病种稳定率排行 (水平条形图) -->
+<div class="flex-[2] bg-surface-container-lowest rounded-xl p-6 flex flex-col shadow-sm border border-white/40">
+<h3 class="font-headline font-bold text-primary flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-sm">leaderboard</span> 病种稳定率排行
+                    </h3>
+<div class="space-y-3">
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-outline uppercase">
+<span>消化内科</span>
+<span>98.2%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full">
+<div class="bg-primary h-full w-[98.2%] rounded-full shadow-[0_0_8px_rgba(0,103,96,0.2)]"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-outline uppercase">
+<span>骨科</span>
+<span>94.5%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full">
+<div class="bg-secondary h-full w-[94.5%] rounded-full opacity-80"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-outline uppercase">
+<span>儿科</span>
+<span>91.8%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full">
+<div class="bg-primary h-full w-[91.8%] rounded-full opacity-60"></div>
+</div>
+</div>
+<div class="space-y-1">
+<div class="flex justify-between text-[10px] font-bold text-outline uppercase">
+<span>呼吸科</span>
+<span>88.4%</span>
+</div>
+<div class="w-full bg-surface-container-high h-2 rounded-full">
+<div class="bg-error h-full w-[88.4%] rounded-full opacity-50"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Bottom Row: 全量数据溯源中心 -->
+<section class="col-span-3 row-span-5 bg-surface-container-lowest rounded-xl p-6 flex flex-col shadow-sm border border-white/40">
+<h3 class="font-headline font-bold text-primary flex items-center gap-2 mb-4">
+<span class="material-symbols-outlined text-sm">hub</span> 全量数据溯源中心
+                </h3>
+<div class="flex-grow flex flex-col justify-center gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-xl">database</span>
+</div>
+<div class="flex-grow">
+<p class="text-xs font-black text-on-surface">结构化电子病历 (EMR)</p>
+<div class="flex items-center gap-2 mt-1">
+<div class="h-1.5 flex-grow bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[92%] bg-primary"></div>
+</div>
+<span class="text-[10px] text-primary font-bold">92%</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-xl">image</span>
+</div>
+<div class="flex-grow">
+<p class="text-xs font-black text-on-surface">医学影像 PACS 数据</p>
+<div class="flex items-center gap-2 mt-1">
+<div class="h-1.5 flex-grow bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[78%] bg-secondary"></div>
+</div>
+<span class="text-[10px] text-secondary font-bold">78%</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-xl">biotech</span>
+</div>
+<div class="flex-grow">
+<p class="text-xs font-black text-on-surface">实验室信息 LIS 系统</p>
+<div class="flex items-center gap-2 mt-1">
+<div class="h-1.5 flex-grow bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full w-[85%] bg-tertiary"></div>
+</div>
+<span class="text-[10px] text-tertiary font-bold">85%</span>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-surface-container-high flex justify-between items-center text-[10px] text-outline">
+<span>最后溯源于: 14:22:05</span>
+<span class="flex items-center gap-1"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> 链路畅通</span>
+</div>
+</section>
+</div>
+</main>
+<!-- Unified Footer -->
+<footer class="fixed bottom-0 w-full z-50 flex justify-between items-center px-10 h-10 max-w-[1280px] mx-auto border-t border-white/10 bg-white/30 backdrop-blur-md rounded-t-xl">
+<div class="font-body text-xs uppercase tracking-widest text-slate-400">
+            © 2024 智慧医疗指挥系统 | 系统状态: <span class="text-cyan-500 font-bold">运行中</span> | 延迟: <span class="text-cyan-500 font-bold">12ms</span> | 运行级别: <span class="text-cyan-500 font-bold">L1</span>
+</div>
+<div class="flex gap-6">
+<a class="font-body text-xs uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-all" href="#">隐私政策</a>
+<a class="font-body text-xs uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-all" href="#">技术支持</a>
+</div>
+</footer>
+</body></html>

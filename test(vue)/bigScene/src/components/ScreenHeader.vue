@@ -8,7 +8,6 @@
         </div>
       </div>
       <div class="header-right">
-        <span class="sub">{{ subTitle }}</span>
         <span class="time">{{ timeText }}</span>
       </div>
     </div>
@@ -20,7 +19,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 
 defineProps<{
   title: string
-  subTitle: string
+  subTitle?: string
 }>()
 
 const timeText = ref('')
@@ -49,14 +48,14 @@ onUnmounted(() => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 
 .brand {
   margin: 0;
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 650;
   letter-spacing: 0.01em;
   background: linear-gradient(90deg, rgba(32, 82, 110, 0.98), rgba(46, 113, 140, 0.96), rgba(95, 199, 216, 0.92));
   -webkit-background-clip: text;
@@ -72,14 +71,10 @@ onUnmounted(() => {
 .header-right {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: rgba(92, 130, 156, 0.72);
-  font-size: 11px;
+  gap: 6px;
+  color: rgba(92, 130, 156, 0.68);
+  font-size: 10px;
   white-space: nowrap;
-}
-
-.sub {
-  color: rgba(92, 130, 156, 0.62);
 }
 
 .time {

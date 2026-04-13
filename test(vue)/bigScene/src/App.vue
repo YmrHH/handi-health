@@ -1,14 +1,14 @@
 <template>
   <div class="frame">
     <template v-if="!isAuthed">
-      <ScreenHeader title="寒岐智护·慢性病随访健康预警管理平台" sub-title="请先登录医生账号以加载真实数据" />
+      <ScreenHeader title="寒岐智护·慢性病随访健康预警管理平台" />
       <div class="content">
         <LoginScreen @logged-in="handleLoggedIn" />
       </div>
     </template>
 
     <template v-else>
-      <ScreenHeader title="寒岐智护·慢性病随访健康预警管理平台" sub-title="医疗运营监测大屏">
+      <ScreenHeader title="寒岐智护·慢性病随访健康预警管理平台">
         <ScreenTabs v-model="active" :tabs="tabs" />
       </ScreenHeader>
       <div class="content">
@@ -23,9 +23,6 @@
         :status-tone="footerState.statusTone"
         :latency-ms="footerState.latencyMs"
         :security-text="footerState.securityText"
-        :version-text="footerState.versionText"
-        :updated-at="footerState.updatedAt"
-        :ticker-items="footerState.tickerItems"
       />
     </template>
   </div>
