@@ -29,7 +29,7 @@ defineEmits<{ (e: 'update:modelValue', v: string): void }>()
   padding: 1px 2px;
   border-radius: 999px;
   border: none;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -52,9 +52,9 @@ defineEmits<{ (e: 'update:modelValue', v: string): void }>()
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, rgba(95, 199, 216, 0.08), rgba(255, 255, 255, 0.3));
+  background: linear-gradient(135deg, rgba(95, 199, 216, 0.07), rgba(255, 255, 255, 0.26));
   color: rgba(27, 91, 120, 0.94);
-  box-shadow: 0 1px 4px rgba(79, 209, 197, 0.02), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 1px 3px rgba(79, 209, 197, 0.016), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 </style>
 

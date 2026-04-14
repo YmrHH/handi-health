@@ -4,7 +4,7 @@
 
     <main class="page-main stitch-home screen-main">
       <section class="hero-metrics stitch-stats" aria-label="首页核心指标">
-        <article v-for="card in topCards" :key="card.key" class="metric-card glass-card">
+        <article v-for="card in topCards" :key="card.key" class="metric-card frost-card">
           <div class="metric-icon" :class="`metric-icon--${card.accent}`">{{ card.icon }}</div>
           <div class="metric-body">
             <p class="metric-label">{{ card.label }}</p>
@@ -68,14 +68,14 @@
         </aside>
 
         <section class="center-column stitch-center cc-center screen-col">
-          <section ref="hubShellRef" class="hub-shell glass-card" :style="hubStyle">
+          <section ref="hubShellRef" class="hub-shell frost-card" :style="hubStyle">
             <div class="hub-glow"></div>
             <div class="hub-outer-ring"></div>
             <div class="hub-middle-ring"></div>
             <div class="hub-inner-ring"></div>
             <div ref="hubRingRef" class="hub-chart"></div>
 
-            <div class="hub-core glass-card">
+            <div class="hub-core frost-card">
               <div class="hub-kicker">平台中枢</div>
               <h2 class="hub-title">寒岐智护</h2>
               <p class="hub-subtitle">慢性病随访健康预警管理平台</p>
@@ -112,7 +112,7 @@
             </div>
           </section>
 
-          <section class="trend-section glass-card">
+          <section class="trend-section frost-card">
             <div class="frost-head trend-header">
               <div>
                 <h3 class="frost-title">综合趋势主图</h3>
@@ -1356,15 +1356,6 @@ onBeforeUnmount(() => {
 
 .stitch-main {
   position: relative;
-}
-
-.glass-card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(247,252,252,0.6));
-  border: 1px solid rgba(255,255,255,0.05);
-  box-shadow:
-    0 14px 30px rgba(28, 88, 96, 0.06),
-    inset 0 1px 0 rgba(255,255,255,0.12);
-  backdrop-filter: blur(18px);
 }
 
 .hero-metrics {

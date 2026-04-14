@@ -446,7 +446,7 @@ onDeactivated(() => {
   background: rgba(255, 255, 255, 0.46);
   border: 1px solid rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(18px);
-  box-shadow: 0 14px 30px rgba(0, 103, 96, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  box-shadow: 0 12px 24px rgba(0, 103, 96, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
 
@@ -629,13 +629,13 @@ onDeactivated(() => {
 .center-ring-bg {
   width: clamp(220px, 19vw, 312px);
   height: clamp(220px, 19vw, 312px);
-  border: 1px dashed rgba(70, 174, 189, 0.28);
+  border: 1px dashed rgba(70, 174, 189, 0.2);
 }
 
 .center-ring-mid {
   width: clamp(180px, 15vw, 256px);
   height: clamp(180px, 15vw, 256px);
-  border: 1px solid rgba(94, 183, 199, 0.1);
+  border: 1px solid rgba(94, 183, 199, 0.08);
 }
 
 .center-ring-chart {
@@ -739,7 +739,7 @@ onDeactivated(() => {
   padding: 0 10px;
   border-radius: 999px;
   border: none;
-  background: rgba(255, 255, 255, 0.34);
+  background: rgba(255, 255, 255, 0.26);
   color: rgba(43, 97, 123, 0.9);
   font-size: 11px;
   line-height: 1;
@@ -830,7 +830,7 @@ onDeactivated(() => {
   padding: 10px 10px 10px 12px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.42);
-  box-shadow: inset 3px 0 0 rgba(179, 27, 37, 0.9);
+  box-shadow: inset 2px 0 0 rgba(179, 27, 37, 0.62);
 }
 
 .risk-item-title {
@@ -906,7 +906,7 @@ onDeactivated(() => {
   align-items: center;
   gap: 12px;
   padding: 0 16px;
-  background: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.36);
   border: 1px solid rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(14px);
 }
