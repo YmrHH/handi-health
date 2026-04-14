@@ -9,7 +9,17 @@
           </div>
         </div>
         <div class="card-body">
-          <div ref="diseaseRef" class="chart"></div>
+          <div class="disease-rank-list">
+            <div v-for="item in diseaseRankRows" :key="item.name" class="disease-rank-item">
+              <div class="disease-rank-head">
+                <span class="disease-name">{{ item.name }}</span>
+                <strong class="disease-ratio">{{ item.ratio }}%</strong>
+              </div>
+              <div class="disease-track">
+                <div class="disease-bar" :style="{ width: `${item.ratio}%` }"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </article>
 
@@ -192,6 +202,29 @@ const constitutionRows = computed(() => {
   }))
 })
 
+const diseaseRankRows = computed(() => {
+  const by = new Map<string, number>()
+  const rows = patientList.value || []
+  rows.forEach((r: any) => {
+    const disease = pickDiseaseName(r)
+    by.set(disease, (by.get(disease) || 0) + 1)
+  })
+  const pairs = Array.from(by.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const sum = pairs.reduce((acc, [, count]) => acc + count, 0) || 1
+  if (!pairs.length) {
+    return [
+      { name: '原发性高血压', ratio: 42.8, count: 0 },
+      { name: '2型糖尿病', ratio: 31.2, count: 0 },
+      { name: '冠心病', ratio: 15.5, count: 0 }
+    ]
+  }
+  return pairs.map(([name, count]) => ({
+    name,
+    count,
+    ratio: Number(((count / sum) * 100).toFixed(1))
+  }))
+})
+
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
 const patientList = ref<any[]>([])
 const monitorRows = computed(() =>
@@ -221,11 +254,9 @@ const femaleRatio = computed(() => 100 - maleRatio.value)
 const genderRatioText = computed(() => `${maleRatio.value}:${femaleRatio.value}`)
 
 const ageRef = ref<HTMLElement | null>(null)
-const diseaseRef = ref<HTMLElement | null>(null)
 const portraitRef = ref<HTMLElement | null>(null)
 
 let ageChart: ECharts | null = null
-let diseaseChart: ECharts | null = null
 let portraitChart: ECharts | null = null
 
 let activeAlive = false
@@ -312,28 +343,6 @@ function collectGender(list: any[]) {
   femaleCount.value = by['女'] || 0
 }
 
-function buildDisease(list: any[]) {
-  if (!diseaseRef.value) return
-  if (!diseaseChart) diseaseChart = init(diseaseRef.value)
-  const by: Record<string, number> = {}
-  list.forEach((r: any) => {
-    const d = pickDiseaseName(r)
-    by[d] = (by[d] || 0) + 1
-  })
-  const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 8)
-  topDiseaseCount.value = pairs[0]?.[1] ? Number(pairs[0][1]) : 0
-  const names = pairs.map((p) => p[0])
-  const vals = pairs.map((p) => p[1])
-  const axis = axisStyle()
-  diseaseChart.setOption({
-    tooltip: tooltipStyle(),
-    grid: { left: 40, right: 18, top: 20, bottom: 40 },
-    xAxis: { type: 'category', data: names, axisLabel: { color: 'rgba(39,85,113,0.92)', rotate: 24 } },
-    yAxis: { type: 'value', ...axis },
-    series: [{ type: 'bar', data: vals, barWidth: 16, itemStyle: { color: '#7fd6e3', borderRadius: [6, 6, 0, 0] } }]
-  })
-}
-
 function buildPortrait() {
   if (!portraitRef.value) return
   if (!portraitChart) portraitChart = init(portraitRef.value)
@@ -384,7 +393,6 @@ function computeAdvice(board: any) {
 function resizeAll() {
   if (!activeAlive) return
   ageChart?.resize()
-  diseaseChart?.resize()
   portraitChart?.resize()
 }
 
@@ -425,7 +433,7 @@ async function loadBoard() {
 
   buildAge(list)
   collectGender(list)
-  buildDisease(list)
+  topDiseaseCount.value = diseaseRankRows.value[0]?.count || 0
   buildPortrait()
   computeAdvice(board || {})
 }
@@ -441,10 +449,8 @@ onUnmounted(() => {
   activeAlive = false
   window.removeEventListener('resize', onResize)
   ageChart?.dispose()
-  diseaseChart?.dispose()
   portraitChart?.dispose()
   ageChart = null
-  diseaseChart = null
   portraitChart = null
 })
 
@@ -477,7 +483,7 @@ onDeactivated(() => {
   height: 230px;
   border-radius: 999px;
   background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.76) 58%, rgba(140, 188, 227, 0.25));
-  border: 1px solid rgba(114, 180, 205, 0.2);
+  border: 1px solid rgba(114, 180, 205, 0.08);
   box-shadow: 0 10px 22px rgba(95, 199, 216, 0.14);
   display: flex;
   flex-direction: column;
@@ -626,6 +632,51 @@ onDeactivated(() => {
   line-height: 1;
   color: rgba(22, 97, 107, 0.95);
   font-weight: 800;
+}
+
+.disease-rank-list {
+  display: grid;
+  gap: 12px;
+}
+
+.disease-rank-item {
+  display: grid;
+  gap: 6px;
+}
+
+.disease-rank-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.disease-name {
+  font-size: 12px;
+  color: rgba(39, 85, 113, 0.94);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.disease-ratio {
+  font-size: 20px;
+  line-height: 1;
+  color: rgba(18, 106, 113, 0.97);
+}
+
+.disease-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(114, 180, 205, 0.18);
+}
+
+.disease-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(15, 142, 133, 0.95), rgba(95, 199, 216, 0.92));
 }
 
 .portrait-insight {

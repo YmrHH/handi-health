@@ -31,7 +31,17 @@
           </div>
         </div>
         <div class="card-body">
-          <div ref="hardwareTrendRef" class="chart"></div>
+          <div class="device-distribution-list">
+            <div v-for="item in deviceDistributionRows" :key="item.name" class="device-row">
+              <div class="device-row-head">
+                <span class="device-name">{{ item.name }}</span>
+                <span class="device-count">{{ item.count }} 次</span>
+              </div>
+              <div class="device-track">
+                <div class="device-bar" :style="{ width: `${item.ratio}%` }"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </article>
     </aside>
@@ -74,36 +84,36 @@
         </div>
       </article>
 
-      <article class="frost-card">
-        <div class="card-head">
-          <div class="card-titlebar">
-            <div class="card-title">责任医生负载与闭环效率</div>
-            <div class="card-subtitle">医生负载 · 关闭率 · 超时率</div>
-          </div>
-        </div>
-        <div class="card-body center-bottom">
-          <div class="center-bottom-left">
-            <div ref="doctorRef" class="chart"></div>
-          </div>
-          <div class="center-bottom-right">
-            <div class="eff-item">
-              <span class="eff-label">今日关闭率</span>
-              <span class="eff-value is-success">{{ closeRateText }}</span>
-            </div>
-            <div class="eff-item">
-              <span class="eff-label">超时率</span>
-              <span class="eff-value is-danger">{{ overtimeRateText }}</span>
-            </div>
-            <div class="eff-item">
-              <span class="eff-label">复发告警</span>
-              <span class="eff-value">{{ recurrenceCountText }}</span>
-            </div>
-          </div>
-        </div>
-      </article>
     </section>
 
     <aside class="stitch-col screen-col">
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">责任医生告警负载排行</div>
+            <div class="card-subtitle">按当前告警压力排序</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="doctor-rank-list">
+            <div v-for="item in doctorRankRows" :key="item.name" class="doctor-row">
+              <div class="doctor-row-head">
+                <span class="doctor-name">{{ item.name }}</span>
+                <span class="doctor-count">{{ item.count }}</span>
+              </div>
+              <div class="doctor-track">
+                <div class="doctor-bar" :style="{ width: `${item.ratio}%` }"></div>
+              </div>
+            </div>
+          </div>
+          <div class="doctor-meta">
+            <span>关闭率 {{ closeRateText }}</span>
+            <span>超时率 {{ overtimeRateText }}</span>
+            <span>复发告警 {{ recurrenceCountText }}</span>
+          </div>
+        </div>
+      </article>
+
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
@@ -133,19 +143,8 @@
               <div class="task-desc">{{ item.desc }}</div>
             </article>
           </div>
-        </div>
-      </article>
-
-      <article class="frost-card">
-        <div class="card-head">
-          <div class="card-titlebar">
-            <div class="card-title">响应与超时</div>
-            <div class="card-subtitle">闭环效率</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div class="dispatch-btn-wrap">
-            <button type="button" class="dispatch-btn">进入调度台</button>
+          <div class="dispatch-entry">
+            <button type="button" class="dispatch-link">进入调度台</button>
           </div>
         </div>
       </article>
@@ -168,6 +167,8 @@ const assignedFlow = ref(0)
 const inFollowFlow = ref(0)
 const overtimeRateText = ref('0.0%')
 const recurrenceCountText = ref('0')
+const doctorRankRows = ref<Array<{ name: string; count: number; ratio: number }>>([])
+const deviceDistributionRows = ref<Array<{ name: string; count: number; ratio: number }>>([])
 
 const closeRateText = computed(() => {
   if (!totalAlerts.value) return '0.0%'
@@ -191,13 +192,9 @@ const taskItems = computed(() => {
 
 const levelRef = ref<HTMLElement | null>(null)
 const patientTrendRef = ref<HTMLElement | null>(null)
-const hardwareTrendRef = ref<HTMLElement | null>(null)
-const doctorRef = ref<HTMLElement | null>(null)
 
 let levelChart: ECharts | null = null
 let patientTrendChart: ECharts | null = null
-let hardwareTrendChart: ECharts | null = null
-let doctorChart: ECharts | null = null
 
 let activeAlive = false
 
@@ -296,46 +293,47 @@ function buildTrend(
   return c
 }
 
-function buildDoctor(rows: any[]) {
-  if (!doctorRef.value) return
-  if (!doctorChart) doctorChart = init(doctorRef.value)
+function computeDoctorRank(rows: any[]) {
   const by: Record<string, number> = {}
   rows.forEach((r: any) => {
     const d = (r.responsibleDoctor || r.doctor || '未分配').toString().trim() || '未分配'
     const c = Number(r.activeAlertCount || 0)
     by[d] = (by[d] || 0) + (Number.isFinite(c) ? c : 0)
   })
-  const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const names = pairs.map((p) => p[0])
-  const vals = pairs.map((p) => p[1])
-  const axis = axisStyle()
-  doctorChart.setOption({
-    tooltip: tooltipStyle(),
-    grid: { left: 90, right: 18, top: 18, bottom: 10 },
-    xAxis: { type: 'value', ...axis },
-    yAxis: {
-      type: 'category',
-      data: names,
-      axisLabel: { color: 'rgba(39,85,113,0.92)' },
-      axisLine: axis.axisLine
-    },
-    series: [
-      {
-        type: 'bar',
-        data: vals,
-        barWidth: 14,
-        itemStyle: { color: '#7fd6e3', borderRadius: [0, 8, 8, 0] }
-      }
-    ]
+  const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  const max = Math.max(1, ...pairs.map((x) => Number(x[1] || 0)))
+  doctorRankRows.value = (pairs.length ? pairs : [['未分配', 0]]).map(([name, count]) => ({
+    name: String(name),
+    count: Number(count || 0),
+    ratio: Math.max(8, Math.round((Number(count || 0) / max) * 100))
+  }))
+}
+
+function computeDeviceDistribution(rows: any[]) {
+  const by: Record<string, number> = {}
+  rows.forEach((r: any) => {
+    const name = String(r.deviceType || r.deviceName || r.hardwareType || r.category || '其他设备').trim() || '其他设备'
+    by[name] = (by[name] || 0) + 1
   })
+  const pairs = Object.entries(by).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  const max = Math.max(1, ...pairs.map((x) => Number(x[1] || 0)))
+  deviceDistributionRows.value = (pairs.length
+    ? pairs
+    : [
+        ['智能血压计', 0],
+        ['动态血糖仪', 0]
+      ]
+  ).map(([name, count]) => ({
+    name: String(name),
+    count: Number(count || 0),
+    ratio: Math.max(10, Math.round((Number(count || 0) / max) * 100))
+  }))
 }
 
 function resizeAll() {
   if (!activeAlive) return
   levelChart?.resize()
   patientTrendChart?.resize()
-  hardwareTrendChart?.resize()
-  doctorChart?.resize()
 }
 
 const onResize = rafThrottle(() => resizeAll())
@@ -413,17 +411,16 @@ async function loadBoard() {
   }
 
   buildLevel(aRows.length, hRows.length)
+  computeDeviceDistribution(hRows)
   const labels = lastNDaysLabels(7)
   const aByDay = countByDay(aRows, 7, (r) => parseTs(r.alertTime || r.firstTime || r.createdAt))
-  const hByDay = countByDay(hRows, 7, (r) => parseTs(r.alertTime || r.firstTime || r.createdAt))
   patientTrendChart = buildTrend(patientTrendRef.value, patientTrendChart, 'rgb(95,199,216)', labels, aByDay)
-  hardwareTrendChart = buildTrend(hardwareTrendRef.value, hardwareTrendChart, 'rgb(158,169,230)', labels, hByDay)
   const pRows = pickRows(ps) as any[]
   inFollowFlow.value = pRows.filter((r: any) => {
     const txt = String(r.followStatus || r.taskStatus || r.status || '')
     return txt.includes('随访中') || txt.includes('执行中') || txt.toUpperCase() === 'PROCESSING'
   }).length
-  buildDoctor(pRows)
+  computeDoctorRank(pRows)
 }
 
 onUnmounted(() => {
@@ -431,12 +428,8 @@ onUnmounted(() => {
   window.removeEventListener('resize', onResize)
   levelChart?.dispose()
   patientTrendChart?.dispose()
-  hardwareTrendChart?.dispose()
-  doctorChart?.dispose()
   levelChart = null
   patientTrendChart = null
-  hardwareTrendChart = null
-  doctorChart = null
 })
 
 onActivated(() => {
@@ -464,7 +457,7 @@ onDeactivated(() => {
 
 .node {
   border-radius: var(--r-md);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   background: rgba(255, 255, 255, 0.56);
   padding: 10px 10px;
   text-align: center;
@@ -524,54 +517,101 @@ onDeactivated(() => {
 
 .stitch-col:first-child > .frost-card:nth-child(1) { flex: 1.02 1 0; }
 .stitch-col:first-child > .frost-card:nth-child(2) { flex: 0.98 1 0; }
-.stitch-col:first-child > .frost-card:nth-child(3) { flex: 1 1 0; }
-.stitch-center > .frost-card:nth-child(1) { flex: 1.2 1 0; }
-.stitch-center > .frost-card:nth-child(2) { flex: 0.8 1 0; }
-.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1.2 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(3) { flex: 0.96 1 0; }
+.stitch-center > .frost-card:nth-child(1) { flex: 1 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(1) { flex: 0.94 1 0; }
 .stitch-col:last-child > .frost-card:nth-child(2) { flex: 1.08 1 0; }
-.stitch-col:last-child > .frost-card:nth-child(3) { flex: 0.72 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(3) { flex: 0.98 1 0; }
 
-.center-bottom {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 180px;
-  gap: 10px;
-  min-height: 0;
-}
-
-.center-bottom-left,
-.center-bottom-right {
-  min-height: 0;
-}
-
-.center-bottom-right {
+.device-distribution-list {
   display: grid;
   gap: 8px;
-  align-content: center;
 }
 
-.eff-item {
-  padding: 8px 10px;
-  border-radius: var(--r-md);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.48);
+.device-row {
+  display: grid;
+  gap: 5px;
+}
+
+.device-row-head {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
   align-items: center;
 }
 
-.eff-label {
+.device-name {
+  min-width: 0;
   font-size: 11px;
-  color: rgba(92, 130, 156, 0.9);
+  color: rgba(39, 85, 113, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.eff-value {
-  font-size: 20px;
-  font-weight: 900;
-  color: rgba(22, 97, 107, 0.98);
+.device-count {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: rgba(92, 130, 156, 0.86);
 }
 
-.eff-value.is-success { color: #0f8e85; }
-.eff-value.is-danger { color: #cf3948; }
+.device-track,
+.doctor-track {
+  height: 6px;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(114, 180, 205, 0.2);
+  overflow: hidden;
+}
+
+.device-bar,
+.doctor-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(95, 199, 216, 0.92), rgba(140, 188, 227, 0.88));
+}
+
+.doctor-rank-list {
+  display: grid;
+  gap: 8px;
+}
+
+.doctor-row {
+  display: grid;
+  gap: 5px;
+}
+
+.doctor-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.doctor-name {
+  min-width: 0;
+  font-size: 11px;
+  color: rgba(39, 85, 113, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doctor-count {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(22, 97, 107, 0.96);
+}
+
+.doctor-meta {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 10px;
+  color: rgba(92, 130, 156, 0.84);
+}
 
 .task-list {
   display: grid;
@@ -616,23 +656,21 @@ onDeactivated(() => {
   color: rgba(92, 130, 156, 0.88);
 }
 
-.dispatch-btn-wrap {
-  height: 100%;
-  display: grid;
-  place-items: center;
+.dispatch-entry {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.dispatch-btn {
-  width: 100%;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: rgba(39, 85, 113, 0.9);
-  font-size: 12px;
+.dispatch-link {
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: rgba(39, 85, 113, 0.88);
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  background: linear-gradient(135deg, rgba(95, 199, 216, 0.18), rgba(255, 255, 255, 0.66));
-  box-shadow: 0 8px 16px rgba(0, 103, 96, 0.08);
+  padding: 0 4px;
 }
 
 .chart {

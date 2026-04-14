@@ -1360,10 +1360,10 @@ onBeforeUnmount(() => {
 
 .glass-card {
   background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(247,252,252,0.6));
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.05);
   box-shadow:
     0 14px 30px rgba(28, 88, 96, 0.06),
-    inset 0 1px 0 rgba(255,255,255,0.2);
+    inset 0 1px 0 rgba(255,255,255,0.12);
   backdrop-filter: blur(18px);
 }
 
@@ -1499,7 +1499,7 @@ onBeforeUnmount(() => {
   padding: 9px 10px;
   border-radius: 14px;
   background: rgba(255,255,255,0.48);
-  border: 1px solid rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.06);
 }
 .rank-row { display: grid; grid-template-columns: 22px 1fr auto; align-items: center; gap: 8px; margin-bottom: 6px; }
 .rank-index {
@@ -1685,7 +1685,7 @@ onBeforeUnmount(() => {
   border-radius: 14px;
   padding: 8px 8px;
   background: rgba(255,255,255,0.44);
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.06);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1712,7 +1712,7 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   background: rgba(255,255,255,0.78);
-  border: 1px solid rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.06);
   box-shadow: 0 8px 18px rgba(17, 90, 99, 0.08);
   color: #1a7f89;
 }
@@ -1911,7 +1911,7 @@ onBeforeUnmount(() => {
   height: 30px;
   min-width: 42px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.16);
+  border: 1px solid rgba(255,255,255,0.06);
   background: rgba(255,255,255,0.5);
   color: #587079;
   font-size: 11px;

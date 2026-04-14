@@ -4,16 +4,27 @@
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">服务任务总览</div>
-            <div class="card-subtitle">今日执行与积压</div>
+            <div class="card-title">干预计划总览</div>
+            <div class="card-subtitle">新增 · 执行 · 响应</div>
           </div>
         </div>
         <div class="card-body">
-          <div class="stat-grid">
-            <StatCard label="今日服务任务" :value="board.overview.total" tone="cyan" />
-            <StatCard label="已完成" :value="board.overview.done" tone="success" />
-            <StatCard label="待执行" :value="board.overview.pending" tone="warning" />
-            <StatCard label="活跃服务人员" :value="board.staffCount" tone="tertiary" />
+          <div class="plan-overview">
+            <div class="metric-card">
+              <div class="metric-label">今日新增任务</div>
+              <div class="metric-value">{{ todayNewCount }}</div>
+              <div class="metric-sub">较昨日 {{ todayNewDeltaText }}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">正在执行方案</div>
+              <div class="metric-value">{{ executingCount }}</div>
+              <div class="metric-sub">待执行 {{ board.overview.pending }} · 超期 {{ board.overview.overdue }}</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">平均干预响应时效</div>
+              <div class="metric-value">{{ avgResponseText }}</div>
+              <div class="metric-sub">触达率 {{ board.reachRate }}% · 活跃人员 {{ board.staffCount }}</div>
+            </div>
           </div>
         </div>
       </article>
@@ -21,44 +32,69 @@
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">计划类型占比</div>
-            <div class="card-subtitle">任务结构</div>
+            <div class="card-title">计划类型分布</div>
+            <div class="card-subtitle">远程随访 · 门诊干预 · 紧急送诊</div>
           </div>
         </div>
         <div class="card-body">
-          <div ref="planTypeRef" class="chart"></div>
+          <div class="type-dist">
+            <div ref="planTypeRef" class="chart type-chart"></div>
+            <div class="type-list">
+              <div v-for="item in typeDistRows" :key="item.name" class="type-row">
+                <span class="type-dot" :style="{ background: item.color }"></span>
+                <span class="type-name">{{ item.name }}</span>
+                <span class="type-count">{{ item.value }}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </article>
 
-      <article class="frost-card">
-        <div class="card-head">
-          <div class="card-titlebar">
-            <div class="card-title">服务人员地区分布</div>
-            <div class="card-subtitle">区域覆盖活跃度</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div ref="leftAreaRef" class="chart"></div>
-        </div>
-      </article>
     </aside>
 
     <section class="stitch-center screen-col">
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">服务执行路径盘</div>
-            <div class="card-subtitle">触达 · 执行 · 达标</div>
+            <div class="card-title">服务执行全生命周期</div>
+            <div class="card-subtitle">生成 · 分派 · 执行 · 反馈 · 再评估</div>
           </div>
         </div>
         <div class="card-body">
           <div class="center-stage">
             <div class="hub glow-breath">
-              <div class="hub-title">服务执行</div>
-                <div class="hub-value">{{ board.overview.done }}</div>
-                <div class="hub-sub">今日完成 · 待办 {{ board.overview.pending }} · 触达率 {{ board.reachRate }}%</div>
+              <div class="hub-title">生命周期执行</div>
+              <div class="hub-value">{{ lifecycleScore }}</div>
+              <div class="hub-sub">今日完成 {{ board.overview.done }} · 执行中 {{ board.overview.inProgress }} · 触达率 {{ board.reachRate }}%</div>
             </div>
             <div ref="serviceRingRef" class="hub-ring"></div>
+            <div class="lifecycle-steps">
+              <div class="step">
+                <span class="step-dot"></span>
+                <span class="step-name">方案生成</span>
+                <span class="step-val">{{ todayNewCount }}</span>
+              </div>
+              <div class="step">
+                <span class="step-dot"></span>
+                <span class="step-name">任务分派</span>
+                <span class="step-val">{{ Math.max(0, board.overview.total - board.overview.pending) }}</span>
+              </div>
+              <div class="step">
+                <span class="step-dot"></span>
+                <span class="step-name">服务执行</span>
+                <span class="step-val">{{ board.overview.inProgress }}</span>
+              </div>
+              <div class="step">
+                <span class="step-dot"></span>
+                <span class="step-name">闭环反馈</span>
+                <span class="step-val">{{ board.overview.done }}</span>
+              </div>
+              <div class="step">
+                <span class="step-dot warn"></span>
+                <span class="step-name">再评估</span>
+                <span class="step-val">{{ board.overview.overdue }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </article>
@@ -66,8 +102,8 @@
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">服务频次与触达分布</div>
-            <div class="card-subtitle">近时段执行变化与地区活跃度</div>
+            <div class="card-title">执行趋势与地区触达</div>
+            <div class="card-subtitle">近 24 小时 · 活跃度分布</div>
           </div>
         </div>
         <div class="card-body center-bottom">
@@ -87,12 +123,25 @@
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">上门服务触达</div>
-            <div class="card-subtitle">触达与完成</div>
+            <div class="card-title">热门干预方案 TOP</div>
+            <div class="card-subtitle">热度与有效性</div>
           </div>
         </div>
         <div class="card-body">
-          <div ref="reachGaugeRef" class="chart"></div>
+          <div class="hot-list">
+            <div v-for="(item, idx) in hotPlanRows" :key="item.name" class="hot-item">
+              <div class="hot-rank">{{ String(idx + 1).padStart(2, '0') }}</div>
+              <div class="hot-main">
+                <div class="hot-head">
+                  <span class="hot-name">{{ item.name }}</span>
+                  <span class="hot-meta">执行 {{ item.value }} 次</span>
+                </div>
+                <div class="hot-track">
+                  <div class="hot-bar" :style="{ width: `${item.ratio}%` }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </article>
 
@@ -100,23 +149,11 @@
         <div class="card-head">
           <div class="card-titlebar">
             <div class="card-title">最新服务动态</div>
-            <div class="card-subtitle">任务执行流</div>
+            <div class="card-subtitle">触达 · 执行 · 反馈</div>
           </div>
         </div>
         <div class="card-body">
           <EventTicker :items="events" />
-        </div>
-      </article>
-
-      <article class="frost-card">
-        <div class="card-head">
-          <div class="card-titlebar">
-            <div class="card-title">热门干预方案前五</div>
-            <div class="card-subtitle">执行热度与有效性</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <div ref="hotPlanRef" class="chart"></div>
         </div>
       </article>
     </aside>
@@ -124,10 +161,9 @@
 </template>
 
 <script setup lang="ts">
-import { onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { init, type ECharts } from '../utils/echarts'
 import EventTicker from '../components/EventTicker.vue'
-import StatCard from '../components/StatCard.vue'
 import { axisStyle, baseGrid, tooltipStyle } from '../utils/chartTheme'
 import { fetchInterventionBoardData } from '../api'
 import { rafThrottle } from '../utils/perf'
@@ -155,20 +191,57 @@ const board = ref<BoardData>({
 })
 const events = ref<Array<{ id: string | number; title: string; time: string }>>([])
 
+const todayNewCount = computed(() => Number((board.value as any)?.todayNew ?? board.value.overview.total ?? 0) || 0)
+const todayNewDeltaText = computed(() => {
+  const delta = Number((board.value as any)?.todayNewDelta ?? ((board.value.overview.overdue || 0) > 0 ? -0.02 : 0.04))
+  const pct = Math.round(delta * 1000) / 10
+  return `${pct > 0 ? '+' : ''}${pct}%`
+})
+const executingCount = computed(() => Number((board.value as any)?.executing ?? board.value.overview.inProgress ?? 0) || 0)
+const avgResponseText = computed(() => {
+  const minutes = Number((board.value as any)?.avgResponseMinutes ?? (board.value as any)?.avgResponseMins ?? NaN)
+  if (Number.isFinite(minutes) && minutes > 0) return `${minutes.toFixed(1)} 分钟`
+  const fallback = Math.max(6, Math.min(45, 30 - Math.round(board.value.reachRate / 5)))
+  return `${fallback.toFixed(1)} 分钟`
+})
+const lifecycleScore = computed(() => {
+  const total = Math.max(1, board.value.overview.total || 0)
+  const done = Math.max(0, board.value.overview.done || 0)
+  const overdue = Math.max(0, board.value.overview.overdue || 0)
+  const score = Math.max(0, Math.min(99.9, (done / total) * 90 + (1 - overdue / total) * 10))
+  return score.toFixed(1)
+})
+
+const typeDistRows = computed(() => {
+  const rows = board.value.typeDist?.length
+    ? board.value.typeDist
+    : [
+        { name: '远程随访', value: 0 },
+        { name: '门诊干预', value: 0 },
+        { name: '紧急送诊', value: 0 }
+      ]
+  const palette = ['#006760', '#24646f', '#006762', '#6f7879']
+  return rows.slice(0, 4).map((x, idx) => ({ ...x, color: palette[idx] }))
+})
+
+const hotPlanRows = computed(() => {
+  const rows = board.value.hotPlans?.length ? board.value.hotPlans : [{ name: '综合随访', value: 0 }]
+  const max = Math.max(1, ...rows.map((x) => Number(x.value || 0)))
+  return rows.slice(0, 5).map((x) => ({
+    name: x.name,
+    value: x.value,
+    ratio: Math.max(10, Math.round((Number(x.value || 0) / max) * 100))
+  }))
+})
+
 const planTypeRef = ref<HTMLElement | null>(null)
-const leftAreaRef = ref<HTMLElement | null>(null)
-const hotPlanRef = ref<HTMLElement | null>(null)
 const serviceRingRef = ref<HTMLElement | null>(null)
 const serviceTrendRef = ref<HTMLElement | null>(null)
-const reachGaugeRef = ref<HTMLElement | null>(null)
 const areaRef = ref<HTMLElement | null>(null)
 
 let planTypeChart: ECharts | null = null
-let leftAreaChart: ECharts | null = null
-let hotPlanChart: ECharts | null = null
 let serviceRingChart: ECharts | null = null
 let serviceTrendChart: ECharts | null = null
-let reachGaugeChart: ECharts | null = null
 let areaChart: ECharts | null = null
 
 let activeAlive = false
@@ -176,7 +249,7 @@ let activeAlive = false
 function buildPlanType() {
   if (!planTypeRef.value) return
   if (!planTypeChart) planTypeChart = init(planTypeRef.value)
-  const data = board.value.typeDist.length ? board.value.typeDist : [{ name: '综合随访', value: 1 }]
+  const data = typeDistRows.value.length ? typeDistRows.value : [{ name: '远程随访', value: 1 }]
   planTypeChart.setOption({
     tooltip: { trigger: 'item', ...tooltipStyle() },
     series: [
@@ -185,42 +258,10 @@ function buildPlanType() {
         radius: ['50%', '78%'],
         center: ['50%', '50%'],
         label: { color: 'rgba(20,52,79,0.96)', fontWeight: 800, formatter: '{b}\n{d}%' },
-        itemStyle: { borderColor: 'rgba(114,180,205,0.22)', borderWidth: 2 },
+        itemStyle: { borderColor: 'rgba(114,180,205,0.18)', borderWidth: 1 },
         data
       }
     ]
-  })
-}
-
-function buildHotPlan() {
-  if (!hotPlanRef.value) return
-  if (!hotPlanChart) hotPlanChart = init(hotPlanRef.value)
-  const rows = board.value.hotPlans.length ? board.value.hotPlans : [{ name: '综合随访', value: 1 }]
-  const names = rows.map((x) => x.name)
-  const vals = rows.map((x) => x.value)
-  const axis = axisStyle()
-  hotPlanChart.setOption({
-    tooltip: tooltipStyle(),
-    grid: { left: 90, right: 18, top: 18, bottom: 10 },
-    xAxis: { type: 'value', ...axis },
-    yAxis: { type: 'category', data: names, axisLabel: { color: 'rgba(39,85,113,0.92)' }, axisLine: axis.axisLine },
-    series: [{ type: 'bar', data: vals, barWidth: 14, itemStyle: { color: '#7fd6e3', borderRadius: [0, 8, 8, 0] } }]
-  })
-}
-
-function buildLeftArea() {
-  if (!leftAreaRef.value) return
-  if (!leftAreaChart) leftAreaChart = init(leftAreaRef.value)
-  const rows = board.value.areaDist.length ? board.value.areaDist : [{ name: '未知区域', value: 0 }]
-  const names = rows.map((x) => x.name)
-  const vals = rows.map((x) => x.value)
-  const axis = axisStyle()
-  leftAreaChart.setOption({
-    tooltip: tooltipStyle(),
-    grid: { left: 80, right: 18, top: 18, bottom: 10 },
-    xAxis: { type: 'value', ...axis },
-    yAxis: { type: 'category', data: names, axisLabel: { color: 'rgba(39,85,113,0.92)' }, axisLine: axis.axisLine },
-    series: [{ type: 'bar', data: vals, barWidth: 14, itemStyle: { color: '#9ea9e6', borderRadius: [0, 8, 8, 0] } }]
   })
 }
 
@@ -235,7 +276,7 @@ function buildServiceRing() {
         radius: ['62%', '86%'],
         center: ['50%', '50%'],
         label: { show: false },
-        itemStyle: { borderColor: 'rgba(114,180,205,0.22)', borderWidth: 2 },
+        itemStyle: { borderColor: 'rgba(245,252,255,0.46)', borderWidth: 1 },
         data: [
           { name: '待执行', value: board.value.overview.pending },
           { name: '执行中', value: board.value.overview.inProgress },
@@ -273,29 +314,6 @@ function buildServiceTrend() {
   })
 }
 
-function buildReachGauge() {
-  if (!reachGaugeRef.value) return
-  if (!reachGaugeChart) reachGaugeChart = init(reachGaugeRef.value)
-  reachGaugeChart.setOption({
-    series: [
-      {
-        type: 'gauge',
-        startAngle: 210,
-        endAngle: -30,
-        progress: { show: true, width: 10 },
-        axisLine: { lineStyle: { width: 10, color: [[1, 'rgba(114,180,205,0.32)']] } },
-        splitLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { show: false },
-        pointer: { show: false },
-        detail: { valueAnimation: true, formatter: '{value}%', color: 'rgba(20,52,79,0.96)', fontSize: 22, fontWeight: 900 },
-        title: { color: 'rgba(39,85,113,0.92)', fontSize: 12, offsetCenter: [0, '58%'] },
-        data: [{ value: board.value.reachRate, name: '触达率' }]
-      }
-    ]
-  })
-}
-
 function buildArea() {
   if (!areaRef.value) return
   if (!areaChart) areaChart = init(areaRef.value)
@@ -315,11 +333,8 @@ function buildArea() {
 function resizeAll() {
   if (!activeAlive) return
   planTypeChart?.resize()
-  leftAreaChart?.resize()
-  hotPlanChart?.resize()
   serviceRingChart?.resize()
   serviceTrendChart?.resize()
-  reachGaugeChart?.resize()
   areaChart?.resize()
 }
 
@@ -343,11 +358,8 @@ onMounted(async () => {
   activeAlive = true
   await loadBoard()
   buildPlanType()
-  buildLeftArea()
-  buildHotPlan()
   buildServiceRing()
   buildServiceTrend()
-  buildReachGauge()
   buildArea()
   window.addEventListener('resize', onResize)
 })
@@ -356,18 +368,12 @@ onUnmounted(() => {
   activeAlive = false
   window.removeEventListener('resize', onResize)
   planTypeChart?.dispose()
-  leftAreaChart?.dispose()
-  hotPlanChart?.dispose()
   serviceRingChart?.dispose()
   serviceTrendChart?.dispose()
-  reachGaugeChart?.dispose()
   areaChart?.dispose()
   planTypeChart = null
-  leftAreaChart = null
-  hotPlanChart = null
   serviceRingChart = null
   serviceTrendChart = null
-  reachGaugeChart = null
   areaChart = null
 })
 
@@ -376,11 +382,8 @@ onActivated(() => {
   window.addEventListener('resize', onResize)
   void loadBoard().then(() => {
     buildPlanType()
-    buildLeftArea()
-    buildHotPlan()
     buildServiceRing()
     buildServiceTrend()
-    buildReachGauge()
     buildArea()
     onResize()
   })
@@ -418,12 +421,13 @@ onDeactivated(() => {
 
 .stitch-col:first-child > .frost-card:nth-child(1) { flex: 0.96 1 0; }
 .stitch-col:first-child > .frost-card:nth-child(2) { flex: 1.02 1 0; }
-.stitch-col:first-child > .frost-card:nth-child(3) { flex: 1.02 1 0; }
 .stitch-center > .frost-card:nth-child(1) { flex: 1.24 1 0; }
 .stitch-center > .frost-card:nth-child(2) { flex: 0.76 1 0; }
 .stitch-col:last-child > .frost-card:nth-child(1) { flex: 1 1 0; }
 .stitch-col:last-child > .frost-card:nth-child(2) { flex: 1.26 1 0; }
-.stitch-col:last-child > .frost-card:nth-child(3) { flex: 0.94 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(2) { flex: 1.04 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1.15 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(2) { flex: 1.35 1 0; }
 
 .chart {
   height: 100%;
@@ -465,13 +469,204 @@ onDeactivated(() => {
   place-items: center;
 }
 
+.lifecycle-steps {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  width: 180px;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.46);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.step {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(15, 142, 133, 0.9);
+}
+
+.step-dot.warn {
+  background: rgba(179, 27, 37, 0.9);
+}
+
+.step-name {
+  font-size: 11px;
+  color: rgba(39, 85, 113, 0.92);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.step-val {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(22, 97, 107, 0.98);
+}
+
+.plan-overview {
+  display: grid;
+  gap: 10px;
+}
+
+.metric-card {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.metric-label {
+  font-size: 11px;
+  color: rgba(92, 130, 156, 0.86);
+  white-space: nowrap;
+}
+
+.metric-value {
+  margin-top: 6px;
+  font-size: 30px;
+  line-height: 1;
+  font-weight: 900;
+  color: rgba(22, 97, 107, 0.98);
+  white-space: nowrap;
+}
+
+.metric-sub {
+  margin-top: 6px;
+  font-size: 10px;
+  color: rgba(92, 130, 156, 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.type-dist {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 10px;
+}
+
+.type-chart {
+  min-height: 0;
+}
+
+.type-list {
+  min-height: 0;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+}
+
+.type-row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.type-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.type-name {
+  font-size: 11px;
+  color: rgba(39, 85, 113, 0.92);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.type-count {
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(22, 97, 107, 0.98);
+  white-space: nowrap;
+}
+
+.hot-list {
+  display: grid;
+  gap: 10px;
+}
+
+.hot-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.hot-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(115, 241, 228, 0.22);
+  color: rgba(22, 97, 107, 0.98);
+  font-weight: 900;
+  font-size: 11px;
+}
+
+.hot-main {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hot-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.hot-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(33, 75, 103, 0.96);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hot-meta {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: rgba(92, 130, 156, 0.82);
+}
+
+.hot-track {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(114, 180, 205, 0.18);
+}
+
+.hot-bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(0, 103, 96, 0.9), rgba(95, 199, 216, 0.88));
+}
+
 .hub {
   position: absolute;
   width: 230px;
   height: 230px;
   border-radius: 999px;
   background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.76) 58%, rgba(140, 188, 227, 0.25));
-  border: 1px solid rgba(114, 180, 205, 0.2);
+  border: 1px solid rgba(114, 180, 205, 0.08);
   box-shadow: 0 10px 22px rgba(95, 199, 216, 0.14);
   display: flex;
   flex-direction: column;
@@ -554,6 +749,8 @@ onDeactivated(() => {
     height: 210px;
   }
   .hub-value { font-size: 33px; }
+  .metric-value { font-size: 26px; }
+  .lifecycle-steps { width: 168px; }
 }
 
 </style>
