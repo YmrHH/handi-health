@@ -453,29 +453,6 @@ onDeactivated(() => {
 </script>
 
 <style scoped>
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
-  gap: 12px;
-  height: 100%;
-  min-height: 0;
-}
-
-.col {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-}
-
-.col :deep(.panel) {
-  flex: 1;
-  min-height: 0;
-}
-
-.chart {
-  height: 210px;
-}
 
 .flow-stage {
   display: grid;

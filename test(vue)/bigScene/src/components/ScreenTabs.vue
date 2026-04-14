@@ -28,8 +28,8 @@ defineEmits<{ (e: 'update:modelValue', v: string): void }>()
   gap: 4px;
   padding: 3px 4px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.38), rgba(247, 252, 255, 0.24));
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(247, 252, 255, 0.18));
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -37,7 +37,7 @@ defineEmits<{ (e: 'update:modelValue', v: string): void }>()
 .tab-btn {
   padding: 4px 11px;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 550;
   letter-spacing: 0.02em;
   line-height: 1.1;
   white-space: nowrap;
@@ -46,10 +46,10 @@ defineEmits<{ (e: 'update:modelValue', v: string): void }>()
 }
 
 .tab-btn.active {
-  background: linear-gradient(135deg, rgba(95, 199, 216, 0.24), rgba(255, 255, 255, 0.72));
-  border-color: rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, rgba(95, 199, 216, 0.16), rgba(255, 255, 255, 0.58));
+  border-color: rgba(255, 255, 255, 0.14);
   color: rgba(27, 91, 120, 0.98);
-  box-shadow: 0 8px 16px rgba(79, 209, 197, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  box-shadow: 0 6px 12px rgba(79, 209, 197, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 </style>
 

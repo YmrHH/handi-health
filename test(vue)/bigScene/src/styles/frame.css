@@ -23,9 +23,9 @@
   justify-content: space-between;
   backdrop-filter: blur(calc(var(--blur-soft) + 2px));
   -webkit-backdrop-filter: blur(calc(var(--blur-soft) + 2px));
-  background: linear-gradient(180deg, rgba(250, 254, 255, 0.38), rgba(246, 252, 255, 0.20));
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 24px rgba(79, 209, 197, 0.05);
+  background: linear-gradient(180deg, rgba(250, 254, 255, 0.32), rgba(246, 252, 255, 0.14));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 20px rgba(79, 209, 197, 0.03);
 }
 
 .header-title {

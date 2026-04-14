@@ -444,25 +444,6 @@ onDeactivated(() => {
 </script>
 
 <style scoped>
-.layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 2.35fr) minmax(0, 1fr);
-  gap: 12px;
-  height: 100%;
-  min-height: 0;
-}
-
-.col {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-height: 0;
-}
-
-.col :deep(.panel) {
-  flex: 1;
-  min-height: 0;
-}
 
 .chart {
   height: 100%;
@@ -598,22 +579,22 @@ onDeactivated(() => {
 .action-btn {
   height: 32px;
   border-radius: 10px;
-  border: 1px solid transparent;
+  border: 1px solid rgba(255, 255, 255, 0.22);
   padding: 0 14px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
 }
 
 .action-btn-primary {
-  color: #fff;
-  background: linear-gradient(135deg, #0f8e85, #0b7a72);
+  color: rgba(39, 85, 113, 0.9);
+  background: rgba(255, 255, 255, 0.52);
 }
 
 .action-btn-muted {
-  color: rgba(39, 85, 113, 0.94);
-  background: rgba(214, 227, 233, 0.72);
-  border-color: rgba(114, 180, 205, 0.2);
+  color: rgba(92, 130, 156, 0.88);
+  background: rgba(246, 252, 255, 0.62);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 
 .insight-notes {

@@ -8,8 +8,8 @@
   --glass: rgba(255, 255, 255, 0.62);
   --glass-2: rgba(247, 252, 255, 0.84);
   --glass-3: rgba(255, 255, 255, 0.42);
-  --glass-stroke: rgba(255, 255, 255, 0.16);
-  --glass-stroke-2: rgba(114, 180, 205, 0.1);
+  --glass-stroke: rgba(255, 255, 255, 0.1);
+  --glass-stroke-2: rgba(114, 180, 205, 0.07);
   --blur-strong: 20px;
   --blur: 16px;
   --blur-soft: 12px;
@@ -35,8 +35,8 @@
   --c-success: #78c4a0;
 
   /* Borders / glow */
-  --bd: rgba(114, 180, 205, 0.2);
-  --bd-2: rgba(140, 188, 227, 0.18);
+  --bd: rgba(114, 180, 205, 0.12);
+  --bd-2: rgba(140, 188, 227, 0.1);
   --glow: 0 0 18px rgba(95, 199, 216, 0.16);
   --glow-strong: 0 0 28px rgba(95, 199, 216, 0.22);
   --shadow: 0 18px 42px rgba(116, 153, 182, 0.18);
@@ -84,9 +84,9 @@ body {
 
 .glass {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(244, 251, 255, 0.40));
-  border: 1px solid var(--glass-stroke-2);
+  border: 1px solid var(--glass-stroke);
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
-  box-shadow: var(--shadow-soft), var(--shadow-frost);
+  box-shadow: var(--shadow-soft);
 }
 

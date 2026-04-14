@@ -2,9 +2,7 @@
   <footer class="screen-footer">
     <div class="footer-left">
       <span class="footer-brand">© {{ year }} {{ brand }}</span>
-      <span class="footer-divider"></span>
       <span class="footer-page">{{ pageLabel }}</span>
-      <span class="footer-divider"></span>
       <span class="footer-status">
         <span class="status-dot" :class="statusToneClass"></span>
         <span>{{ statusText }}</span>
@@ -67,11 +65,11 @@ const statusToneClass = computed(() => {
   justify-content: space-between;
   gap: 10px;
   padding: 8px var(--canvas-pad-x) calc(8px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.24);
   backdrop-filter: blur(var(--blur-soft));
   -webkit-backdrop-filter: blur(var(--blur-soft));
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 -8px 20px rgba(79, 209, 197, 0.05);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 -6px 16px rgba(79, 209, 197, 0.03);
   color: rgba(39, 85, 113, 0.92);
   font-size: 11px;
   letter-spacing: 0.02em;
@@ -81,7 +79,7 @@ const statusToneClass = computed(() => {
 .footer-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   min-width: 0;
   flex-shrink: 0;
 }
@@ -124,12 +122,6 @@ const statusToneClass = computed(() => {
 }
 .status-dot.is-danger {
   background: var(--c-danger);
-}
-
-.footer-divider {
-  width: 1px;
-  height: 12px;
-  background: rgba(114, 180, 205, 0.12);
 }
 
 </style>

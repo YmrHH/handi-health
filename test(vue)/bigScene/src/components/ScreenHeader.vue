@@ -54,8 +54,8 @@ onUnmounted(() => {
 
 .brand {
   margin: 0;
-  font-size: 14px;
-  font-weight: 650;
+  font-size: 13px;
+  font-weight: 620;
   letter-spacing: 0.01em;
   background: linear-gradient(90deg, rgba(32, 82, 110, 0.98), rgba(46, 113, 140, 0.96), rgba(95, 199, 216, 0.92));
   -webkit-background-clip: text;

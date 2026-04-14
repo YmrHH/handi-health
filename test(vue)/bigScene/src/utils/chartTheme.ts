@@ -6,31 +6,31 @@ export function baseGrid() {
 
 export function axisStyle() {
   return {
-    axisLine: { show: false, lineStyle: { color: 'rgba(114,180,205,0.2)' } },
+    axisLine: { show: false, lineStyle: { color: 'rgba(114,180,205,0.12)' } },
     axisTick: { show: false },
-    axisLabel: { color: 'rgba(92,130,156,0.88)', fontSize: 11 },
-    splitLine: { lineStyle: { color: 'rgba(114,180,205,0.1)' } }
+    axisLabel: { color: 'rgba(92,130,156,0.8)', fontSize: 10 },
+    splitLine: { lineStyle: { color: 'rgba(114,180,205,0.07)' } }
   }
 }
 
 export function tooltipStyle(): EChartsOption['tooltip'] {
   return {
     trigger: 'axis',
-    backgroundColor: 'rgba(250,254,255,0.9)',
-    borderColor: 'rgba(255,255,255,0.22)',
+    backgroundColor: 'rgba(248,253,255,0.82)',
+    borderColor: 'rgba(255,255,255,0.12)',
     borderWidth: 0,
     padding: [8, 10],
-    textStyle: { color: 'rgba(39,85,113,0.92)', fontSize: 11 },
-    extraCssText: 'backdrop-filter: blur(12px);-webkit-backdrop-filter: blur(12px);box-shadow:0 12px 28px rgba(0,103,96,0.08);border-radius:10px;'
+    textStyle: { color: 'rgba(39,85,113,0.9)', fontSize: 10 },
+    extraCssText: 'backdrop-filter: blur(10px);-webkit-backdrop-filter: blur(10px);box-shadow:0 10px 22px rgba(79,153,182,0.08);border-radius:10px;'
   }
 }
 
 export function legendStyle(): EChartsOption['legend'] {
   return {
     bottom: 0,
-    itemWidth: 10,
-    itemHeight: 6,
-    textStyle: { color: 'rgba(92,130,156,0.88)', fontSize: 10 }
+    itemWidth: 8,
+    itemHeight: 5,
+    textStyle: { color: 'rgba(92,130,156,0.78)', fontSize: 9 }
   }
 }
 
