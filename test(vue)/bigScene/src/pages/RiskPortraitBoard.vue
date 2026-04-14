@@ -4,24 +4,29 @@
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">年龄结构</div>
-            <div class="card-subtitle">高危人群年龄段</div>
+            <div class="card-title">慢性病病种排行</div>
+            <div class="card-subtitle">重点慢病分布</div>
           </div>
         </div>
         <div class="card-body">
-          <div ref="ageRef" class="chart"></div>
+          <div ref="diseaseRef" class="chart"></div>
         </div>
       </article>
 
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">性别占比</div>
-            <div class="card-subtitle">患者档案聚合</div>
+            <div class="card-title">中医体质/证型分布</div>
+            <div class="card-subtitle">体质与证型聚合</div>
           </div>
         </div>
         <div class="card-body">
-          <div ref="genderRef" class="chart"></div>
+          <div class="constitution-list">
+            <div v-for="item in constitutionRows" :key="item.name" class="constitution-item">
+              <p class="constitution-name">{{ item.name }}</p>
+              <p class="constitution-value">{{ item.ratio }}%</p>
+            </div>
+          </div>
         </div>
       </article>
     </aside>
@@ -45,43 +50,53 @@
           </div>
         </div>
       </article>
-
-      <article class="frost-card">
-        <div class="card-head">
-          <div class="card-titlebar">
-            <div class="card-title">重点患者动态</div>
-            <div class="card-subtitle">事件流</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <EventTicker :items="events" />
-        </div>
-      </article>
     </section>
 
     <aside class="stitch-col screen-col">
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">病种排行</div>
-            <div class="card-subtitle">前八病种</div>
+            <div class="card-title">人群画像洞察</div>
+            <div class="card-subtitle">年龄梯队与性别结构</div>
           </div>
         </div>
-        <div class="card-body">
-          <div ref="diseaseRef" class="chart"></div>
+        <div class="card-body portrait-insight">
+          <div class="gender-overview">
+            <div class="gender-head">
+              <span>性别比例（男/女）</span>
+              <strong>{{ genderRatioText }}</strong>
+            </div>
+            <div class="gender-track">
+              <div class="gender-bar male" :style="{ width: `${maleRatio}%` }"></div>
+              <div class="gender-bar female" :style="{ width: `${femaleRatio}%` }"></div>
+            </div>
+          </div>
+          <div class="age-overview">
+            <div class="age-title">年龄梯队分布</div>
+            <div ref="ageRef" class="chart age-chart"></div>
+          </div>
         </div>
       </article>
 
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">体质 / 证型分布</div>
-            <div class="card-subtitle">画像结构</div>
+            <div class="card-title">重点患者动态监控</div>
+            <div class="card-subtitle">风险等级与监测变化</div>
           </div>
         </div>
         <div class="card-body">
-          <div class="chip-grid">
-            <div v-for="item in constitutionTags" :key="item" class="chip">{{ item }}</div>
+          <div class="monitor-list">
+            <div v-for="item in monitorRows" :key="item.id" class="monitor-item">
+              <div class="monitor-main">
+                <div class="monitor-name">{{ item.name }}</div>
+                <div class="monitor-metric">{{ item.metric }}</div>
+              </div>
+              <div class="monitor-side">
+                <span class="risk-tag" :class="item.levelClass">{{ item.levelText }}</span>
+                <span class="monitor-time">{{ item.time }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </article>
@@ -115,8 +130,7 @@
 <script setup lang="ts">
 import { computed, onActivated, onDeactivated, onMounted, onUnmounted, ref } from 'vue'
 import { init, type ECharts } from '../utils/echarts'
-import EventTicker from '../components/EventTicker.vue'
-import { axisStyle, baseGrid, legendStyle, tooltipStyle } from '../utils/chartTheme'
+import { axisStyle, baseGrid, tooltipStyle } from '../utils/chartTheme'
 import { fetchAlerts, fetchHomeStats, fetchPatientRiskList, fetchPatientSummary, fetchReportBoard } from '../api'
 import { rafThrottle } from '../utils/perf'
 
@@ -126,15 +140,22 @@ const mid = ref(0)
 const low = ref(0)
 const topDiseaseCount = ref(0)
 const activeAlertPatients = ref(0)
-const boardData = ref<any>({})
 const adviceCoverage = ref(0)
+const maleCount = ref(0)
+const femaleCount = ref(0)
+const ageBuckets = ref<{ label: string; value: number }[]>([
+  { label: '0-44', value: 0 },
+  { label: '45-59', value: 0 },
+  { label: '60-74', value: 0 },
+  { label: '75+', value: 0 }
+])
 
 const highRatio = computed(() => {
   if (!total.value) return '0.0%'
   return `${((high.value / total.value) * 100).toFixed(1)}%`
 })
 
-const constitutionTags = computed(() => {
+const constitutionRows = computed(() => {
   const map = new Map<string, number>()
   const rows = patientList.value || []
   rows.forEach((row: any) => {
@@ -156,25 +177,56 @@ const constitutionTags = computed(() => {
   })
   const rowsTop = Array.from(map.entries())
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([name]) => name)
-  return rowsTop.length ? rowsTop : ['气虚', '痰湿', '阴虚', '湿热', '血瘀', '阳虚']
+    .slice(0, 4)
+  const sum = rowsTop.reduce((acc, [, count]) => acc + count, 0) || 1
+  const fallback = [
+    { name: '气虚质', ratio: 24.5 },
+    { name: '阳虚质', ratio: 18.2 },
+    { name: '痰湿质', ratio: 15.8 },
+    { name: '平和质', ratio: 12.4 }
+  ]
+  if (!rowsTop.length) return fallback
+  return rowsTop.map(([name, count]) => ({
+    name,
+    ratio: Number(((count / sum) * 100).toFixed(1))
+  }))
 })
 
 const events = ref<Array<{ id: string; title: string; time: string }>>([])
 const patientList = ref<any[]>([])
+const monitorRows = computed(() =>
+  events.value.slice(0, 4).map((item) => {
+    const namePart = item.title.split('·')[1]?.trim() || '重点患者'
+    const metricPart = item.title.split('·').slice(2).join('·').trim() || '风险链路监测中'
+    const upper = item.title.toUpperCase()
+    const levelClass = upper.includes('HIGH') || item.title.includes('高') ? 'high' : upper.includes('MID') || item.title.includes('中') ? 'mid' : 'low'
+    return {
+      id: item.id,
+      name: namePart,
+      metric: metricPart,
+      time: item.time || '实时',
+      levelText: levelClass === 'high' ? '高风险' : levelClass === 'mid' ? '中风险' : '低风险',
+      levelClass
+    }
+  })
+)
+
+const maleRatio = computed(() => {
+  const sum = maleCount.value + femaleCount.value
+  if (!sum) return 50
+  return Math.round((maleCount.value / sum) * 100)
+})
+
+const femaleRatio = computed(() => 100 - maleRatio.value)
+const genderRatioText = computed(() => `${maleRatio.value}:${femaleRatio.value}`)
 
 const ageRef = ref<HTMLElement | null>(null)
-const genderRef = ref<HTMLElement | null>(null)
 const diseaseRef = ref<HTMLElement | null>(null)
 const portraitRef = ref<HTMLElement | null>(null)
-const adviceRef = ref<HTMLElement | null>(null)
 
 let ageChart: ECharts | null = null
-let genderChart: ECharts | null = null
 let diseaseChart: ECharts | null = null
 let portraitChart: ECharts | null = null
-let adviceChart: ECharts | null = null
 
 let activeAlive = false
 
@@ -221,22 +273,22 @@ function pickDiseaseName(row: any) {
 function buildAge(list: any[]) {
   if (!ageRef.value) return
   if (!ageChart) ageChart = init(ageRef.value)
-  const highList = list.filter((r: any) => String(r.riskLevel || '').toUpperCase().includes('HIGH'))
   const buckets: Record<string, number> = { '0-44': 0, '45-59': 0, '60-74': 0, '75+': 0 }
-  highList.forEach((r: any) => {
+  list.forEach((r: any) => {
     const age = Number(r.age || 0)
     if (age >= 75) buckets['75+']++
     else if (age >= 60) buckets['60-74']++
     else if (age >= 45) buckets['45-59']++
     else buckets['0-44']++
   })
+  ageBuckets.value = Object.entries(buckets).map(([label, value]) => ({ label, value }))
   const axis = axisStyle()
   ageChart.setOption({
     tooltip: tooltipStyle(),
-    grid: baseGrid(),
+    grid: { ...baseGrid(), left: 10, right: 8, top: 8, bottom: 18 },
     xAxis: { type: 'category', data: Object.keys(buckets), ...axis },
     yAxis: { type: 'value', ...axis },
-  series: [{ type: 'bar', data: Object.values(buckets), barWidth: 16, itemStyle: { color: '#ee8d99', borderRadius: [6, 6, 0, 0] } }]
+    series: [{ type: 'bar', data: Object.values(buckets), barWidth: 14, itemStyle: { color: '#4da9b6', borderRadius: [6, 6, 0, 0] } }]
   })
 }
 
@@ -248,12 +300,7 @@ function normalizeGender(v: any) {
   return '未知'
 }
 
-function buildGender(list: any[]) {
-  if (!genderRef.value) return
-  if (!genderChart) genderChart = init(genderRef.value)
-  const w = genderRef.value.clientWidth || 320
-  const fontSize = Math.max(10, Math.min(14, Math.round(w / 26)))
-  const labelWidth = Math.max(56, Math.min(96, Math.round(w / 4.6)))
+function collectGender(list: any[]) {
   const by: Record<string, number> = { 男: 0, 女: 0 }
   list.forEach((r: any) => {
     const g = normalizeGender(r.gender)
@@ -261,51 +308,8 @@ function buildGender(list: any[]) {
       by[g] = (by[g] || 0) + 1
     }
   })
-  genderChart.setOption({
-    // 显式绑定每个扇区颜色，确保标签颜色严格一致
-    tooltip: { trigger: 'item' },
-    series: [
-      {
-        type: 'pie',
-        radius: ['52%', '80%'],
-        center: ['50%', '45%'],
-        label: {
-          show: true,
-          position: 'outside',
-          formatter: (p: any) => `${p.name}\n${p.value}`,
-          color: (p: any) => (p?.data?.itemStyle?.color as string) || (p?.color as string) || 'rgba(20,52,79,0.96)',
-          fontSize,
-          fontWeight: 800,
-          lineHeight: Math.round(fontSize * 1.25),
-          width: labelWidth,
-          overflow: 'break'
-        },
-        emphasis: {
-          // 防止 hover 时标签颜色发生变化
-          label: {
-            color: (p: any) =>
-              (p?.data?.itemStyle?.color as string) || (p?.color as string) || 'rgba(20,52,79,0.96)',
-            fontWeight: 800
-          },
-          labelLine: {
-            lineStyle: { color: 'rgba(114,180,205,0.35)', width: 1 }
-          }
-        },
-        labelLine: {
-          show: true,
-          length: 18,
-          length2: 14,
-          smooth: false,
-          lineStyle: { color: 'rgba(114,180,205,0.35)', width: 1 }
-        },
-        itemStyle: { borderColor: 'rgba(114,180,205,0.24)', borderWidth: 2 },
-        data: [
-          { name: '男', value: by['男'] || 0, itemStyle: { color: '#7fd6e3' } },
-          { name: '女', value: by['女'] || 0, itemStyle: { color: '#9ea9e6' } }
-        ]
-      }
-    ]
-  })
+  maleCount.value = by['男'] || 0
+  femaleCount.value = by['女'] || 0
 }
 
 function buildDisease(list: any[]) {
@@ -369,43 +373,19 @@ function buildPortrait() {
   })
 }
 
-function buildAdvice(board: any) {
-  if (!adviceRef.value) return
-  if (!adviceChart) adviceChart = init(adviceRef.value)
+function computeAdvice(board: any) {
   const coverage = Number(board?.adviceCoverageRate ?? board?.adviceReachRate ?? board?.reachRate ?? 0)
   const auc = Number(board?.latestAuc || 0) * 100
   const f1 = Number(board?.latestF1 || 0) * 100
   const value = coverage > 0 ? Math.min(100, Math.max(0, coverage)) : Math.max(0, Math.min(100, (auc + f1) / 2))
   adviceCoverage.value = Math.round(value)
-  adviceChart.setOption({
-    series: [
-      {
-        type: 'gauge',
-        startAngle: 210,
-        endAngle: -30,
-        progress: { show: true, width: 10 },
-        axisLine: { lineStyle: { width: 10, color: [[1, 'rgba(114,180,205,0.32)']] } },
-        splitLine: { show: false },
-        axisTick: { show: false },
-        axisLabel: { show: false },
-        pointer: { show: false },
-        detail: { valueAnimation: true, formatter: '{value}%', color: 'rgba(20,52,79,0.96)', fontSize: 20, fontWeight: 900 },
-        title: { color: 'rgba(39,85,113,0.92)', fontSize: 12, offsetCenter: [0, '58%'] },
-        data: [{ value, name: '建议覆盖' }]
-      }
-    ]
-  })
 }
 
 function resizeAll() {
   if (!activeAlive) return
   ageChart?.resize()
-  genderChart?.resize()
   diseaseChart?.resize()
   portraitChart?.resize()
-  adviceChart?.resize()
-  // 标签字体随容器自适应（避免省略号）
-  if (patientList.value.length) buildGender(patientList.value)
 }
 
 const onResize = rafThrottle(() => resizeAll())
@@ -444,11 +424,10 @@ async function loadBoard() {
   }
 
   buildAge(list)
-  buildGender(list)
+  collectGender(list)
   buildDisease(list)
   buildPortrait()
-  boardData.value = board || {}
-  buildAdvice(boardData.value)
+  computeAdvice(board || {})
 }
 
 onMounted(async () => {
@@ -462,15 +441,11 @@ onUnmounted(() => {
   activeAlive = false
   window.removeEventListener('resize', onResize)
   ageChart?.dispose()
-  genderChart?.dispose()
   diseaseChart?.dispose()
   portraitChart?.dispose()
-  adviceChart?.dispose()
   ageChart = null
-  genderChart = null
   diseaseChart = null
   portraitChart = null
-  adviceChart = null
 })
 
 onActivated(() => {
@@ -563,10 +538,9 @@ onDeactivated(() => {
 
 .stitch-col:first-child > .frost-card:nth-child(1) { flex: 1.02 1 0; }
 .stitch-col:first-child > .frost-card:nth-child(2) { flex: 0.98 1 0; }
-.stitch-center > .frost-card:nth-child(1) { flex: 1.2 1 0; }
-.stitch-center > .frost-card:nth-child(2) { flex: 0.8 1 0; }
-.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1.05 1 0; }
-.stitch-col:last-child > .frost-card:nth-child(2) { flex: 0.95 1 0; }
+.stitch-center > .frost-card:nth-child(1) { flex: 1 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1.03 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(2) { flex: 0.97 1 0; }
 
 .coverage-panel {
   grid-column: 1 / -1;
@@ -627,23 +601,165 @@ onDeactivated(() => {
   color: rgba(22, 97, 107, 0.98);
 }
 
-.chip-grid {
+.constitution-list {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
 
-.chip {
-  padding: 10px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.5);
-  color: rgba(39, 85, 113, 0.92);
+.constitution-item {
+  padding: 12px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.46);
+}
+
+.constitution-name {
+  margin: 0;
   font-size: 11px;
-  text-align: center;
+  color: rgba(77, 111, 123, 0.85);
+  white-space: nowrap;
+}
+
+.constitution-value {
+  margin: 4px 0 0;
+  font-size: 28px;
+  line-height: 1;
+  color: rgba(22, 97, 107, 0.95);
+  font-weight: 800;
+}
+
+.portrait-insight {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+.gender-overview {
+  display: grid;
+  gap: 8px;
+}
+
+.gender-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: rgba(39, 85, 113, 0.9);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.gender-head strong {
+  font-size: 18px;
+  color: rgba(22, 97, 107, 0.98);
+}
+
+.gender-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  display: flex;
+}
+
+.gender-bar {
+  height: 100%;
+}
+
+.gender-bar.male {
+  background: #24646f;
+}
+
+.gender-bar.female {
+  background: #e070b3;
+}
+
+.age-overview {
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.age-title {
+  font-size: 11px;
+  color: rgba(92, 130, 156, 0.78);
+  margin-bottom: 6px;
+  white-space: nowrap;
+}
+
+.age-chart {
+  min-height: 0;
+}
+
+.monitor-list {
+  display: grid;
+  gap: 8px;
+}
+
+.monitor-item {
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.46);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.monitor-main,
+.monitor-side {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.monitor-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(33, 75, 103, 0.95);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.monitor-metric {
+  font-size: 11px;
+  color: rgba(77, 111, 123, 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.monitor-side {
+  justify-items: end;
+}
+
+.risk-tag {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.risk-tag.high {
+  color: #fff;
+  background: #f45b5b;
+}
+
+.risk-tag.mid {
+  color: #fff;
+  background: #f3a047;
+}
+
+.risk-tag.low {
+  color: #fff;
+  background: #39a38f;
+}
+
+.monitor-time {
+  font-size: 10px;
+  color: rgba(92, 130, 156, 0.74);
+  white-space: nowrap;
 }
 
 .chart {
