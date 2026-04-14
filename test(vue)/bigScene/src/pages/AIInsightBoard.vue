@@ -1,56 +1,52 @@
 <template>
   <main class="stitch-grid screen-page screen-grid">
     <aside class="stitch-col screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">模型效果与覆盖</div>
-            <div class="panel-subtitle">AUC / F1 / 建议覆盖率</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">模型效果与覆盖</div>
+            <div class="card-subtitle">AUC / F1 / 建议覆盖率</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="kpiRef" class="chart"></div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">近三个月趋势</div>
-            <div class="panel-subtitle">告警 / 随访 / 高危</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">近三个月趋势</div>
+            <div class="card-subtitle">告警 / 随访 / 高危</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="trend3Ref" class="chart chart-tall"></div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">数据来源分布</div>
-            <div class="panel-subtitle">来源结构</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">数据来源分布</div>
+            <div class="card-subtitle">来源结构</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="typeRef" class="chart"></div>
         </div>
-      </section>
+      </article>
     </aside>
 
     <section class="stitch-center screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">AI 趋势中枢</div>
-            <div class="panel-subtitle">多层环与趋势锚点</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">AI 趋势中枢</div>
+            <div class="card-subtitle">多层环与趋势锚点</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="center-stage">
             <div class="hub glow-breath">
               <div class="hub-title">AI 洞察指数</div>
@@ -60,17 +56,16 @@
             <div ref="insightRef" class="hub-ring"></div>
           </div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">病种趋势</div>
-            <div class="panel-subtitle">重点病种走势</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">病种趋势</div>
+            <div class="card-subtitle">重点病种走势</div>
           </div>
         </div>
-        <div class="panel-body insight-center-body">
+        <div class="card-body insight-center-body">
           <div ref="diseaseTrendRef" class="chart chart-tall chart-slim"></div>
           <div class="insight-summary">
             <div class="insight-summary-title">AI 智能洞察中枢</div>
@@ -83,45 +78,42 @@
             </div>
           </div>
         </div>
-      </section>
+      </article>
     </section>
 
     <aside class="stitch-col screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">洞察要点</div>
-            <div class="panel-subtitle">动态摘要</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">洞察要点</div>
+            <div class="card-subtitle">动态摘要</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <EventTicker :items="events" />
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">病种稳定率排行</div>
-            <div class="panel-subtitle">前五病种</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">病种稳定率排行</div>
+            <div class="card-subtitle">前五病种</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="rankRef" class="chart"></div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">重点提示</div>
-            <div class="panel-subtitle">关键判断</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">重点提示</div>
+            <div class="card-subtitle">关键判断</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="insight-notes">
             <div v-for="item in insightNotes" :key="item" class="note">{{ item }}</div>
           </div>
@@ -137,7 +129,7 @@
             </div>
           </div>
         </div>
-      </section>
+      </article>
     </aside>
   </main>
 </template>
@@ -549,20 +541,20 @@ onDeactivated(() => {
   min-height: 0;
 }
 
-.stitch-col .panel,
-.stitch-center .panel {
+.stitch-col .frost-card,
+.stitch-center .frost-card {
   flex: 1;
   min-height: 0;
 }
 
-.stitch-col:first-child > .panel:nth-child(1) { flex: 0.95 1 0; }
-.stitch-col:first-child > .panel:nth-child(2) { flex: 1.15 1 0; }
-.stitch-col:first-child > .panel:nth-child(3) { flex: 0.9 1 0; }
-.stitch-center > .panel:nth-child(1) { flex: 1.18 1 0; }
-.stitch-center > .panel:nth-child(2) { flex: 0.82 1 0; }
-.stitch-col:last-child > .panel:nth-child(1) { flex: 1.05 1 0; }
-.stitch-col:last-child > .panel:nth-child(2) { flex: 0.95 1 0; }
-.stitch-col:last-child > .panel:nth-child(3) { flex: 1 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(1) { flex: 0.95 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(2) { flex: 1.15 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(3) { flex: 0.9 1 0; }
+.stitch-center > .frost-card:nth-child(1) { flex: 1.18 1 0; }
+.stitch-center > .frost-card:nth-child(2) { flex: 0.82 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1.05 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(2) { flex: 0.95 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(3) { flex: 1 1 0; }
 
 .insight-center-body {
   display: flex;
@@ -681,6 +673,50 @@ onDeactivated(() => {
   height: 100%;
   border-radius: 999px;
   background: linear-gradient(90deg, rgba(95, 199, 216, 0.9), rgba(140, 188, 227, 0.9));
+}
+
+.frost-card {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(248, 253, 255, 0.46));
+  box-shadow: 0 16px 34px rgba(0, 103, 96, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.card-head {
+  padding: 10px 14px 8px;
+}
+
+.card-titlebar {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgba(33, 75, 103, 0.96);
+  white-space: nowrap;
+}
+
+.card-subtitle {
+  font-size: 11px;
+  line-height: 1.2;
+  color: rgba(92, 130, 156, 0.76);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-body {
+  flex: 1;
+  min-height: 0;
+  padding: 9px 12px 10px;
+  overflow: hidden;
 }
 
 @media (max-width: 1600px) {

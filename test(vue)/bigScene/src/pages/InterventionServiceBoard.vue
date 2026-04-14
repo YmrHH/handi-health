@@ -1,15 +1,14 @@
 <template>
   <main class="stitch-grid screen-page screen-grid">
     <aside class="stitch-col screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">服务任务总览</div>
-            <div class="panel-subtitle">今日执行与积压</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">服务任务总览</div>
+            <div class="card-subtitle">今日执行与积压</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="stat-grid">
             <StatCard label="今日服务任务" :value="board.overview.total" tone="cyan" />
             <StatCard label="已完成" :value="board.overview.done" tone="success" />
@@ -17,45 +16,42 @@
             <StatCard label="活跃服务人员" :value="board.staffCount" tone="tertiary" />
           </div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">计划类型占比</div>
-            <div class="panel-subtitle">任务结构</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">计划类型占比</div>
+            <div class="card-subtitle">任务结构</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="planTypeRef" class="chart"></div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">服务人员地区分布</div>
-            <div class="panel-subtitle">区域覆盖活跃度</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">服务人员地区分布</div>
+            <div class="card-subtitle">区域覆盖活跃度</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="leftAreaRef" class="chart"></div>
         </div>
-      </section>
+      </article>
     </aside>
 
     <section class="stitch-center screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">服务执行路径盘</div>
-            <div class="panel-subtitle">触达 · 执行 · 达标</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">服务执行路径盘</div>
+            <div class="card-subtitle">触达 · 执行 · 达标</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="center-stage">
             <div class="hub glow-breath">
               <div class="hub-title">服务执行</div>
@@ -65,17 +61,16 @@
             <div ref="serviceRingRef" class="hub-ring"></div>
           </div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">服务频次与触达分布</div>
-            <div class="panel-subtitle">近时段执行变化与地区活跃度</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">服务频次与触达分布</div>
+            <div class="card-subtitle">近时段执行变化与地区活跃度</div>
           </div>
         </div>
-        <div class="panel-body center-bottom">
+        <div class="card-body center-bottom">
           <div class="center-bottom-item">
             <div class="mini-title">24h 服务频次趋势</div>
             <div ref="serviceTrendRef" class="chart chart-tall"></div>
@@ -85,48 +80,45 @@
             <div ref="areaRef" class="chart chart-tall"></div>
           </div>
         </div>
-      </section>
+      </article>
     </section>
 
     <aside class="stitch-col screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">上门服务触达</div>
-            <div class="panel-subtitle">触达与完成</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">上门服务触达</div>
+            <div class="card-subtitle">触达与完成</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="reachGaugeRef" class="chart"></div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">最新服务动态</div>
-            <div class="panel-subtitle">任务执行流</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">最新服务动态</div>
+            <div class="card-subtitle">任务执行流</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <EventTicker :items="events" />
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">热门干预方案前五</div>
-            <div class="panel-subtitle">执行热度与有效性</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">热门干预方案前五</div>
+            <div class="card-subtitle">执行热度与有效性</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="hotPlanRef" class="chart"></div>
         </div>
-      </section>
+      </article>
     </aside>
   </main>
 </template>
@@ -418,20 +410,20 @@ onDeactivated(() => {
   min-height: 0;
 }
 
-.stitch-col .panel,
-.stitch-center .panel {
+.stitch-col .frost-card,
+.stitch-center .frost-card {
   flex: 1;
   min-height: 0;
 }
 
-.stitch-col:first-child > .panel:nth-child(1) { flex: 0.96 1 0; }
-.stitch-col:first-child > .panel:nth-child(2) { flex: 1.02 1 0; }
-.stitch-col:first-child > .panel:nth-child(3) { flex: 1.02 1 0; }
-.stitch-center > .panel:nth-child(1) { flex: 1.24 1 0; }
-.stitch-center > .panel:nth-child(2) { flex: 0.76 1 0; }
-.stitch-col:last-child > .panel:nth-child(1) { flex: 1 1 0; }
-.stitch-col:last-child > .panel:nth-child(2) { flex: 1.26 1 0; }
-.stitch-col:last-child > .panel:nth-child(3) { flex: 0.94 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(1) { flex: 0.96 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(2) { flex: 1.02 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(3) { flex: 1.02 1 0; }
+.stitch-center > .frost-card:nth-child(1) { flex: 1.24 1 0; }
+.stitch-center > .frost-card:nth-child(2) { flex: 0.76 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(2) { flex: 1.26 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(3) { flex: 0.94 1 0; }
 
 .chart {
   height: 100%;
@@ -510,6 +502,50 @@ onDeactivated(() => {
 .hub-ring {
   position: absolute;
   inset: 0;
+}
+
+.frost-card {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(248, 253, 255, 0.46));
+  box-shadow: 0 16px 34px rgba(0, 103, 96, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.card-head {
+  padding: 10px 14px 8px;
+}
+
+.card-titlebar {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgba(33, 75, 103, 0.96);
+  white-space: nowrap;
+}
+
+.card-subtitle {
+  font-size: 11px;
+  line-height: 1.2;
+  color: rgba(92, 130, 156, 0.76);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-body {
+  flex: 1;
+  min-height: 0;
+  padding: 9px 12px 10px;
+  overflow: hidden;
 }
 
 @media (max-width: 1600px) {

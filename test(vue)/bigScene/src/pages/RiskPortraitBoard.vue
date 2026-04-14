@@ -1,43 +1,40 @@
 <template>
   <main class="stitch-grid screen-page screen-grid risk-layout">
     <aside class="stitch-col screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">年龄结构</div>
-            <div class="panel-subtitle">高危人群年龄段</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">年龄结构</div>
+            <div class="card-subtitle">高危人群年龄段</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="ageRef" class="chart"></div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">性别占比</div>
-            <div class="panel-subtitle">患者档案聚合</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">性别占比</div>
+            <div class="card-subtitle">患者档案聚合</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="genderRef" class="chart"></div>
         </div>
-      </section>
+      </article>
     </aside>
 
     <section class="stitch-center screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">风险画像中枢</div>
-            <div class="panel-subtitle">分层 · 结构 · 变化</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">风险画像中枢</div>
+            <div class="card-subtitle">分层 · 结构 · 变化</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="center-stage">
             <div class="hub glow-breath">
               <div class="hub-title">重点管理患者</div>
@@ -47,62 +44,58 @@
             <div ref="portraitRef" class="hub-ring"></div>
           </div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">重点患者动态</div>
-            <div class="panel-subtitle">事件流</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">重点患者动态</div>
+            <div class="card-subtitle">事件流</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <EventTicker :items="events" />
         </div>
-      </section>
+      </article>
     </section>
 
     <aside class="stitch-col screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">病种排行</div>
-            <div class="panel-subtitle">前八病种</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">病种排行</div>
+            <div class="card-subtitle">前八病种</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="diseaseRef" class="chart"></div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">体质 / 证型分布</div>
-            <div class="panel-subtitle">画像结构</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">体质 / 证型分布</div>
+            <div class="card-subtitle">画像结构</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="chip-grid">
             <div v-for="item in constitutionTags" :key="item" class="chip">{{ item }}</div>
           </div>
         </div>
-      </section>
+      </article>
 
     </aside>
 
-    <section class="panel coverage-panel">
-      <div class="panel-corners"></div>
-      <div class="panel-header">
-        <div class="panel-titlebar">
-          <div class="panel-title">医学建议覆盖率</div>
-          <div class="panel-subtitle">建议触达概览</div>
+    <article class="frost-card coverage-panel">
+      <div class="card-head">
+        <div class="card-titlebar">
+          <div class="card-title">医学建议覆盖率</div>
+          <div class="card-subtitle">建议触达概览</div>
         </div>
       </div>
-      <div class="panel-body coverage-body">
+      <div class="card-body coverage-body">
         <div class="coverage-legend">
           <span><i class="dot dot-a"></i>药物干预</span>
           <span><i class="dot dot-b"></i>中医调理</span>
@@ -115,7 +108,7 @@
           <div class="coverage-value">{{ adviceCoverage }}%</div>
         </div>
       </div>
-    </section>
+    </article>
   </main>
 </template>
 
@@ -585,18 +578,18 @@ onDeactivated(() => {
   min-height: 0;
 }
 
-.stitch-col .panel,
-.stitch-center .panel {
+.stitch-col .frost-card,
+.stitch-center .frost-card {
   flex: 1;
   min-height: 0;
 }
 
-.stitch-col:first-child > .panel:nth-child(1) { flex: 1.02 1 0; }
-.stitch-col:first-child > .panel:nth-child(2) { flex: 0.98 1 0; }
-.stitch-center > .panel:nth-child(1) { flex: 1.2 1 0; }
-.stitch-center > .panel:nth-child(2) { flex: 0.8 1 0; }
-.stitch-col:last-child > .panel:nth-child(1) { flex: 1.05 1 0; }
-.stitch-col:last-child > .panel:nth-child(2) { flex: 0.95 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(1) { flex: 1.02 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(2) { flex: 0.98 1 0; }
+.stitch-center > .frost-card:nth-child(1) { flex: 1.2 1 0; }
+.stitch-center > .frost-card:nth-child(2) { flex: 0.8 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1.05 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(2) { flex: 0.95 1 0; }
 
 .coverage-panel {
   grid-column: 1 / -1;
@@ -679,6 +672,50 @@ onDeactivated(() => {
 .chart {
   height: 100%;
   min-height: 0;
+}
+
+.frost-card {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(248, 253, 255, 0.46));
+  box-shadow: 0 16px 34px rgba(0, 103, 96, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.card-head {
+  padding: 10px 14px 8px;
+}
+
+.card-titlebar {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgba(33, 75, 103, 0.96);
+  white-space: nowrap;
+}
+
+.card-subtitle {
+  font-size: 11px;
+  line-height: 1.2;
+  color: rgba(92, 130, 156, 0.76);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-body {
+  flex: 1;
+  min-height: 0;
+  padding: 9px 12px 10px;
+  overflow: hidden;
 }
 
 @media (max-width: 1600px) {

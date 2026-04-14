@@ -1,54 +1,50 @@
 <template>
   <main class="stitch-grid screen-page screen-grid">
     <aside class="stitch-col screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">告警等级分布</div>
-            <div class="panel-subtitle">健康 + 设备（近 30 天）</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">告警等级分布</div>
+            <div class="card-subtitle">健康 + 设备（近 30 天）</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="levelRef" class="chart"></div>
         </div>
-      </section>
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">健康告警趋势</div>
-            <div class="panel-subtitle">近 7 天</div>
+      </article>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">健康告警趋势</div>
+            <div class="card-subtitle">近 7 天</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="patientTrendRef" class="chart"></div>
         </div>
-      </section>
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">设备告警趋势</div>
-            <div class="panel-subtitle">近 7 天</div>
+      </article>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">设备告警趋势</div>
+            <div class="card-subtitle">近 7 天</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div ref="hardwareTrendRef" class="chart"></div>
         </div>
-      </section>
+      </article>
     </aside>
 
     <section class="stitch-center screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">告警联动中枢</div>
-            <div class="panel-subtitle">告警 · 处置 · 闭环</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">告警联动中枢</div>
+            <div class="card-subtitle">告警 · 处置 · 闭环</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="flow-stage">
             <div class="node n1">
               <div class="node-title">告警源头</div>
@@ -76,17 +72,16 @@
             </div>
           </div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">责任医生负载与闭环效率</div>
-            <div class="panel-subtitle">医生负载 · 关闭率 · 超时率</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">责任医生负载与闭环效率</div>
+            <div class="card-subtitle">医生负载 · 关闭率 · 超时率</div>
           </div>
         </div>
-        <div class="panel-body center-bottom">
+        <div class="card-body center-bottom">
           <div class="center-bottom-left">
             <div ref="doctorRef" class="chart"></div>
           </div>
@@ -105,32 +100,30 @@
             </div>
           </div>
         </div>
-      </section>
+      </article>
     </section>
 
     <aside class="stitch-col screen-col">
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">实时处置流</div>
-            <div class="panel-subtitle">动态事件追踪</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">实时处置流</div>
+            <div class="card-subtitle">动态事件追踪</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <EventTicker :items="events" />
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">待处理任务</div>
-            <div class="panel-subtitle">优先处置清单</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">待处理任务</div>
+            <div class="card-subtitle">优先处置清单</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="task-list">
             <article v-for="(item, idx) in taskItems" :key="`${item.id}-${idx}`" class="task-item" :class="`is-${item.tone}`">
               <div class="task-main">
@@ -141,22 +134,21 @@
             </article>
           </div>
         </div>
-      </section>
+      </article>
 
-      <section class="panel">
-        <div class="panel-corners"></div>
-        <div class="panel-header">
-          <div class="panel-titlebar">
-            <div class="panel-title">响应与超时</div>
-            <div class="panel-subtitle">闭环效率</div>
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">响应与超时</div>
+            <div class="card-subtitle">闭环效率</div>
           </div>
         </div>
-        <div class="panel-body">
+        <div class="card-body">
           <div class="dispatch-btn-wrap">
             <button type="button" class="dispatch-btn">进入调度台</button>
           </div>
         </div>
-      </section>
+      </article>
     </aside>
   </main>
 </template>
@@ -547,20 +539,20 @@ onDeactivated(() => {
   min-height: 0;
 }
 
-.stitch-col .panel,
-.stitch-center .panel {
+.stitch-col .frost-card,
+.stitch-center .frost-card {
   flex: 1;
   min-height: 0;
 }
 
-.stitch-col:first-child > .panel:nth-child(1) { flex: 1.02 1 0; }
-.stitch-col:first-child > .panel:nth-child(2) { flex: 0.98 1 0; }
-.stitch-col:first-child > .panel:nth-child(3) { flex: 1 1 0; }
-.stitch-center > .panel:nth-child(1) { flex: 1.2 1 0; }
-.stitch-center > .panel:nth-child(2) { flex: 0.8 1 0; }
-.stitch-col:last-child > .panel:nth-child(1) { flex: 1.2 1 0; }
-.stitch-col:last-child > .panel:nth-child(2) { flex: 1.08 1 0; }
-.stitch-col:last-child > .panel:nth-child(3) { flex: 0.72 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(1) { flex: 1.02 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(2) { flex: 0.98 1 0; }
+.stitch-col:first-child > .frost-card:nth-child(3) { flex: 1 1 0; }
+.stitch-center > .frost-card:nth-child(1) { flex: 1.2 1 0; }
+.stitch-center > .frost-card:nth-child(2) { flex: 0.8 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1.2 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(2) { flex: 1.08 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(3) { flex: 0.72 1 0; }
 
 .center-bottom {
   display: grid;
@@ -669,6 +661,50 @@ onDeactivated(() => {
 .chart {
   height: 100%;
   min-height: 0;
+}
+
+.frost-card {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-lg);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(248, 253, 255, 0.46));
+  box-shadow: 0 16px 34px rgba(0, 103, 96, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.card-head {
+  padding: 10px 14px 8px;
+}
+
+.card-titlebar {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: rgba(33, 75, 103, 0.96);
+  white-space: nowrap;
+}
+
+.card-subtitle {
+  font-size: 11px;
+  line-height: 1.2;
+  color: rgba(92, 130, 156, 0.76);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-body {
+  flex: 1;
+  min-height: 0;
+  padding: 9px 12px 10px;
+  overflow: hidden;
 }
 
 @media (max-width: 1600px) {

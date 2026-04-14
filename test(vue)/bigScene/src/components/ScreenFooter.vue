@@ -70,8 +70,8 @@ const statusToneClass = computed(() => {
   background: rgba(255, 255, 255, 0.28);
   backdrop-filter: blur(var(--blur-soft));
   -webkit-backdrop-filter: blur(var(--blur-soft));
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: 0 -6px 18px rgba(79, 209, 197, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -8px 20px rgba(79, 209, 197, 0.05);
   color: rgba(39, 85, 113, 0.92);
   font-size: 11px;
   letter-spacing: 0.02em;
@@ -129,7 +129,7 @@ const statusToneClass = computed(() => {
 .footer-divider {
   width: 1px;
   height: 12px;
-  background: rgba(114, 180, 205, 0.18);
+  background: rgba(114, 180, 205, 0.12);
 }
 
 </style>

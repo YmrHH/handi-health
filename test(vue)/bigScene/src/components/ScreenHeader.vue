@@ -54,7 +54,7 @@ onUnmounted(() => {
 
 .brand {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 650;
   letter-spacing: 0.01em;
   background: linear-gradient(90deg, rgba(32, 82, 110, 0.98), rgba(46, 113, 140, 0.96), rgba(95, 199, 216, 0.92));
@@ -73,12 +73,12 @@ onUnmounted(() => {
   align-items: center;
   gap: 6px;
   color: rgba(92, 130, 156, 0.68);
-  font-size: 10px;
+  font-size: 9px;
   white-space: nowrap;
 }
 
 .time {
-  color: rgba(92, 130, 156, 0.66);
+  color: rgba(92, 130, 156, 0.58);
   font-variant-numeric: tabular-nums;
 }
 </style>
