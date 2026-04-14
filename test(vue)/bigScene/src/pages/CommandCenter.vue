@@ -16,7 +16,7 @@
 
       <section class="hero-grid stitch-main cc-bento">
         <aside class="left-column stitch-col column-stack cc-left screen-col">
-          <section class="glass-card frost-card">
+          <section class="frost-card">
             <div class="frost-head">
               <div>
                 <h3 class="frost-title">病种排名 TOP5</h3>
@@ -39,7 +39,7 @@
             </div>
           </section>
 
-          <section class="glass-card frost-card efficiency-panel">
+          <section class="frost-card efficiency-panel">
             <div class="frost-head">
               <div>
                 <h3 class="frost-title">医生负载 TOP5</h3>
@@ -135,7 +135,7 @@
         </section>
 
         <aside class="right-column stitch-col column-stack cc-right screen-col">
-          <section class="glass-card frost-card">
+          <section class="frost-card">
             <div class="frost-head">
               <div>
                 <h3 class="frost-title">处置效率卡</h3>
@@ -171,7 +171,7 @@
             </div>
           </section>
 
-          <section class="glass-card frost-card event-panel">
+          <section class="frost-card event-panel">
             <div class="frost-head">
               <div>
                 <h3 class="frost-title">实时动态流</h3>
@@ -1460,6 +1460,12 @@ onBeforeUnmount(() => {
   min-height: 0;
 }
 .frost-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(247,252,252,0.6));
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow:
+    0 14px 30px rgba(28, 88, 96, 0.06),
+    inset 0 1px 0 rgba(255,255,255,0.12);
+  backdrop-filter: blur(18px);
   border-radius: 20px;
   padding: 12px 12px 14px;
   min-height: 0;

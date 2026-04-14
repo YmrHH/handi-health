@@ -78,6 +78,10 @@
           <div class="center-copy">
             <h2>寒岐智护·慢性病随访健康预警管理平台</h2>
             <p>{{ centerNarrative }}</p>
+            <div class="center-actions">
+              <button type="button" class="action-link">生成详细报告</button>
+              <button type="button" class="action-link">全量模型回溯</button>
+            </div>
           </div>
         </article>
 
@@ -134,7 +138,7 @@
 
         <article class="glass-card rank-card">
           <header class="card-head">
-            <h3 class="card-title">疾病稳定性排名</h3>
+            <h3 class="card-title">病种稳定率排行</h3>
           </header>
           <div class="rank-list">
             <div v-for="(item, idx) in stabilityRanks" :key="item.name" class="rank-row">
@@ -722,6 +726,23 @@ onDeactivated(() => {
   color: rgba(76, 98, 113, 0.9);
   font-size: 13px;
   line-height: 1.45;
+}
+
+.center-actions {
+  margin-top: 10px;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.action-link {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.34);
+  color: rgba(43, 97, 123, 0.9);
+  font-size: 11px;
+  line-height: 1;
 }
 
 .center-bottom {

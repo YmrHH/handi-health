@@ -56,39 +56,6 @@
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">执行趋势与地区触达</div>
-            <div class="card-subtitle">近 24 小时 · 活跃度分布</div>
-          </div>
-        </div>
-        <div class="card-body center-bottom">
-          <div class="center-bottom-item">
-            <div class="mini-title">24h 服务频次趋势</div>
-            <div ref="serviceTrendRef" class="chart chart-tall"></div>
-          </div>
-          <div class="center-bottom-item">
-            <div class="mini-title">地区触达活跃度</div>
-            <div ref="areaRef" class="chart chart-tall"></div>
-          </div>
-        </div>
-      </article>
-
-      <article class="frost-card service-event-panel">
-        <div class="card-head">
-          <div class="card-titlebar">
-            <div class="card-title">最新服务动态</div>
-            <div class="card-subtitle">触达 · 执行 · 反馈</div>
-          </div>
-        </div>
-        <div class="card-body">
-          <EventTicker :items="events" />
-        </div>
-      </article>
-    </section>
-
-    <aside class="stitch-col screen-col">
-      <article class="frost-card lifecycle-panel">
-        <div class="card-head">
-          <div class="card-titlebar">
             <div class="card-title">服务执行全生命周期</div>
             <div class="card-subtitle">生成 · 分派 · 执行 · 反馈 · 再评估</div>
           </div>
@@ -132,6 +99,20 @@
         </div>
       </article>
 
+      <article class="frost-card service-event-panel">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">最新服务动态</div>
+            <div class="card-subtitle">触达 · 执行 · 反馈</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <EventTicker :items="events" />
+        </div>
+      </article>
+    </section>
+
+    <aside class="stitch-col screen-col">
       <article class="frost-card hot-plan-panel">
         <div class="card-head">
           <div class="card-titlebar">
@@ -153,6 +134,25 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="frost-card">
+        <div class="card-head">
+          <div class="card-titlebar">
+            <div class="card-title">执行趋势与地区触达</div>
+            <div class="card-subtitle">近 24 小时 · 活跃度分布</div>
+          </div>
+        </div>
+        <div class="card-body center-bottom">
+          <div class="center-bottom-item">
+            <div class="mini-title">24h 服务频次趋势</div>
+            <div ref="serviceTrendRef" class="chart chart-tall"></div>
+          </div>
+          <div class="center-bottom-item">
+            <div class="mini-title">地区触达活跃度</div>
+            <div ref="areaRef" class="chart chart-tall"></div>
           </div>
         </div>
       </article>
@@ -422,10 +422,10 @@ onDeactivated(() => {
 
 .stitch-col:first-child > .frost-card:nth-child(1) { flex: 0.96 1 0; }
 .stitch-col:first-child > .frost-card:nth-child(2) { flex: 1.04 1 0; }
-.stitch-center > .frost-card:nth-child(1) { flex: 1.06 1 0; }
-.stitch-center > .frost-card:nth-child(2) { flex: 0.94 1 0; }
-.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1.18 1 0; }
-.stitch-col:last-child > .frost-card:nth-child(2) { flex: 0.82 1 0; }
+.stitch-center > .frost-card:nth-child(1) { flex: 1.26 1 0; }
+.stitch-center > .frost-card:nth-child(2) { flex: 0.74 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(1) { flex: 1 1 0; }
+.stitch-col:last-child > .frost-card:nth-child(2) { flex: 1 1 0; }
 
 .chart {
   height: 100%;
