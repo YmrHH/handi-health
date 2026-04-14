@@ -471,8 +471,8 @@ onDeactivated(() => {
   height: 230px;
   border-radius: 999px;
   background: radial-gradient(circle at 50% 35%, rgba(127, 214, 227, 0.30), rgba(255, 255, 255, 0.76) 58%, rgba(140, 188, 227, 0.25));
-  border: 1px solid rgba(114, 180, 205, 0.34);
-  box-shadow: var(--glow-strong);
+  border: 1px solid rgba(114, 180, 205, 0.2);
+  box-shadow: 0 10px 22px rgba(95, 199, 216, 0.14);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -510,7 +510,7 @@ onDeactivated(() => {
   flex-direction: column;
   border-radius: var(--r-lg);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(248, 253, 255, 0.46));
-  box-shadow: 0 16px 34px rgba(0, 103, 96, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  box-shadow: 0 12px 26px rgba(0, 103, 96, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .card-head {
@@ -556,10 +556,5 @@ onDeactivated(() => {
   .hub-value { font-size: 33px; }
 }
 
-.muted-ring {
-  border-radius: 999px;
-  border: 1px dashed rgba(114, 180, 205, 0.32);
-  margin: 14px;
-}
 </style>
 

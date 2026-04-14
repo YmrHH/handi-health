@@ -63,15 +63,15 @@ const statusToneClass = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
   padding: 8px var(--canvas-pad-x) calc(8px + env(safe-area-inset-bottom, 0px));
-  background: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(var(--blur-soft));
   -webkit-backdrop-filter: blur(var(--blur-soft));
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 -6px 16px rgba(79, 209, 197, 0.03);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: 0 -4px 12px rgba(79, 209, 197, 0.02);
   color: rgba(39, 85, 113, 0.92);
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.02em;
 }
 
@@ -79,7 +79,7 @@ const statusToneClass = computed(() => {
 .footer-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
   flex-shrink: 0;
 }
@@ -92,12 +92,12 @@ const statusToneClass = computed(() => {
 
 .footer-page {
   white-space: nowrap;
-  color: rgba(92, 130, 156, 0.90);
+  color: rgba(92, 130, 156, 0.82);
 }
 
 .footer-meta {
   white-space: nowrap;
-  color: rgba(92, 130, 156, 0.78);
+  color: rgba(92, 130, 156, 0.72);
 }
 
 .footer-status {
@@ -105,14 +105,14 @@ const statusToneClass = computed(() => {
   align-items: center;
   gap: 6px;
   white-space: nowrap;
-  color: rgba(46, 113, 140, 0.92);
+  color: rgba(46, 113, 140, 0.84);
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 999px;
-  box-shadow: 0 0 14px rgba(95, 199, 216, 0.22);
+  box-shadow: 0 0 10px rgba(95, 199, 216, 0.16);
 }
 .status-dot.is-success {
   background: var(--c-success);

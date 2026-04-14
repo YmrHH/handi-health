@@ -464,8 +464,8 @@ onDeactivated(() => {
 
 .node {
   border-radius: var(--r-md);
-  border: 1px solid rgba(114, 180, 205, 0.34);
-  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.56);
   padding: 10px 10px;
   text-align: center;
 }
@@ -496,8 +496,8 @@ onDeactivated(() => {
 
 .arrow {
   height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(95, 199, 216, 0.42), transparent);
-  box-shadow: var(--glow);
+  background: linear-gradient(90deg, transparent, rgba(95, 199, 216, 0.26), transparent);
+  box-shadow: 0 0 8px rgba(95, 199, 216, 0.08);
 }
 
 .stitch-grid {
@@ -552,8 +552,8 @@ onDeactivated(() => {
 .eff-item {
   padding: 8px 10px;
   border-radius: var(--r-md);
-  border: 1px solid rgba(114, 180, 205, 0.18);
-  background: rgba(255, 255, 255, 0.52);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.48);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -626,13 +626,13 @@ onDeactivated(() => {
   width: 100%;
   height: 34px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: rgba(39, 85, 113, 0.9);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
-  background: linear-gradient(135deg, #0f8e85, #0b7a72);
-  box-shadow: 0 12px 24px rgba(0, 103, 96, 0.16);
+  background: linear-gradient(135deg, rgba(95, 199, 216, 0.18), rgba(255, 255, 255, 0.66));
+  box-shadow: 0 8px 16px rgba(0, 103, 96, 0.08);
 }
 
 .chart {
@@ -646,7 +646,7 @@ onDeactivated(() => {
   flex-direction: column;
   border-radius: var(--r-lg);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.66), rgba(248, 253, 255, 0.46));
-  box-shadow: 0 16px 34px rgba(0, 103, 96, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  box-shadow: 0 12px 26px rgba(0, 103, 96, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
 .card-head {

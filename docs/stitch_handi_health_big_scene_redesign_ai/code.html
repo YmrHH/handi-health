@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+
+<html class="light" lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>医疗AI指挥部 - AI洞察板</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Manrope:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#fb5151",
+                        "on-surface": "#283031",
+                        "outline": "#6f7879",
+                        "error-dim": "#9f0519",
+                        "surface-container-highest": "#d2dfe0",
+                        "primary-fixed-dim": "#63e2d6",
+                        "inverse-on-surface": "#969f9f",
+                        "on-tertiary-fixed": "#004642",
+                        "surface-container-low": "#e8f3f3",
+                        "tertiary": "#006762",
+                        "primary": "#006760",
+                        "on-secondary-fixed-variant": "#24646f",
+                        "on-secondary-container": "#165a65",
+                        "on-tertiary-fixed-variant": "#006560",
+                        "on-surface-variant": "#545d5d",
+                        "on-primary-fixed-variant": "#00635c",
+                        "primary-container": "#73f1e4",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-high": "#d9e5e5",
+                        "surface-container": "#dfeaeb",
+                        "inverse-surface": "#071010",
+                        "outline-variant": "#a6afaf",
+                        "surface-dim": "#c9d7d8",
+                        "error": "#b31b25",
+                        "on-primary-fixed": "#00443f",
+                        "on-tertiary-container": "#005a56",
+                        "tertiary-dim": "#005a55",
+                        "surface-variant": "#d2dfe0",
+                        "tertiary-fixed": "#93f0e8",
+                        "secondary-fixed": "#b0ecfa",
+                        "on-error-container": "#570008",
+                        "secondary-fixed-dim": "#a2deeb",
+                        "secondary-container": "#b0ecfa",
+                        "background": "#eff8f8",
+                        "on-secondary": "#daf8ff",
+                        "on-background": "#283031",
+                        "tertiary-fixed-dim": "#85e1da",
+                        "on-primary": "#bffff6",
+                        "on-secondary-fixed": "#004650",
+                        "inverse-primary": "#7cfaed",
+                        "surface-tint": "#006760",
+                        "on-primary-container": "#005852",
+                        "surface": "#eff8f8",
+                        "tertiary-container": "#93f0e8",
+                        "primary-dim": "#005a54",
+                        "surface-bright": "#eff8f8",
+                        "secondary": "#24646f",
+                        "primary-fixed": "#73f1e4",
+                        "secondary-dim": "#135763",
+                        "on-error": "#ffefee",
+                        "on-tertiary": "#bdfff9"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Manrope"],
+                        "label": ["Manrope"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; background-color: #eff8f8; overflow: hidden; height: 1024px; width: 1280px; }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .glass-panel { background: rgba(255, 255, 255, 0.4); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .neural-glow { background: radial-gradient(circle at center, rgba(115, 241, 228, 0.15) 0%, transparent 70%); }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- Top Navigation Shell -->
+<nav class="flex justify-between items-center w-full px-10 h-16 max-w-full mx-auto bg-cyan-50/40 backdrop-blur-xl docked full-width top-0 border-b border-white/20 shadow-sm shadow-teal-900/5 z-50">
+<div class="text-xl font-bold text-teal-800 font-headline tracking-tight">医疗AI指挥部</div>
+<div class="flex gap-8 items-center h-full">
+<a class="text-slate-500 font-medium hover:text-teal-600 font-['Space_Grotesk'] tracking-tight text-sm transition-all duration-200" href="#">控制中心</a>
+<a class="text-slate-500 font-medium hover:text-teal-600 font-['Space_Grotesk'] tracking-tight text-sm transition-all duration-200" href="#">风险画像</a>
+<a class="text-slate-500 font-medium hover:text-teal-600 font-['Space_Grotesk'] tracking-tight text-sm transition-all duration-200" href="#">警报联动</a>
+<a class="text-slate-500 font-medium hover:text-teal-600 font-['Space_Grotesk'] tracking-tight text-sm transition-all duration-200" href="#">干预服务</a>
+<a class="text-teal-700 border-b-2 border-teal-500 font-bold pb-1 font-['Space_Grotesk'] tracking-tight text-sm transition-all duration-200" href="#">AI洞察板</a>
+</div>
+<div class="flex items-center gap-6">
+<span class="material-symbols-outlined text-teal-700">notifications</span>
+<span class="material-symbols-outlined text-teal-700">account_circle</span>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="w-full h-[calc(100%-104px)] p-6 grid grid-cols-12 gap-6 relative overflow-hidden">
+<!-- Left Column: Overview (3 Cols) -->
+<aside class="col-span-3 flex flex-col gap-6 h-full">
+<!-- Patient & Alert Overview -->
+<div class="glass-panel p-6 rounded-xl flex flex-col gap-6 shadow-sm">
+<div>
+<h3 class="text-xs font-bold text-primary tracking-widest font-headline mb-4">管理患者总数</h3>
+<div class="flex items-end justify-between">
+<span class="text-4xl font-headline font-bold text-on-surface">12,842</span>
+<div class="flex items-center text-teal-600 text-xs font-bold bg-primary-container/20 px-2 py-1 rounded-full">
+<span class="material-symbols-outlined text-sm mr-1">trending_up</span>+4.2%
+                        </div>
+</div>
+<div class="w-full h-1.5 bg-surface-container-high rounded-full mt-4 overflow-hidden">
+<div class="h-full bg-primary w-4/5"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white/30 p-4 rounded-lg">
+<p class="text-[10px] text-slate-500 mb-1">警报概览</p>
+<p class="text-2xl font-headline font-bold text-error-dim">158</p>
+</div>
+<div class="bg-white/30 p-4 rounded-lg">
+<p class="text-[10px] text-slate-500 mb-1">高风险概览</p>
+<p class="text-2xl font-headline font-bold text-secondary">412</p>
+</div>
+</div>
+</div>
+<!-- Follow-up Summary -->
+<div class="glass-panel p-6 rounded-xl flex-grow shadow-sm">
+<h3 class="text-xs font-bold text-primary tracking-widest font-headline mb-4">随访任务概览</h3>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-teal-400"></div>
+<span class="text-sm font-medium">已完成随访</span>
+</div>
+<span class="text-sm font-bold">88.5%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span class="text-sm font-medium">待访患者</span>
+</div>
+<span class="text-sm font-bold">1,421</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-2 h-2 rounded-full bg-error-dim"></div>
+<span class="text-sm font-medium">失访预警</span>
+</div>
+<span class="text-sm font-bold">42</span>
+</div>
+</div>
+<div class="mt-8">
+<h3 class="text-xs font-bold text-slate-400 tracking-widest font-headline mb-4 uppercase">数据源分布</h3>
+<div class="flex flex-wrap gap-2">
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold text-secondary">电子病历 (42%)</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold text-secondary">实验室 (28%)</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold text-secondary">物联网设备 (18%)</span>
+<span class="px-3 py-1 bg-surface-container-high rounded-full text-[10px] font-bold text-secondary">佩戴式设备 (12%)</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Center Column: Focus (6 Cols) -->
+<section class="col-span-6 flex flex-col gap-6 relative">
+<div class="neural-glow absolute inset-0 -z-10"></div>
+<!-- Central Visual -->
+<div class="flex-grow flex flex-col items-center justify-center relative pt-4">
+<div class="relative w-80 h-80 flex items-center justify-center">
+<!-- Fake AI Neural Visualization Rings -->
+<div class="absolute inset-0 rounded-full border border-teal-500/10 animate-pulse"></div>
+<div class="absolute inset-4 rounded-full border border-teal-400/20"></div>
+<div class="absolute inset-12 rounded-full border-2 border-teal-300/30 border-dashed"></div>
+<div class="flex flex-col items-center z-10">
+<span class="text-[10px] font-bold tracking-widest text-teal-600 mb-1">AI 智能洞察中枢</span>
+<span class="text-7xl font-headline font-extrabold text-primary">94.2</span>
+<span class="text-xs text-slate-500 mt-2">系统洞察置信度</span>
+</div>
+<!-- Floating Data Nodes -->
+<div class="absolute -top-4 left-10 bg-white/60 backdrop-blur-md p-3 rounded-lg border border-white/40 shadow-xl shadow-teal-900/5">
+<p class="text-[10px] font-bold text-slate-400">心血管风险</p>
+<p class="text-sm font-bold text-error">较昨日 +2.4%</p>
+</div>
+<div class="absolute top-20 -right-8 bg-white/60 backdrop-blur-md p-3 rounded-lg border border-white/40 shadow-xl shadow-teal-900/5">
+<p class="text-[10px] font-bold text-slate-400">稳定指数</p>
+<p class="text-sm font-bold text-primary">稳健增长</p>
+</div>
+</div>
+<div class="max-w-xl text-center mt-8">
+<h2 class="text-2xl font-headline font-bold text-on-surface mb-3">多维数据驱动的精准干预决策</h2>
+<p class="text-slate-500 text-sm leading-relaxed font-body">
+                        基于全量病例库的深度学习模型显示，本月高血压患者并发症风险降低了 12.8%。
+                        系统识别到 3 处显著的数据偏移，建议重点关注 65 岁以上伴有糖尿病史的群体，
+                        预警系统已自动调优干预阈值，确保临床资源的最优分配。
+                    </p>
+</div>
+</div>
+<!-- Comparison & Trends -->
+<div class="grid grid-cols-2 gap-6 h-48">
+<div class="glass-panel p-5 rounded-xl">
+<h3 class="text-xs font-bold text-primary tracking-widest font-headline mb-4 uppercase">近 3 个月趋势对比</h3>
+<div class="flex items-end justify-between h-20 gap-2">
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-sm h-12 relative">
+<div class="absolute bottom-0 w-full bg-teal-200 h-8"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">10月</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-sm h-16 relative">
+<div class="absolute bottom-0 w-full bg-teal-400 h-12"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">11月</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-t-sm h-20 relative">
+<div class="absolute bottom-0 w-full bg-primary h-16"></div>
+</div>
+<span class="text-[10px] font-bold text-slate-400">12月</span>
+</div>
+</div>
+</div>
+<div class="glass-panel p-5 rounded-xl">
+<h3 class="text-xs font-bold text-primary tracking-widest font-headline mb-4 uppercase">疾病发病趋势</h3>
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between text-xs">
+<span>糖尿病控制率</span>
+<span class="font-bold">78%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-teal-400 w-[78%]"></div>
+</div>
+<div class="flex items-center justify-between text-xs mt-1">
+<span>高血压稳定期</span>
+<span class="font-bold">62%</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[62%]"></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column: Insights (3 Cols) -->
+<aside class="col-span-3 flex flex-col gap-6 h-full">
+<!-- Insight Highlights -->
+<div class="glass-panel p-6 rounded-xl shadow-sm">
+<h3 class="text-xs font-bold text-primary tracking-widest font-headline mb-4">洞察要点</h3>
+<div class="space-y-4">
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-teal-500 shrink-0">clinical_notes</span>
+<div>
+<p class="text-xs font-bold leading-tight">并发症早期筛查模型更新</p>
+<p class="text-[10px] text-slate-500 mt-1">覆盖 92% 在册病例，灵敏度提升 15%</p>
+</div>
+</div>
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-teal-500 shrink-0">groups</span>
+<div>
+<p class="text-xs font-bold leading-tight">高风险人群集中于西北片区</p>
+<p class="text-[10px] text-slate-500 mt-1">建议增派 2 名全科医生进行入户随访</p>
+</div>
+</div>
+<div class="flex gap-3">
+<span class="material-symbols-outlined text-teal-500 shrink-0">medication</span>
+<div>
+<p class="text-xs font-bold leading-tight">用药依从性显著提升</p>
+<p class="text-[10px] text-slate-500 mt-1">通过 AI 智能提醒，依从率达 84.5%</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Key Warning Notes -->
+<div class="bg-error/5 border border-error-container/20 p-6 rounded-xl">
+<h3 class="text-xs font-bold text-error tracking-widest font-headline mb-4 uppercase">关键风险提醒</h3>
+<div class="space-y-3">
+<div class="p-3 bg-white/40 rounded-lg border-l-4 border-error">
+<p class="text-xs font-bold">核心警报：异常血压偏移</p>
+<p class="text-[10px] text-slate-500 mt-1">检测到 14 例急性血压升高，需立即响应</p>
+</div>
+<div class="p-3 bg-white/40 rounded-lg border-l-4 border-error-container">
+<p class="text-xs font-bold">随访中断风险：3 级预警</p>
+<p class="text-[10px] text-slate-500 mt-1">由于春节假期，预计随访率将下降 20%</p>
+</div>
+</div>
+</div>
+<!-- Disease Stability Ranking -->
+<div class="glass-panel p-6 rounded-xl flex-grow shadow-sm">
+<h3 class="text-xs font-bold text-primary tracking-widest font-headline mb-4 uppercase">疾病稳定性排名</h3>
+<div class="space-y-4">
+<div class="flex items-center gap-4">
+<span class="text-xs font-bold text-slate-400 w-4">01</span>
+<div class="flex-grow">
+<div class="flex justify-between text-[10px] mb-1 font-bold">
+<span>慢阻肺 (COPD)</span>
+<span>稳健</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-teal-400 w-[92%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-xs font-bold text-slate-400 w-4">02</span>
+<div class="flex-grow">
+<div class="flex justify-between text-[10px] mb-1 font-bold">
+<span>冠心病</span>
+<span>波动</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[74%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-xs font-bold text-slate-400 w-4">03</span>
+<div class="flex-grow">
+<div class="flex justify-between text-[10px] mb-1 font-bold">
+<span>慢性肾病</span>
+<span>严峻</span>
+</div>
+<div class="w-full h-1 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-error-container w-[45%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-6 pt-6 border-t border-white/20">
+<p class="text-[10px] font-bold text-slate-400 mb-2 uppercase">趋势解读</p>
+<p class="text-[11px] text-slate-600 leading-relaxed italic">
+                        "近期气温骤降，心血管类疾病的入院风险系数上升，建议调高相关科室的备勤等级。"
+                    </p>
+</div>
+</div>
+</aside>
+<!-- Bottom Horizontal Evidence Strip -->
+<div class="col-span-12 h-16 glass-panel rounded-xl flex items-center px-8 gap-12 shadow-sm overflow-hidden border-teal-100/30">
+<div class="flex items-center gap-3 shrink-0">
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">月度聚合趋势</span>
+<img alt="趋势小图" class="h-8 w-24 object-contain opacity-60" data-alt="simple cyan line graph showing stable upward growth on pure white background minimalist clinical style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASASOThOdqNtAMub1i5NMr6jaJHcRYI4_bd-3CJDGwkigHhlWLRroRXQp45ItjVkv7pw15GSDnxbdzuu5Hgxav0j1jUxfK2UfCNpqr0rRpP4v_d5gC1jdFxU_lYR3a98ShjBPSJRZZkPtbZHs6BZ0NZ3m6Ri1ntcEB_7zmjB71uh0QLD-8B_3hMEDId6lJGDEwq_BCwB8SeCaUNxIgWOG47TVMwjYurmb6SsI1u8iBlqwDwoPPinr0nO7EcVXsmj-XYAmvqcTufQ"/>
+</div>
+<div class="flex-grow flex items-center justify-around border-l border-white/20 pl-12">
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-slate-400 uppercase">警报变更</span>
+<span class="text-sm font-bold text-error-dim">-12.4% <span class="text-[10px] font-normal text-slate-400">较上月</span></span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-slate-400 uppercase">高风险覆盖</span>
+<span class="text-sm font-bold text-primary">99.8% <span class="text-[10px] font-normal text-slate-400">已建档</span></span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-slate-400 uppercase">系统覆盖度</span>
+<span class="text-sm font-bold text-secondary">全量接入 <span class="text-[10px] font-normal text-slate-400">24/24 机构</span></span>
+</div>
+<div class="flex flex-col">
+<span class="text-[10px] font-bold text-slate-400 uppercase">AI 演算能效</span>
+<span class="text-sm font-bold text-teal-600">0.12ms <span class="text-[10px] font-normal text-slate-400">响应</span></span>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer Shell -->
+<footer class="flex justify-between items-center px-8 py-2 w-full fixed bottom-0 bg-white/20 backdrop-blur-md border-t border-white/10 z-50">
+<div class="flex items-center gap-4 text-teal-600 font-['Manrope'] text-xs tracking-wider"><span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>系统状态：正常</span><span class="text-slate-500">|</span><span>延迟：24ms</span><span class="text-slate-500">|</span><span>数据同步中...</span></div>
+<div class="flex gap-6">
+<a class="text-slate-500 hover:text-teal-400 transition-colors font-['Manrope'] text-xs tracking-wider" href="#">隐私政策</a>
+<a class="text-slate-500 hover:text-teal-400 transition-colors font-['Manrope'] text-xs tracking-wider font-semibold" href="#">技术支持</a>
+</div>
+</footer>
+</body></html>

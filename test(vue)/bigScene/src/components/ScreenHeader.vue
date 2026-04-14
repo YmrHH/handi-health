@@ -19,7 +19,6 @@ import { onMounted, onUnmounted, ref } from 'vue'
 
 defineProps<{
   title: string
-  subTitle?: string
 }>()
 
 const timeText = ref('')
@@ -48,14 +47,14 @@ onUnmounted(() => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
 .brand {
   margin: 0;
-  font-size: 13px;
-  font-weight: 620;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 0.01em;
   background: linear-gradient(90deg, rgba(32, 82, 110, 0.98), rgba(46, 113, 140, 0.96), rgba(95, 199, 216, 0.92));
   -webkit-background-clip: text;
@@ -71,14 +70,14 @@ onUnmounted(() => {
 .header-right {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  color: rgba(92, 130, 156, 0.68);
-  font-size: 9px;
+  gap: 4px;
+  color: rgba(92, 130, 156, 0.6);
+  font-size: 8px;
   white-space: nowrap;
 }
 
 .time {
-  color: rgba(92, 130, 156, 0.58);
+  color: rgba(92, 130, 156, 0.5);
   font-variant-numeric: tabular-nums;
 }
 </style>
