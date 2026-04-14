@@ -443,10 +443,10 @@ onDeactivated(() => {
 .risk-card {
   min-height: 0;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.46);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.4);
+  border: none;
   backdrop-filter: blur(18px);
-  box-shadow: 0 12px 24px rgba(0, 103, 96, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 20px rgba(0, 103, 96, 0.035), inset 0 1px 0 rgba(255, 255, 255, 0.09);
   overflow: hidden;
 }
 
@@ -458,7 +458,7 @@ onDeactivated(() => {
 .risk-card {
   display: flex;
   flex-direction: column;
-  background: rgba(251, 81, 81, 0.08);
+  background: rgba(251, 81, 81, 0.06);
 }
 
 .card-head {
@@ -629,13 +629,15 @@ onDeactivated(() => {
 .center-ring-bg {
   width: clamp(220px, 19vw, 312px);
   height: clamp(220px, 19vw, 312px);
-  border: 1px dashed rgba(70, 174, 189, 0.2);
+  border: none;
+  box-shadow: inset 0 0 0 1px rgba(70, 174, 189, 0.14);
 }
 
 .center-ring-mid {
   width: clamp(180px, 15vw, 256px);
   height: clamp(180px, 15vw, 256px);
-  border: 1px solid rgba(94, 183, 199, 0.08);
+  border: none;
+  box-shadow: inset 0 0 0 1px rgba(94, 183, 199, 0.1);
 }
 
 .center-ring-chart {
@@ -829,8 +831,8 @@ onDeactivated(() => {
 .risk-item {
   padding: 10px 10px 10px 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.42);
-  box-shadow: inset 2px 0 0 rgba(179, 27, 37, 0.62);
+  background: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 1px 0 0 rgba(179, 27, 37, 0.32);
 }
 
 .risk-item-title {
@@ -896,7 +898,7 @@ onDeactivated(() => {
   font-size: 11px;
   line-height: 1.35;
   color: rgba(73, 102, 116, 0.88);
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  border-top: none;
 }
 
 .evidence-strip {
@@ -906,21 +908,22 @@ onDeactivated(() => {
   align-items: center;
   gap: 12px;
   padding: 0 16px;
-  background: rgba(255, 255, 255, 0.36);
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
   backdrop-filter: blur(14px);
+  box-shadow: 0 8px 18px rgba(0, 103, 96, 0.025), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .evidence-title {
   font-size: 11px;
-  color: rgba(77, 110, 124, 0.84);
+  color: rgba(77, 110, 124, 0.78);
   white-space: nowrap;
 }
 
 .evidence-line {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(90deg, rgba(0, 103, 96, 0.22), rgba(123, 218, 205, 0.6));
+  background: linear-gradient(90deg, rgba(0, 103, 96, 0.16), rgba(123, 218, 205, 0.42));
 }
 
 .evidence-metrics {
