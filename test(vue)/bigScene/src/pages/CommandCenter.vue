@@ -16,11 +16,11 @@
 
       <section class="hero-grid stitch-main cc-bento">
         <aside class="left-column stitch-col column-stack cc-left screen-col">
-          <section class="glass-card panel panel-compact">
-            <div class="panel-header">
+          <section class="glass-card frost-card">
+            <div class="frost-head">
               <div>
-                <h3 class="panel-title">病种排名 TOP5</h3>
-                <p class="panel-subtitle">基于患者档案与画像数据统计</p>
+                <h3 class="frost-title">病种排名 TOP5</h3>
+                <p class="frost-subtitle">基于患者档案与画像数据统计</p>
               </div>
             </div>
             <div class="rank-list">
@@ -39,11 +39,11 @@
             </div>
           </section>
 
-          <section class="glass-card panel panel-compact efficiency-panel">
-            <div class="panel-header">
+          <section class="glass-card frost-card efficiency-panel">
+            <div class="frost-head">
               <div>
-                <h3 class="panel-title">医生负载 TOP5</h3>
-                <p class="panel-subtitle">基于患者归属与画像数据统计</p>
+                <h3 class="frost-title">医生负载 TOP5</h3>
+                <p class="frost-subtitle">基于患者归属与画像数据统计</p>
               </div>
             </div>
             <div class="doctor-list">
@@ -113,10 +113,10 @@
           </section>
 
           <section class="trend-section glass-card">
-            <div class="panel-header trend-header">
+            <div class="frost-head trend-header">
               <div>
-                <h3 class="panel-title">综合趋势主图</h3>
-                <p class="panel-subtitle">风险、告警与随访数据的连续变化</p>
+                <h3 class="frost-title">综合趋势主图</h3>
+                <p class="frost-subtitle">风险、告警与随访数据的连续变化</p>
               </div>
               <div class="switch-group">
                 <button
@@ -135,11 +135,11 @@
         </section>
 
         <aside class="right-column stitch-col column-stack cc-right screen-col">
-          <section class="glass-card panel panel-compact">
-            <div class="panel-header">
+          <section class="glass-card frost-card">
+            <div class="frost-head">
               <div>
-                <h3 class="panel-title">处置效率卡</h3>
-                <p class="panel-subtitle">近 30 天告警闭环处理情况</p>
+                <h3 class="frost-title">处置效率卡</h3>
+                <p class="frost-subtitle">近 30 天告警闭环处理情况</p>
               </div>
             </div>
             <div class="efficiency-wrap">
@@ -171,11 +171,11 @@
             </div>
           </section>
 
-          <section class="glass-card panel panel-compact event-panel">
-            <div class="panel-header">
+          <section class="glass-card frost-card event-panel">
+            <div class="frost-head">
               <div>
-                <h3 class="panel-title">实时动态流</h3>
-                <p class="panel-subtitle">事件播报与处置进度追踪</p>
+                <h3 class="frost-title">实时动态流</h3>
+                <p class="frost-subtitle">事件播报与处置进度追踪</p>
               </div>
             </div>
             <div class="event-list">
@@ -1448,31 +1448,34 @@ onBeforeUnmount(() => {
 }
 
 .column-stack { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
-.cc-left > .panel:nth-child(1) { flex: 1.02 1 0; }
-.cc-left > .panel:nth-child(2) { flex: 0.98 1 0; }
-.cc-right > .panel:nth-child(1) {
+.cc-left > .frost-card:nth-child(1) { flex: 1.02 1 0; }
+.cc-left > .frost-card:nth-child(2) { flex: 0.98 1 0; }
+.cc-right > .frost-card:nth-child(1) {
   flex: 0.95 1 0;
   min-height: 0;
   overflow: hidden;
 }
-.cc-right > .panel:nth-child(2) {
+.cc-right > .frost-card:nth-child(2) {
   flex: 1.05 1 0;
   min-height: 0;
 }
-.panel {
+.frost-card {
   border-radius: 20px;
   padding: 12px 12px 14px;
   min-height: 0;
+  flex: 1 1 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
-.panel-compact { min-height: 0; flex: 1 1 0; overflow: hidden; display: flex; flex-direction: column; }
-.panel-header {
+.frost-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
   margin-bottom: 10px;
 }
-.panel-title {
+.frost-title {
   margin: 0;
   font-size: 15px;
   font-weight: 800;
@@ -1482,7 +1485,7 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.panel-subtitle {
+.frost-subtitle {
   margin: 4px 0 0;
   font-size: 11px;
   color: #6e858d;
@@ -1727,9 +1730,6 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
-.efficiency-panel.panel-compact {
-  overflow: hidden;
-}
 .eff-kpis {
   display: grid;
   grid-template-columns: 1fr auto 1fr auto 1fr;
@@ -1868,15 +1868,15 @@ onBeforeUnmount(() => {
   overflow-wrap: anywhere;
 }
 
-.panel table {
+.frost-card table {
   width: 100%;
   max-width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
 }
 
-.panel th,
-.panel td {
+.frost-card th,
+.frost-card td {
   min-width: 0;
   max-width: 0;
   overflow: hidden;
@@ -1885,14 +1885,14 @@ onBeforeUnmount(() => {
   vertical-align: middle;
 }
 
-.panel td > *,
-.panel th > * {
+.frost-card td > *,
+.frost-card th > * {
   min-width: 0;
   max-width: 100%;
 }
 
-.panel .table-wrap,
-.panel .table-container {
+.frost-card .table-wrap,
+.frost-card .table-container {
   min-height: 0;
   overflow: hidden;
 }

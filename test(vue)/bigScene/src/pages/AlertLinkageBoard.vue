@@ -26,8 +26,8 @@
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">设备告警趋势</div>
-            <div class="card-subtitle">近 7 天</div>
+            <div class="card-title">设备告警分布</div>
+            <div class="card-subtitle">按设备类型告警占比</div>
           </div>
         </div>
         <div class="card-body">
@@ -50,8 +50,8 @@
       <article class="frost-card">
         <div class="card-head">
           <div class="card-titlebar">
-            <div class="card-title">告警联动中枢</div>
-            <div class="card-subtitle">告警 · 处置 · 闭环</div>
+            <div class="card-title">实时告警联动中枢</div>
+            <div class="card-subtitle">告警分发 · 处置协同 · 闭环追踪</div>
           </div>
         </div>
         <div class="card-body">

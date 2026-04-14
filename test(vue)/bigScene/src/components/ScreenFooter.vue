@@ -68,8 +68,8 @@ const statusToneClass = computed(() => {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(var(--blur-soft));
   -webkit-backdrop-filter: blur(var(--blur-soft));
-  border-top: 1px solid rgba(255, 255, 255, 0.04);
-  box-shadow: 0 -4px 12px rgba(79, 209, 197, 0.02);
+  border-top: none;
+  box-shadow: 0 -3px 9px rgba(79, 209, 197, 0.014);
   color: rgba(39, 85, 113, 0.92);
   font-size: 10px;
   letter-spacing: 0.02em;

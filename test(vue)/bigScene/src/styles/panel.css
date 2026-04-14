@@ -4,7 +4,7 @@
   flex-direction: column;
   min-height: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(244, 251, 255, 0.42));
-  border: 1px solid rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.025);
   border-radius: var(--r-lg);
   backdrop-filter: blur(var(--blur));
   -webkit-backdrop-filter: blur(var(--blur));
@@ -66,8 +66,8 @@
   right: 12px;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(95, 199, 216, 0.02), transparent);
-  opacity: 0.18;
+  background: linear-gradient(90deg, transparent, rgba(95, 199, 216, 0.014), transparent);
+  opacity: 0.12;
 }
 
 .panel-body {

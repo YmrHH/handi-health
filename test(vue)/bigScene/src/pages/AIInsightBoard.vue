@@ -440,7 +440,7 @@ onDeactivated(() => {
   min-height: 0;
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.46);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(18px);
   box-shadow: 0 14px 30px rgba(0, 103, 96, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.14);
   overflow: hidden;
@@ -631,7 +631,7 @@ onDeactivated(() => {
 .center-ring-mid {
   width: clamp(180px, 15vw, 256px);
   height: clamp(180px, 15vw, 256px);
-  border: 1px solid rgba(94, 183, 199, 0.2);
+  border: 1px solid rgba(94, 183, 199, 0.1);
 }
 
 .center-ring-chart {
@@ -875,7 +875,7 @@ onDeactivated(() => {
   font-size: 11px;
   line-height: 1.35;
   color: rgba(73, 102, 116, 0.88);
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .evidence-strip {
@@ -886,7 +886,7 @@ onDeactivated(() => {
   gap: 12px;
   padding: 0 16px;
   background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(14px);
 }
 
