@@ -60,14 +60,7 @@
 }
 
 .panel-header::after {
-  content: '';
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(95, 199, 216, 0.014), transparent);
-  opacity: 0.12;
+  content: none;
 }
 
 .panel-body {
